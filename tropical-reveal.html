@@ -27,8 +27,8 @@
     z-index:15;
     color:rgba(226,196,122,0.85);
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    font-size:15px; font-weight:300;
-    letter-spacing:0.32em;
+    font-size:clamp(17px, 4.7vw, 20px); font-weight:300;   /* v18.51: was 15px */
+    letter-spacing:0.28em;
     text-transform:lowercase;
     text-align:center; width:92vw;
     opacity:0;
@@ -45,8 +45,8 @@
     z-index:16;
     color:rgba(226,196,122,0.9);
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    font-size:15px; font-weight:300;
-    letter-spacing:0.32em;
+    font-size:clamp(17px, 4.7vw, 20px); font-weight:300;   /* v18.51: was 15px */
+    letter-spacing:0.28em;
     text-transform:lowercase;
     text-align:center; width:92vw;
     opacity:0;
@@ -444,7 +444,7 @@
   #chartResultPage {
     position:fixed; inset:0; z-index:30;
     overflow-y:auto; -webkit-overflow-scrolling:touch;
-    touch-action:pan-y pinch-zoom; overscroll-behavior:contain;
+    touch-action:pan-y; overscroll-behavior:contain;
     background:rgb(6,15,30);
     padding:0 0 calc(44px + env(safe-area-inset-bottom,0px));
     opacity:0; transform:translateY(24px);
@@ -471,24 +471,36 @@
     padding:clamp(16px, 4vw, 32px) clamp(12px, 3.5vw, 34px);
     border:24px solid transparent;
     border-image:url('asc-frame.jpg') 60 fill stretch; }
-  @media (max-width:700px){ .tr-frame { border-width:18px; margin:0 1% 3.2%; } }
+  /* v18.50: the side padding was eating room the table needs — the border art
+     already gives the visual inset, so the phone breakpoint keeps its vertical
+     padding and hands the horizontal space back to the columns */
+  @media (max-width:700px){ .tr-frame { border-width:18px; margin:0 1% 3.2%;
+    padding:clamp(14px, 3.6vw, 26px) clamp(3px, 1vw, 10px); } }
 
   /* planet table: five to a side, gold arrow between */
   .tr-table { display:grid; grid-template-columns:1fr auto 1fr;
-    gap:clamp(4px, 1.8vw, 20px); align-items:center; }
-  .tr-tcol { display:flex; flex-direction:column; gap:clamp(11px, 2.9vw, 20px); min-width:0; }
-  .tr-prow { display:grid;
-    grid-template-columns:1.35em minmax(0,1.05fr) minmax(0,1.35fr) minmax(0,1.15fr);
-    gap:0.4em; align-items:baseline;
+    gap:clamp(3px, 1.2vw, 16px); align-items:center; }
+  /* v18.50: the column is the grid and each row is display:contents, so all
+     five rows share ONE set of tracks sized to the longest name and the longest
+     sign — nothing can run into its neighbour. justify-content:space-between
+     then spreads whatever is left over across the full width instead of
+     bunching everything against the left edge. Font size is untouched. */
+  .tr-tcol { display:grid;
+    grid-template-columns:1.35em max-content max-content max-content;
+    justify-content:space-between;
+    column-gap:0.6em; row-gap:clamp(11px, 2.9vw, 20px);
+    align-items:baseline; min-width:0;
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
     font-size:clamp(6.5px, calc(2.25vw - 2px), 12.5px);   /* v18.49: two points down */
     letter-spacing:0.08em; color:#EBE5D0;
     white-space:nowrap; }
+  .tr-prow { display:contents; }
   .tr-pgly { color:#C2A481; font-family:Georgia, serif; font-size:1.4em;
     line-height:0.9; align-self:center; }
   .tr-phouse { color:rgba(235,229,208,0.85); letter-spacing:0.05em; }
   .tr-arrow { display:flex; align-items:center; justify-content:center; height:100%; }
-  .tr-arrow svg { height:clamp(96px, 26vw, 190px); width:auto; display:block; }
+  .tr-arrow svg { height:clamp(96px, 26vw, 190px); width:auto; display:block;
+    max-width:20px; }   /* v18.50: the arrow keeps its height, gives back its width */
 
   /* ascendant frame: glyph ring + name | divider | reading */
   .tr-asc { display:grid; grid-template-columns:auto 1px 1fr;
@@ -724,7 +736,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.49 zoom + locked sky · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.51 larger type · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2634,25 +2646,98 @@ function trCoords(){
   return la.d + '\u00B0' + (BIRTH.lat >= 0 ? 'N' : 'S') + ' ' + la.m + '\u2032 \u00B7 '
        + lo.d + '\u00B0' + (BIRTH.lon >= 0 ? 'E' : 'W') + ' ' + lo.m + '\u2032';
 }
-/* v18.49: the result page is a document to study — pinch/zoom is allowed here,
-   and because the reveal runs inside the index's iframe the parent's viewport
-   meta governs, so the parent is switched too. Everything before the result
-   page stays locked at scale 1. */
-var TR_ZOOM_VP = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover';
-function trSetZoom(on){
-  function apply(doc){
-    try {
-      var m = doc.querySelector('meta[name="viewport"]');
-      if (!m) return;
-      if (m.__lockVP === undefined) m.__lockVP = m.getAttribute('content');   /* each document keeps its own locked value */
-      m.setAttribute('content', on ? TR_ZOOM_VP : m.__lockVP);
-      var ta = on ? 'pan-x pan-y pinch-zoom' : '';
-      doc.documentElement.style.touchAction = ta;
-      if (doc.body) doc.body.style.touchAction = ta;
-    } catch(_){}
+/* v18.50: the result page owns its own zoom.
+   v18.49 turned on BROWSER pinch by rewriting the viewport meta. That is what
+   made the page disappear: #chartResultPage is position:fixed inside a fixed
+   parent, and iOS does not pan fixed layers with the visual viewport, so the
+   first pinch pushed the reading off screen with no way back. The viewport
+   stays locked at scale 1 in both documents; instead the page transforms its
+   own content, so a zoom holds until the reader ends it — nothing times out,
+   nothing scrolls away, and the reading stays exactly where they put it.
+   Pinch to scale 1x-4x, one finger to pan while zoomed, pinch back to 1x to
+   return to normal scrolling. */
+var TR_ZMIN = 1, TR_ZMAX = 4;
+var trZ = 1, trTX = 0, trTY = 0;
+var trPinch = null, trPan = null;
+
+function trZoomApply(){
+  var page = document.getElementById('chartResultPage');
+  var inner = page && page.querySelector('.tr-page');
+  if (!inner) return;
+  if (trZ <= 1.001){
+    trZ = 1;
+    inner.style.transform = '';                    /* clean at 1x so position:sticky keeps working */
+    inner.style.transformOrigin = '';
+    page.style.overflowY = 'auto';
+    page.style.touchAction = 'pan-y';
+    if (trTY){ page.scrollTop = -trTY; trTX = 0; trTY = 0; }
+  } else {
+    inner.style.transformOrigin = '0 0';
+    inner.style.transform = 'translate(' + trTX.toFixed(2) + 'px,' + trTY.toFixed(2) + 'px) scale(' + trZ.toFixed(4) + ')';
+    page.style.overflowY = 'hidden';
+    page.style.touchAction = 'none';
   }
-  apply(document);
-  try { if (window.parent !== window) apply(window.parent.document); } catch(_){}
+}
+function trZoomClamp(){
+  var page = document.getElementById('chartResultPage');
+  var inner = page && page.querySelector('.tr-page');
+  if (!inner) return;
+  var vw = page.clientWidth, vh = page.clientHeight;
+  var cw = inner.offsetWidth * trZ, ch = inner.offsetHeight * trZ;
+  var left = inner.offsetLeft * trZ;
+  trTX = (cw <= vw) ? (vw - cw)/2 - left : Math.min(-left, Math.max(vw - cw - left, trTX));
+  trTY = (ch <= vh) ? 0 : Math.min(0, Math.max(vh - ch, trTY));
+}
+function trTouchMid(t0, t1, page){
+  var r = page.getBoundingClientRect();
+  return { x:(t0.clientX + t1.clientX)/2 - r.left, y:(t0.clientY + t1.clientY)/2 - r.top };
+}
+function trTouchDist(t0, t1){
+  return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY) || 1;
+}
+function trZoomWire(){
+  var page = document.getElementById('chartResultPage');
+  if (!page || page.__zoomWired) return;
+  page.__zoomWired = true;
+
+  page.addEventListener('touchstart', function(e){
+    if (e.touches.length === 2){
+      if (trZ === 1){ trTY = -page.scrollTop; trTX = 0; }   /* fold the current scroll into the transform */
+      var m = trTouchMid(e.touches[0], e.touches[1], page);
+      trPinch = { d:trTouchDist(e.touches[0], e.touches[1]), z:trZ, tx:trTX, ty:trTY, m:m };
+      trPan = null;
+      e.preventDefault();
+    } else if (e.touches.length === 1 && trZ > 1){
+      trPan = { x:e.touches[0].clientX, y:e.touches[0].clientY, tx:trTX, ty:trTY };
+    }
+  }, { passive:false });
+
+  page.addEventListener('touchmove', function(e){
+    if (trPinch && e.touches.length === 2){
+      var k = trTouchDist(e.touches[0], e.touches[1]) / trPinch.d;
+      var nz = Math.max(TR_ZMIN, Math.min(TR_ZMAX, trPinch.z * k));
+      var cx = (trPinch.m.x - trPinch.tx) / trPinch.z;      /* content point under the first midpoint */
+      var cy = (trPinch.m.y - trPinch.ty) / trPinch.z;
+      var m = trTouchMid(e.touches[0], e.touches[1], page);
+      trZ = nz; trTX = m.x - cx*nz; trTY = m.y - cy*nz;
+      trZoomClamp(); trZoomApply();
+      e.preventDefault();
+    } else if (trPan && e.touches.length === 1 && trZ > 1){
+      trTX = trPan.tx + (e.touches[0].clientX - trPan.x);
+      trTY = trPan.ty + (e.touches[0].clientY - trPan.y);
+      trZoomClamp(); trZoomApply();
+      e.preventDefault();
+    }
+  }, { passive:false });
+
+  function end(e){
+    if (e.touches.length < 2) trPinch = null;
+    if (e.touches.length === 0) trPan = null;
+    trZoomClamp(); trZoomApply();
+  }
+  page.addEventListener('touchend', end);
+  page.addEventListener('touchcancel', end);
+  window.addEventListener('resize', function(){ trZoomClamp(); trZoomApply(); });
 }
 
 var trHeroDone = false;
@@ -2729,7 +2814,7 @@ function openCompleteChartResult(){
     resultPage.hidden = false;
     resultPage.setAttribute('aria-hidden', 'false');
     resultPage.scrollTop = 0;
-    trSetZoom(true);                      /* v18.49: study mode — pinch allowed */
+    trZoomWire();                         /* v18.50: the page owns its zoom */
     requestAnimationFrame(function(){ resultPage.classList.add('is-visible'); });
     console.log('[EMERGE FLOW] 7. reveal -> combined chart result page (logo + reference + summary)');
     window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
@@ -2808,7 +2893,7 @@ function finishRevealTransition(fadeMs){
     resultPage.hidden = false;
     resultPage.setAttribute('aria-hidden', 'false');
     resultPage.scrollTop = 0;
-    trSetZoom(true);                      /* v18.49: study mode — pinch allowed */
+    trZoomWire();                         /* v18.50: the page owns its zoom */
     requestAnimationFrame(function(){ resultPage.classList.add('is-visible'); });
     console.log('[EMERGE FLOW] 7. reveal transition -> combined chart result page');
     window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));

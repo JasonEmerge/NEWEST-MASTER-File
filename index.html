@@ -98,7 +98,8 @@
     cursor:pointer; }
   #enterPrompt { text-align:center; }
   #enterPrompt .ep-text { opacity:0; transition:opacity 2.4s ease; color:#B08A6E;
-    font-size:11px; letter-spacing:.45em; text-transform:uppercase; margin-right:-.45em; }
+    font-size:clamp(15px,4.2vw,18px);   /* v19.74: was 11px — up to the COSMOLOGY line's weight */
+    letter-spacing:.4em; text-transform:uppercase; margin-right:-.4em; }
   #enterPrompt.ready .ep-text { opacity:1; animation:twinkle 3.2s ease-in-out 2.4s infinite; --o:1; }
 
   /* ---------- act two: the invitation to emerge ---------- */
@@ -143,7 +144,7 @@
     /* v19.28: +30% again per Jason */
     pointer-events:none;
     filter:drop-shadow(0 0 24px rgba(214,169,134,.2)); }
-  #invite .iv-text { color:#B08A6E; font-size:15px; letter-spacing:.45em;  /* v19.29: bigger tap prompt */
+  #invite .iv-text { color:#B08A6E; font-size:clamp(17px,4.5vw,19px); letter-spacing:.4em;  /* v19.74: was 15px */
     text-transform:uppercase; margin-right:-.45em; }
   #invite.focus .iv-text { animation:twinkle 3.2s ease-in-out 5s infinite; --o:1; }  /* v19.42 */
 
@@ -170,8 +171,8 @@
   width:min(86vw,460px); margin:6px auto 0; opacity:0; transition:opacity .6s ease; }
 #searchwrap.on { display:block; }
 #searchwrap.vis { opacity:1; }
-#search-head { text-align:center; margin-bottom:12px; font-size:11px; font-weight:700;
-  letter-spacing:.22em; text-transform:uppercase;
+#search-head { text-align:center; margin-bottom:12px; font-size:clamp(13px,3.5vw,15px); font-weight:700;   /* v19.74: was 11px */
+  letter-spacing:.2em; text-transform:uppercase;
   background:linear-gradient(110deg,#A86F55,#E8C7A6,#C99378,#765044);
   -webkit-background-clip:text; background-clip:text; color:transparent; }
 #search-head .spark { -webkit-text-fill-color:#D6A986; margin-right:8px; font-size:13px; }
@@ -179,7 +180,7 @@
 #search {
   width:100%; box-sizing:border-box; padding:13px 16px 13px 42px; border-radius:12px;
   background:rgba(18,16,10,.72); border:1px solid rgba(214,169,134,.35);
-  color:#F5E9D6; font-size:16px; outline:none; backdrop-filter:blur(6px);
+  color:#F5E9D6; font-size:17.5px; outline:none; backdrop-filter:blur(6px);   /* v19.74: was 16px */
 }
 #search::placeholder { color:#B08A6E; }
 #search:focus { border-color:rgba(214,169,134,.75); box-shadow:0 0 18px rgba(214,169,134,.18); }
@@ -193,23 +194,23 @@
 }
 #dropdown { text-align:left; margin-top:8px; }
 .opt {
-  padding:10px 13px; margin:5px 0; border-radius:10px; cursor:pointer; font-size:13px;
+  padding:11px 13px; margin:5px 0; border-radius:10px; cursor:pointer; font-size:15px;   /* v19.74: was 13px */
   background:rgba(18,16,10,.9); border:1px solid rgba(214,169,134,.22); color:#F5E9D6;
   transition:.12s; backdrop-filter:blur(6px);
 }
 .opt:hover { background:rgba(60,48,20,.9); border-color:rgba(214,169,134,.5); }
-.hint { font-size:11.5px; color:#C1997D; padding:7px 3px; line-height:1.5; }
+.hint { font-size:13px; color:#C1997D; padding:7px 3px; line-height:1.5; }   /* v19.74: was 11.5px */
 .hint.err { color:#ff9a9a; }
 .marker { pointer-events:none; transform:translate(-50%,-58%); text-align:center;
   opacity:0; animation:rise2 1.2s ease .4s forwards; }
 @keyframes rise2 { to { opacity:1; } }
-.marker .b-label { font-family:Georgia,serif; font-size:14px; color:#E8C7A6;
+.marker .b-label { font-family:Georgia,serif; font-size:15.5px; color:#E8C7A6;   /* v19.74 */
   text-shadow:0 1px 6px rgba(0,0,0,.9); margin-bottom:8px; }
 .marker .b-pin { width:42px; height:53px; margin:0 auto; display:block;
   filter:drop-shadow(0 0 14px rgba(214,169,134,.55)); }
-.marker .b-city { font-family:Georgia,serif; font-size:18px; color:#E8C7A6; margin-top:10px;
+.marker .b-city { font-family:Georgia,serif; font-size:20px; color:#E8C7A6; margin-top:10px;   /* v19.74 */
   text-shadow:0 1px 6px rgba(0,0,0,.9); }
-.marker .b-country { font-size:10.5px; color:#cfd6ea; letter-spacing:.06em; margin-top:2px;
+.marker .b-country { font-size:12px; color:#cfd6ea; letter-spacing:.06em; margin-top:2px;   /* v19.74 */
   text-shadow:0 1px 5px rgba(0,0,0,.9); }
 /* v19.51: persistent back navigation — pill beneath the birthplace country */
 .marker .entry-back {
@@ -230,9 +231,9 @@
   );
   color:#2B1D13;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-  font-size:12px;
+  font-size:13.5px;   /* v19.74: BACK, was 12px */
   font-weight:700;
-  letter-spacing:.24em;
+  letter-spacing:.22em;
   text-transform:uppercase;
   box-shadow:
     0 0 26px rgba(214,169,134,.38),
@@ -270,7 +271,7 @@
 }
 #finale.depart { transition:opacity 1.1s ease; opacity:0; pointer-events:none; }
 /* ---------- v13 restored onboarding (donor: Scene 2 v100) ---------- */
-  #bdaybar { position:fixed; left:50%; transform:translate(-50%, 24px); width:250px; bottom:25vh; z-index:14;
+  #bdaybar { position:fixed; left:50%; transform:translate(-50%, 24px); width:min(88vw,282px); bottom:25vh; z-index:14;   /* v19.74: widened for the bigger type */
     display:flex; align-items:center; justify-content:flex-start; gap:10px;
     padding:9px 14px; border-radius:12px; cursor:pointer; overflow:visible;
     background:linear-gradient(180deg, rgba(52,42,18,.65), rgba(30,24,10,.72));
@@ -279,15 +280,15 @@
     opacity:0; pointer-events:none;
     transition:opacity .4s ease, transform .4s ease; }
   #bdaybar.show { opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
-  #bdaybar .bd-star { color:#E8C7A6; font-size:11px; flex:0 0 auto;
+  #bdaybar .bd-star { color:#E8C7A6; font-size:12.5px; flex:0 0 auto;   /* v19.74 */
     border:1px dashed rgba(214,169,134,.55); border-radius:50%;
     width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
   #bdaybar #bd-typed { flex:1; background:none; border:none; outline:none;
-    color:#E8C7A6; font-size:15px; font-weight:600; letter-spacing:.08em;
+    color:#E8C7A6; font-size:17px; font-weight:600; letter-spacing:.08em;   /* v19.74: was 15px */
     text-align:center; text-transform:uppercase; }
   #bdaybar #bd-typed::placeholder { color:#9C7A5F; letter-spacing:.22em; }
   #bdaybar.done { opacity:0 !important; transform:translate(-50%,-30px) scale(.92); pointer-events:none !important; }
-  #timebar { position:fixed; left:50%; transform:translate(-50%, 24px); width:250px; bottom:25vh; z-index:14;
+  #timebar { position:fixed; left:50%; transform:translate(-50%, 24px); width:min(88vw,282px); bottom:25vh; z-index:14;   /* v19.74: widened for the bigger type */
     display:flex; align-items:center; justify-content:flex-start; gap:10px;
     padding:9px 14px; border-radius:12px; cursor:pointer; overflow:visible;
     background:linear-gradient(180deg, rgba(52,42,18,.65), rgba(30,24,10,.72));
@@ -297,11 +298,11 @@
     transition:opacity .4s ease, transform .4s ease; }
   #timebar.show { opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
   #timebar #tm-typed { flex:1; background:none; border:none; outline:none;
-    color:#E8C7A6; font-size:15px; font-weight:600; letter-spacing:.08em;
+    color:#E8C7A6; font-size:17px; font-weight:600; letter-spacing:.08em;   /* v19.74: was 15px */
     text-align:center; text-transform:uppercase; min-width:0; }
   #timebar #tm-typed::placeholder { color:#9C7A5F; letter-spacing:.22em; }
   #ampm { display:flex; gap:6px; flex:0 0 auto; }
-  #ampm span { font-size:10px; letter-spacing:.08em; color:#C99378; padding:4px 7px;
+  #ampm span { font-size:12px; letter-spacing:.08em; color:#C99378; padding:5px 8px;   /* v19.74: was 10px */
     border:1px solid rgba(214,169,134,.4); border-radius:8px; cursor:pointer; transition:.15s; }
   #ampm span.sel { color:#2E1B14; background:linear-gradient(110deg,#A86F55 0%,#D6A986 28%,#E8C7A6 48%,#C99378 68%,#765044 100%);
     border-color:transparent; font-weight:700; }
@@ -309,15 +310,15 @@
   /* v18.8 gold prompt banners — exact fn-pill treatment, one above each birth field.
      They only mirror the bar's .show/.done classes; the bars and inputs are untouched. */
   .bd-prompt { position:fixed; left:50%; transform:translate(-50%, 24px); z-index:14;
-    padding:14px 30px; border-radius:999px; letter-spacing:.2em; text-transform:uppercase;
-    font-size:12px; font-weight:600; color:#2B1D13; white-space:nowrap;
+    padding:14px 22px; border-radius:999px; letter-spacing:.16em; text-transform:uppercase;
+    font-size:clamp(13px,3.5vw,14.5px); font-weight:600; color:#2B1D13; white-space:nowrap;   /* v19.74: was 12px, padding traded for type size */
     background:linear-gradient(180deg, #E8C7A6, #C99378);
     box-shadow:0 0 30px rgba(214,169,134,.35), inset 0 1px 0 rgba(255,240,220,.6);
     opacity:0; pointer-events:none; transition:opacity .4s ease, transform .4s ease; }
   .bd-prompt.show { opacity:1; transform:translate(-50%, 0); }
   .bd-prompt.done { opacity:0 !important; transform:translate(-50%,-30px) scale(.92) !important; }
   #bdayPrompt, #timePrompt { bottom:calc(25vh + 58px); }
-  @media (max-width:380px){ .bd-prompt { font-size:11px; padding:12px 20px; letter-spacing:.16em; } }
+  @media (max-width:380px){ .bd-prompt { font-size:12.5px; padding:12px 15px; letter-spacing:.13em; } }   /* v19.74 */
   /* while the two paths are open, everything else yields the stage */
   body.paths-open #confirm, body.paths-open .marker { opacity:0 !important;
     transition:opacity .9s ease !important; pointer-events:none !important; }
@@ -473,7 +474,7 @@
     opacity:0; pointer-events:none; transition:opacity .9s ease; }
   #voidCarry.show { opacity:1; pointer-events:auto; }
   #vc-whisper { position:absolute; left:0; right:0; top:44%; text-align:center;
-    font-family:Georgia,serif; font-size:15px; letter-spacing:.42em; color:#B08A6E;
+    font-family:Georgia,serif; font-size:clamp(17px,4.7vw,20px); letter-spacing:.38em; color:#B08A6E;   /* v19.74: was 15px */
     opacity:0; transition:opacity 2.2s ease; }
   #voidCarry.speak #vc-whisper { opacity:1; }
   #gn-video { position:absolute; inset:0; width:100%; height:100%; object-fit:contain;
@@ -642,7 +643,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.72 · continuous opening</div>
+<div id="ver">SCENE 1 · v19.74 · larger type</div>
 
 <script src="https://cdn.jsdelivr.net/npm/globe.gl"></script>
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
@@ -2263,8 +2264,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1941'
-      : 'tropical-reveal.html?v=1849';
+      ? 'sidereal-reveal.html?v=1942'
+      : 'tropical-reveal.html?v=1851';
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
