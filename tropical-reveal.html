@@ -444,7 +444,7 @@
   #chartResultPage {
     position:fixed; inset:0; z-index:30;
     overflow-y:auto; -webkit-overflow-scrolling:touch;
-    touch-action:pan-y; overscroll-behavior:contain;
+    touch-action:pan-y pinch-zoom; overscroll-behavior:contain;
     background:rgb(6,15,30);
     padding:0 0 calc(44px + env(safe-area-inset-bottom,0px));
     opacity:0; transform:translateY(24px);
@@ -452,9 +452,12 @@
   }
   #chartResultPage.is-visible { opacity:1; transform:translateY(0); }
   #chartResultPage[hidden] { display:none; }
-  .tr-page { width:100%; max-width:800px; margin:0 auto; }
+  .tr-page { width:100%; max-width:800px; margin:0 auto; position:relative; }
+  /* v18.49: the sky locks to the top and the page scrolls up behind it */
   #trHero { display:block; width:100%; aspect-ratio:4802 / 2043; object-fit:cover;
-    background:rgb(6,15,30); }
+    background:rgb(6,15,30);
+    position:sticky; top:0; z-index:4; }
+  .tr-details, .tr-frame { position:relative; z-index:1; }
 
   .tr-details { display:flex; align-items:center; justify-content:space-between;
     padding:22px 2.5% 18px; }
@@ -478,7 +481,8 @@
     grid-template-columns:1.35em minmax(0,1.05fr) minmax(0,1.35fr) minmax(0,1.15fr);
     gap:0.4em; align-items:baseline;
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    font-size:clamp(8.5px, 2.25vw, 14.5px); letter-spacing:0.08em; color:#EBE5D0;
+    font-size:clamp(6.5px, calc(2.25vw - 2px), 12.5px);   /* v18.49: two points down */
+    letter-spacing:0.08em; color:#EBE5D0;
     white-space:nowrap; }
   .tr-pgly { color:#C2A481; font-family:Georgia, serif; font-size:1.4em;
     line-height:0.9; align-self:center; }
@@ -720,7 +724,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.48 continuous opening · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.49 zoom + locked sky · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2630,6 +2634,27 @@ function trCoords(){
   return la.d + '\u00B0' + (BIRTH.lat >= 0 ? 'N' : 'S') + ' ' + la.m + '\u2032 \u00B7 '
        + lo.d + '\u00B0' + (BIRTH.lon >= 0 ? 'E' : 'W') + ' ' + lo.m + '\u2032';
 }
+/* v18.49: the result page is a document to study — pinch/zoom is allowed here,
+   and because the reveal runs inside the index's iframe the parent's viewport
+   meta governs, so the parent is switched too. Everything before the result
+   page stays locked at scale 1. */
+var TR_ZOOM_VP = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover';
+function trSetZoom(on){
+  function apply(doc){
+    try {
+      var m = doc.querySelector('meta[name="viewport"]');
+      if (!m) return;
+      if (m.__lockVP === undefined) m.__lockVP = m.getAttribute('content');   /* each document keeps its own locked value */
+      m.setAttribute('content', on ? TR_ZOOM_VP : m.__lockVP);
+      var ta = on ? 'pan-x pan-y pinch-zoom' : '';
+      doc.documentElement.style.touchAction = ta;
+      if (doc.body) doc.body.style.touchAction = ta;
+    } catch(_){}
+  }
+  apply(document);
+  try { if (window.parent !== window) apply(window.parent.document); } catch(_){}
+}
+
 var trHeroDone = false;
 function trHeroWire(){
   var v = document.getElementById('trHero');
@@ -2704,6 +2729,7 @@ function openCompleteChartResult(){
     resultPage.hidden = false;
     resultPage.setAttribute('aria-hidden', 'false');
     resultPage.scrollTop = 0;
+    trSetZoom(true);                      /* v18.49: study mode — pinch allowed */
     requestAnimationFrame(function(){ resultPage.classList.add('is-visible'); });
     console.log('[EMERGE FLOW] 7. reveal -> combined chart result page (logo + reference + summary)');
     window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
@@ -2782,6 +2808,7 @@ function finishRevealTransition(fadeMs){
     resultPage.hidden = false;
     resultPage.setAttribute('aria-hidden', 'false');
     resultPage.scrollTop = 0;
+    trSetZoom(true);                      /* v18.49: study mode — pinch allowed */
     requestAnimationFrame(function(){ resultPage.classList.add('is-visible'); });
     console.log('[EMERGE FLOW] 7. reveal transition -> combined chart result page');
     window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
