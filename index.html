@@ -129,7 +129,7 @@
     filter:drop-shadow(0 0 10px rgba(214,169,134,.25)); }
   .tl-sm { font-size:clamp(13px,3.6vw,16px); letter-spacing:.5em;  margin-right:-.5em;  margin-bottom:10px; }  /* v19.40: +20% */
   .tl-lg { font-size:clamp(17px,4.7vw,20px); letter-spacing:.32em; margin-right:-.32em; }  /* v19.40: +20% */
-  .tl-md { font-size:clamp(13px,3.6vw,16px); letter-spacing:.3em;  margin-right:-.3em;  margin-bottom:12px; }
+  .tl-md { font-size:clamp(17px,4.7vw,20px); letter-spacing:.26em; margin-right:-.26em; margin-bottom:12px; }   /* v19.75: matches the COSMOLOGY line */
   .tl-star { -webkit-text-fill-color:#E8A87C; color:#E8A87C; font-size:.85em; }
   .tl-divider { display:flex; align-items:center; justify-content:center; gap:10px; }
   .tl-divider .dv { display:block; height:1px; width:min(24vw,104px); }
@@ -346,6 +346,9 @@
     background:radial-gradient(circle at 50% 28%, rgba(24,27,39,.22),
       rgba(3,5,12,.5) 58%, rgba(2,3,8,.72) 100%); }
   #systembar.show { opacity:1; pointer-events:auto; }
+  /* v19.75: this wrapper exists purely so the page can transform its own content for zoom */
+  #sysZoomInner { display:flex; flex-direction:column; align-items:center; width:100%;
+    transform-origin:0 0; }
   .sys-logo { width:min(42vw,188px); margin-bottom:6px;
     filter:drop-shadow(0 0 18px rgba(214,169,134,.35)); }
   .sys-heading { font-family:Georgia,'Times New Roman',serif; font-size:clamp(20px,5.6vw,30px);
@@ -358,7 +361,7 @@
     letter-spacing:.01em; color:#E8C7A6; max-width:480px;
     text-shadow:0 2px 10px rgba(0,0,0,.85), 0 0 14px rgba(214,169,134,.22); }
   .sys-cards { display:flex; flex-direction:row; align-items:stretch; justify-content:center;
-    margin-top:auto; margin-bottom:auto; }   /* the two paths hold the center of the page */
+    margin-top:clamp(10px,2.6vw,22px); }   /* v19.75: the boxes are longer now — fixed margins so they scroll instead of clipping */
   .sc-slot { width:min(43vw,240px); display:flex; }
   .sc-slot .syscard { flex:1; }
   .sys-link { display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -396,11 +399,11 @@
   .syscard.east.sel { border-color:#F0D9A0;
     box-shadow:0 0 34px rgba(224,178,110,.5), inset 0 0 26px rgba(224,178,110,.12); }
   .syscard.dim { opacity:.3; }
-  .sc-name { font-family:Georgia,'Times New Roman',serif; font-size:clamp(15px,4vw,23px);
+  .sc-name { font-family:Georgia,'Times New Roman',serif; font-size:clamp(17px,4.6vw,25px);   /* v19.75 */
     line-height:1.15; letter-spacing:.06em; color:#ABA7EC;
     text-shadow:0 0 18px rgba(150,150,240,.4); }
   .east .sc-name { color:#E9BE7E; text-shadow:0 0 18px rgba(233,190,126,.4); }
-  .sc-astro { font-size:clamp(8.5px,2vw,10.5px); letter-spacing:.3em; padding-left:.3em;
+  .sc-astro { font-size:clamp(10px,2.5vw,12.5px); letter-spacing:.26em; padding-left:.26em;   /* v19.75 */
     text-transform:uppercase; color:#9A96D2; margin-top:7px; }
   .sc-astro::before, .sc-astro::after { content:'✦'; font-size:7px; margin:0 6px;
     color:rgba(150,150,230,.8); }
@@ -413,22 +416,21 @@
   .sc-symbol svg { width:100%; height:100%; display:block; }
   .east .sc-symbol { color:#E9BE7E; filter:drop-shadow(0 0 10px rgba(233,190,126,.6)); }
   .sc-desc { flex:1; display:flex; align-items:center; text-align:center;
-    font-size:clamp(11.5px,3.1vw,15px); line-height:1.5; padding:0 2px;
+    font-size:clamp(13.5px,3.8vw,17.5px); line-height:1.55; padding:0 2px;   /* v19.75: bigger type, so fewer words cross each line */
     margin-top:clamp(8px,2vw,14px); color:rgba(226,229,246,.88); }
   .east .sc-desc { color:rgba(246,236,215,.88); }
-  .sc-tag { font-family:Georgia,'Times New Roman',serif; font-size:clamp(11.5px,2.9vw,16px);
+  .sc-tag { font-family:Georgia,'Times New Roman',serif; font-size:clamp(13px,3.4vw,17.5px);   /* v19.75 */
     line-height:1.3; color:#B9B6F2; margin-top:clamp(8px,2vw,14px);
     padding-top:clamp(6px,1.6vw,10px); border-top:1px solid rgba(150,150,230,.25); }
   .east .sc-tag { color:#E4C79A; border-top-color:rgba(224,178,110,.3); }
-  .sys-cards { margin-bottom:auto; padding-bottom:calc(48px + env(safe-area-inset-bottom,0px)); }  /* Earth exits before this scene: nothing to clear */
+  .sys-cards { padding-bottom:calc(48px + env(safe-area-inset-bottom,0px)); }  /* Earth exits before this scene: nothing to clear */
   /* staged reveal — brand+heading, intro, west glides, east glides, emblems breathe up, foot */
-  #systembar .sys-logo, #systembar .sys-heading, #systembar .perspective-intro,
+  #systembar .sys-logo, #systembar .sys-heading,
   #systembar .perspective-instruction, #systembar .sc-slot, #systembar .sys-link,
   #systembar .syscard > * { opacity:0; }
   #systembar.show .sys-logo      { animation:sysFade 1.4s ease .1s forwards; }
   #systembar.show .sys-heading   { animation:sysFade 1.5s ease .3s forwards; }
-  #systembar.show .perspective-intro       { animation:sysFade 1.5s ease .9s forwards; }
-  #systembar.show .perspective-instruction { animation:sysFade 1.5s ease 1.25s forwards; }
+  #systembar.show .perspective-instruction { animation:sysFade 1.5s ease .9s forwards; }   /* v19.75: takes the retired intro's beat */
   #systembar.show .sc-slot.west-slot { animation:glideWest 1.5s cubic-bezier(.22,.8,.3,1) 1.6s forwards; }
   #systembar.show .sc-slot.east-slot { animation:glideEast 1.5s cubic-bezier(.22,.8,.3,1) 2s forwards; }
   #systembar.show .sys-link { animation:sysFade 2.2s ease 2.6s forwards; }
@@ -449,7 +451,7 @@
   @keyframes glideEast { from { opacity:0; transform:translateX(-46px); }
                          to   { opacity:1; transform:translateX(0); } }
   @media (prefers-reduced-motion: reduce) {
-    #systembar .sys-logo, #systembar .sys-heading, #systembar .perspective-intro,
+    #systembar .sys-logo, #systembar .sys-heading,
     #systembar .perspective-instruction, #systembar .sc-slot, #systembar .sys-link,
     #systembar .syscard > * { opacity:1; animation:none !important; }
     .sys-link .sl-star { animation:none; } }
@@ -576,9 +578,9 @@
   <div id="ampm"><span data-v="AM">AM</span><span data-v="PM">PM</span></div>
 </div>
 <div id="systembar">
+ <div id="sysZoomInner">
   <img class="emerge-wordmark sys-logo" alt="CozAlyze">
   <div class="sys-heading">Discover Yourself<br>Through Two Perspectives</div>
-  <div class="perspective-intro">Two complementary lenses reveal different layers of who you are.</div>
   <div class="perspective-instruction">Choose which perspective you would like to explore first.</div>
   <div class="sys-cards">
     <div class="sc-slot west-slot">
@@ -630,6 +632,7 @@
       </div>
     </div>
   </div>
+ </div>
 </div>
 <div id="voidCarry">
   <div id="vc-whisper">the sky has always been here</div>
@@ -643,7 +646,101 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.74 · larger type</div>
+<div id="ver">SCENE 1 · v19.75 · larger type</div>
+
+<script>
+/* v19.75: the two-perspectives page owns its own zoom.
+   #systembar is position:fixed, and iOS does not pan fixed layers with the
+   visual viewport, so turning on browser pinch here would push the cards off
+   screen with no way back — the same failure the result page had in v18.49.
+   Instead the page transforms its own content. Pinch to scale 1x-3x, one
+   finger to pan while zoomed, pinch back to 1x for normal scrolling. A zoom
+   holds until the reader ends it; nothing times out. At exactly 1x the
+   transform is cleared so the staged card animations are untouched. */
+(function(){
+  'use strict';
+  var ZMIN = 1, ZMAX = 3;
+  var z = 1, tx = 0, ty = 0, pinch = null, pan = null;
+  function el(){ return document.getElementById('systembar'); }
+  function innerEl(){ return document.getElementById('sysZoomInner'); }
+
+  function apply(){
+    var page = el(), inner = innerEl();
+    if (!page || !inner) return;
+    if (z <= 1.001){
+      z = 1;
+      inner.style.transform = '';
+      page.style.overflowY = 'auto';
+      page.style.touchAction = 'pan-y';
+      if (ty){ page.scrollTop = -ty; tx = 0; ty = 0; }
+    } else {
+      inner.style.transform = 'translate(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px) scale(' + z.toFixed(4) + ')';
+      page.style.overflowY = 'hidden';
+      page.style.touchAction = 'none';
+    }
+  }
+  function clamp(){
+    var page = el(), inner = innerEl();
+    if (!page || !inner) return;
+    var vw = page.clientWidth, vh = page.clientHeight;
+    var cw = inner.offsetWidth * z, ch = inner.offsetHeight * z;
+    tx = (cw <= vw) ? (vw - cw)/2 : Math.min(0, Math.max(vw - cw, tx));
+    ty = (ch <= vh) ? 0 : Math.min(0, Math.max(vh - ch, ty));
+  }
+  function mid(a, b, page){
+    var r = page.getBoundingClientRect();
+    return { x:(a.clientX + b.clientX)/2 - r.left, y:(a.clientY + b.clientY)/2 - r.top };
+  }
+  function dist(a, b){ return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1; }
+
+  function wire(){
+    var page = el();
+    if (!page || page.__zoomWired) return;
+    page.__zoomWired = true;
+
+    page.addEventListener('touchstart', function(e){
+      if (e.touches.length === 2){
+        if (z === 1){ ty = -page.scrollTop; tx = 0; }
+        pinch = { d:dist(e.touches[0], e.touches[1]), z:z, tx:tx, ty:ty, m:mid(e.touches[0], e.touches[1], page) };
+        pan = null;
+        e.preventDefault();
+      } else if (e.touches.length === 1 && z > 1){
+        pan = { x:e.touches[0].clientX, y:e.touches[0].clientY, tx:tx, ty:ty };
+      }
+    }, { passive:false });
+
+    page.addEventListener('touchmove', function(e){
+      if (pinch && e.touches.length === 2){
+        var k = dist(e.touches[0], e.touches[1]) / pinch.d;
+        var nz = Math.max(ZMIN, Math.min(ZMAX, pinch.z * k));
+        var cx = (pinch.m.x - pinch.tx) / pinch.z;
+        var cy = (pinch.m.y - pinch.ty) / pinch.z;
+        var m = mid(e.touches[0], e.touches[1], page);
+        z = nz; tx = m.x - cx*nz; ty = m.y - cy*nz;
+        clamp(); apply();
+        e.preventDefault();
+      } else if (pan && e.touches.length === 1 && z > 1){
+        tx = pan.tx + (e.touches[0].clientX - pan.x);
+        ty = pan.ty + (e.touches[0].clientY - pan.y);
+        clamp(); apply();
+        e.preventDefault();
+      }
+    }, { passive:false });
+
+    function end(e){
+      if (e.touches.length < 2) pinch = null;
+      if (e.touches.length === 0) pan = null;
+      clamp(); apply();
+    }
+    page.addEventListener('touchend', end);
+    page.addEventListener('touchcancel', end);
+    window.addEventListener('resize', function(){ clamp(); apply(); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/globe.gl"></script>
 <script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
