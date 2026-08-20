@@ -1,11 +1,15 @@
 /* ==================================================================
-   EMERGE_SOUND — Final Sound System V4 engine (e26, cue lift 2)
+   EMERGE_SOUND — Final Sound System V4 engine (e27, continuous opening)
    ------------------------------------------------------------------
    Sonic law (locked): low-register, physical, dark, restrained, dry,
    spatial. No pitch sweeps. Movement expressed via gain / density /
    stereo only. Relative WAV levels are preserved — every cue plays
    at gain 1.0; the master limiter exists strictly to guard against
    stacking, never to reshape a single cue.
+   e27: the Earth-arrival cue (07) is retired — the wav is no longer
+   in the master, so it is out of FILES and DUCKS and its call site in
+   Scene 1 is a silent no-op (play() drops any cue with no buffer).
+   No other cue changed; AUDIO_VER stays 18.
    e26: cue lift 2 — construction (14) and sweep (15) raised again to
    +3 dB over the originals (double the e25 step) under 14_d / 15c.
    e25: cue lift — seven one-shot/bed cues raised +1.5 dB (~15%) per
@@ -53,7 +57,6 @@
     fold:         '03d_vacuum_fold.wav',
     tap:          '23b_tap_boom.wav',    /* single boom — the tap is one soft pulse */
     growth:       '06_earth_growth_no_rising_tone.wav',
-    arrival:      '07_earth_arrival.wav',
     orbit:        '08_earth_rotation_silent_orbit_FINAL.wav',
     harmony:      '11_birth_data_complete_fixed_harmony.wav',
     calc:         '12b_calculation.wav',
@@ -67,10 +70,10 @@
   };
   var IS_LOOP = { ambient:1, voidatm:1, orbit:1, calc:1, hum:1, choice:1 };
   /* one-shots that briefly duck the void bed so they read clearly */
-  var DUCKS   = { harmony:1, arrival:1, impact:1, fold:1, ascension:1 };
+  var DUCKS   = { harmony:1, impact:1, fold:1, ascension:1 };
 
   var AUDIO_VER = '18';
-  var ENGINE_VER = '26';   /* bump on ANY wav content change — defeats stale wav caching */
+  var ENGINE_VER = '27';   /* bump on ANY wav content change — defeats stale wav caching */
   var ctx = null, master = null, limiter = null;
   var buffers = {}, loading = {}, loops = {}, wantLoop = {};
   var fired = {};                   /* timeline cues fired once per page */

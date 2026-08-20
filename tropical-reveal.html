@@ -550,7 +550,7 @@
    so sound is alive from this file's very first frame (same-origin) */
 try { if (window.parent !== window && window.parent.EMERGE_SOUND) window.EMERGE_SOUND = window.parent.EMERGE_SOUND; } catch(_){}
 </script>
-<script src="emerge-sound.js?v=26"></script>
+<script src="emerge-sound.js?v=27"></script>
 </head>
 <body>
 <div id="stage"></div>
@@ -720,7 +720,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.47 animation result · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.48 continuous opening · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
