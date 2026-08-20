@@ -848,7 +848,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.54 unlock box · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.55 nakshatra law · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2612,12 +2612,184 @@ function buildSiderealRisingInfluenceSection(P){
   };
   return SIX_RISING[P.risingSign] + ' ' + SIX_RULER_GIFT[P.rulerName] + ' ' + SIX_RULER_TONE[P.ruler.sign];
 }
+
+/* ================== v19.55: NAKSHATRA PERSONALIZATION LAW ==================
+   CRITICAL COZALYZE INTERPRETATION REQUIREMENT — NAKSHATRA PERSONALIZATION
+   (supplied Aug 20 2026, verbatim; this is backsource only, never visible)
+
+   Update the CozAlyze interpretation system so the Moon’s Nakshatra and Pada are
+   treated as essential personalization inputs in every Sidereal/Vedic chart reading.
+   1. Always calculate and identify the user’s Moon Nakshatra and exact Pada from the birth data.
+   2. Use the Moon’s sign and house to establish the broader emotional context.
+   3. Use the Moon’s Nakshatra to deepen the interpretation by addressing underlying
+      emotional motivations, instincts, recurring patterns, needs, sensitivities, and
+      developmental themes.
+   4. Use the Pada to refine how those Nakshatra qualities may specifically express.
+   5. Consider the Nakshatra ruler and its sign, house, condition, rulerships, and
+      relevant relationships within the chart.
+   6. Connect the Moon Nakshatra to Vimshottari Mahadasha timing wherever applicable.
+   7. Synthesize this information with the complete chart. Do not paste a generic
+      Nakshatra description into the reading as an isolated paragraph.
+   8. If another chart factor modifies or contradicts the Nakshatra interpretation,
+      acknowledge the interaction rather than presenting both statements without
+      reconciliation.
+   9. Use the approved CozAlyze interpretive database as the primary reference source
+      for Nakshatra and Pada meanings.
+   10. Never invent missing Nakshatra information. If the required source material or
+      calculation is unavailable, flag the missing input instead of generating an
+      unsupported interpretation.
+   The Moon’s Nakshatra and Pada must meaningfully influence the personalized analysis.
+   They cannot be treated as optional details, decorative labels, or brief add-ons.
+   All interpretations must remain conditional and non-deterministic. Use language such
+   as “may,” “can,” “could,” “suggests,” “there is potential,” and “one possible
+   expression.” Never describe a Nakshatra as determining someone’s personality, fate,
+   relationships, health, career, or future events.
+   Preserve the existing calculations, visual design, page structure, and unrelated
+   functionality. Apply this requirement throughout every relevant Sidereal
+   interpretation and generated reading.
+
+   HOW IT IS WIRED HERE
+   - sixMoonNakshatra() computes nakshatra, pada, navamsa sign of the pada, the
+     Vimshottari lord, the lord's own placement and condition, and the Vimshottari
+     Mahadasha running at birth and today. Everything lands in the trace.
+   - YOUR INNER WORLD = Moon sign (SIX_MOON) + nakshatra core (SIX_NAK) + pada
+     expression (SIX_PADA, from the pada's navamsa element) + Moon house
+     (SIX_MOON_CONTEXT). The nakshatra sentence sits BETWEEN sign and house so it
+     reads as one thought, never a bolted-on paragraph.
+   - Lord condition adds one reconciling clause (SIX_NAK_LORD) when the lord is
+     clearly supported, clearly strained, or both at once (rule 8).
+   - Mahadasha adds one clause only when the lord of the Moon's nakshatra is the
+     current Mahadasha lord, which is where timing is directly applicable (rule 6).
+   - Space: SIX_INNER_BUDGET words. Sign, nakshatra, pada and house are mandatory;
+     the lord and dasha clauses yield first. Over-budget is logged, never shrunk.
+   - Missing input (non-finite Moon longitude) is flagged in the trace and the
+     section falls back to sign + house. Nothing is invented (rule 10).
+   - SIX_NAK / SIX_PADA are the in-app nakshatra bank until the approved CozAlyze
+     interpretive database is supplied; swap the 27 + 4 strings, nothing else moves.
+   ========================================================================== */
+var SIX_NAK_NAMES = ['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','P.Phalguni','U.Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','P.Ashadha','U.Ashadha','Shravana','Dhanishta','Shatabhisha','P.Bhadrapada','U.Bhadrapada','Revati'];
+var SIX_VIM_LORDS = ['Ketu','Venus','Sun','Moon','Mars','Rahu','Jupiter','Saturn','Mercury'];
+var SIX_VIM_YEARS = { Ketu:7, Venus:20, Sun:6, Moon:10, Mars:7, Rahu:18, Jupiter:16, Saturn:19, Mercury:17 };
+var SIX_OWN = { Sun:[4], Moon:[3], Mars:[0,7], Mercury:[2,5], Jupiter:[8,11], Venus:[1,6], Saturn:[9,10] };
+var SIX_INNER_BUDGET = 125;
+
+/* the nakshatra core: underlying motivation, need, recurring pattern, sensitivity */
+var SIX_NAK = [
+'Underneath, you may be moved by a need to begin, to heal, and to get there first, and waiting can feel like a small loss.',
+'Underneath, you may carry things through their whole cycle, bearing what others set down, and letting go can be the harder art.',
+'Underneath, there may be a sharp need for truth and a clean cut, and you can be harder on yourself than on anyone.',
+'Underneath, you may need to grow something that lasts and to be wanted, and comfort can become a place you overstay.',
+'Underneath, you may be quietly searching for something just out of reach, and satisfaction can feel briefer than the seeking.',
+'Underneath, your deepest renewals may follow storms, and you can feel things more fiercely than your composure lets on.',
+'Underneath, you may keep returning to begin again after every scattering, and hope can be both your gift and your blind spot.',
+'Underneath, you may need to nourish and to be of use, and you can steady others while quietly going unfed yourself.',
+'Underneath, you may read motives with rare accuracy, and trust can be something you extend slowly and withdraw fast.',
+'Underneath, you may need to matter and to honor where you come from, and being treated as ordinary can wound deeply.',
+'Underneath, you may need pleasure, play, and affection as much as purpose, and a life that is only work can feel wrong.',
+'Underneath, you may need loyalty you can count on, and once you commit, leaving can feel almost impossible.',
+'Underneath, you may need to shape things with your own hands and get them right, and idle hours can unsettle you.',
+'Underneath, you may see the finished form before anyone else, and ordinary results can leave you quietly unsatisfied.',
+'Underneath, you may need room to move and choose freely, and being pinned down can feel more threatening than being alone.',
+'Underneath, you may lock onto a goal and not let go, and the moment after arriving can feel strangely empty.',
+'Underneath, you may keep faith across distance and difficulty, and devotion can be how you say what you cannot say.',
+'Underneath, you may protect others readily while hiding your own vulnerability behind competence, and asking for help can feel costly.',
+'Underneath, you may be compelled to dig to the root of things, and what you uproot can sometimes include your own footing.',
+'Underneath, you may believe completely once you believe at all, and conviction can carry you past warnings you later recall.',
+'Underneath, you may need to win on your own terms without becoming someone else, and patience can be your quiet strength.',
+'Underneath, you may listen and remember more than you reveal, and carrying other people\u2019s stories can become its own weight.',
+'Underneath, you may come alive with rhythm, company, and momentum, and stillness can feel like being forgotten.',
+'Underneath, you may help deeply while keeping a circle few are allowed inside, and solitude can be both medicine and hiding place.',
+'Underneath, ordinary comfort may never have been quite enough, and you can be drawn to intensity that asks a price.',
+'Underneath, people may bring you their storms without seeing yours, and steadiness can become a mask you forget to take off.',
+'Underneath, your compassion may have no natural border, which is beautiful and can leave you depleted unless it is protected.'
+];
+/* the pada, read through its navamsa element: how the core tends to express */
+var SIX_PADA = [
+'It may show most through action and first moves.',
+'It may show most through steadiness, in what you build and keep.',
+'It may show most through thought, ideas, and the people you choose.',
+'It may show most through feeling, memory, and the bonds you hold closest.'
+];
+/* the nakshatra lord's condition, reconciled with the sign paragraph (rule 8) */
+var SIX_NAK_LORD = {
+  strong:   'There may be real support behind this, so it can show with more confidence than hesitation.',
+  strained: 'Even so, this side of you may have matured through difficulty, and can show more quietly or unevenly than it feels inside.',
+  mixed:    'There may be real strength here that had to prove itself through difficulty, and it can show unevenly before it shows reliably.'
+};
+var SIX_NAK_DASHA = 'This period of your life may be bringing these themes closer to the surface.';
+
+function sixMoonNakshatra(){
+  var moon = findGraha('Moon');
+  var out = { ok:false, missing:[] };
+  if (!moon || !isFinite(moon.sid)) { out.missing.push('Moon sidereal longitude'); return out; }
+  var span = 360/27;
+  out.ok = true;
+  out.index = Math.floor(moon.sid / span) % 27;
+  out.name  = SIX_NAK_NAMES[out.index];
+  out.pada  = Math.floor(moon.sid / (360/108)) % 4 + 1;
+  out.navamsaSign = (out.index * 4 + out.pada - 1) % 12;      /* pada -> navamsa sign, Aries cycle */
+  out.element = out.navamsaSign % 4;                            /* 0 fire 1 earth 2 air 3 water */
+  out.lordName = SIX_VIM_LORDS[out.index % 9];
+  var lord = findGraha(out.lordName);
+  out.lord = { sign: lord.sign, house: lord.house };
+  var isNode = out.lordName === 'Rahu' || out.lordName === 'Ketu';
+  var exalted = !isNode && EXALT[out.lordName] === lord.sign;
+  var debil   = !isNode && (EXALT[out.lordName] + 6) % 12 === lord.sign;
+  var own     = !isNode && SIX_OWN[out.lordName].indexOf(lord.sign) >= 0;
+  var kendraTrikona = [1,4,5,7,9,10].indexOf(lord.house) >= 0;
+  var dusthana = [6,8,12].indexOf(lord.house) >= 0;
+  out.lord.dignity = exalted ? 'exalted' : own ? 'own sign' : debil ? 'debilitated' : 'neutral';
+  var plus  = exalted || own || (kendraTrikona && !debil);
+  var minus = debil || dusthana;
+  out.lord.condition = plus && minus ? 'mixed' : plus ? 'strong' : minus ? 'strained' : 'neutral';
+  out.lord.withMoon = lord.house === moon.house;
+  out.lord.rules = [];
+  for (var h = 1; h <= 12; h++) if (RULERS[(ascSign + h - 1) % 12] === out.lordName) out.lord.rules.push(h);
+
+  /* Vimshottari: balance of the birth dasha from the Moon's progress through the nakshatra */
+  var frac = (moon.sid % span) / span;
+  var li = out.index % 9;
+  var startMs = BIRTH.utc.getTime();
+  var Y = 365.25 * 86400000;
+  var t = startMs, now = Date.now(), seq = [];
+  var len = (1 - frac) * SIX_VIM_YEARS[SIX_VIM_LORDS[li]] * Y;
+  out.birthDasha = { lord: SIX_VIM_LORDS[li], balanceYears: +((1 - frac) * SIX_VIM_YEARS[SIX_VIM_LORDS[li]]).toFixed(2) };
+  for (var k = 0; k < 27 && t <= now; k++){
+    var L = SIX_VIM_LORDS[(li + k) % 9];
+    var end = t + (k === 0 ? len : SIX_VIM_YEARS[L] * Y);
+    seq.push({ lord: L, from: new Date(t).getUTCFullYear(), to: new Date(end).getUTCFullYear() });
+    if (now >= t && now < end) out.currentDasha = { lord: L, from: new Date(t).getUTCFullYear(), to: new Date(end).getUTCFullYear() };
+    t = end;
+  }
+  out.sequence = seq;
+  return out;
+}
+function sixWords(str){ return String(str).trim().split(/\s+/).length; }
 function buildSiderealInnerWorldSection(P){
-  SIDEREAL_SUMMARY_TRACE.innerWorld = {
-    sources: [ 'Moon in ' + SIGNS[P.moon.sign], 'Moon in house ' + P.moon.house + ' (internal)' ],
-    themes: ['emotional nature','security needs','trust and vulnerability','processing style']
-  };
-  return SIX_MOON[P.moon.sign] + ' ' + SIX_MOON_CONTEXT[P.moon.house - 1];
+  var N = P.nak;
+  var src = [ 'Moon in ' + SIGNS[P.moon.sign], 'Moon in house ' + P.moon.house + ' (internal)' ];
+  var themes = ['emotional nature','security needs','trust and vulnerability','processing style'];
+  var sign = SIX_MOON[P.moon.sign], house = SIX_MOON_CONTEXT[P.moon.house - 1];
+  if (!N || !N.ok){
+    SIDEREAL_SUMMARY_TRACE.innerWorld = { sources: src, themes: themes,
+      MISSING: 'Moon nakshatra not computed: ' + ((N && N.missing.join(', ')) || 'no data') + ' — sign + house only, nothing invented' };
+    return sign + ' ' + house;
+  }
+  src.push('Moon nakshatra ' + N.name + ' pada ' + N.pada + ' (navamsa ' + SIGNS[N.navamsaSign] + ', ' + ['fire','earth','air','water'][N.element] + ')');
+  src.push('nakshatra lord ' + N.lordName + ' in ' + SIGNS[N.lord.sign] + ', house ' + N.lord.house + ', ' + N.lord.dignity + ', condition ' + N.lord.condition + (N.lord.withMoon ? ', conjunct Moon house' : '') + (N.lord.rules.length ? ', rules house ' + N.lord.rules.join('/') : ''));
+  if (N.currentDasha) src.push('Vimshottari: birth ' + N.birthDasha.lord + ' (balance ' + N.birthDasha.balanceYears + 'y), current Mahadasha ' + N.currentDasha.lord + ' ' + N.currentDasha.from + '-' + N.currentDasha.to);
+  themes = themes.concat(['underlying motivation (nakshatra)','expression channel (pada)']);
+  var core = SIX_NAK[N.index] + ' ' + SIX_PADA[N.element];
+  var parts = [sign, core];
+  var used = sixWords(sign) + sixWords(core) + sixWords(house);
+  var lordClause = SIX_NAK_LORD[N.lord.condition];
+  if (lordClause && used + sixWords(lordClause) <= SIX_INNER_BUDGET){ parts.push(lordClause); used += sixWords(lordClause); themes.push('lord condition reconciled: ' + N.lord.condition); }
+  else if (lordClause) themes.push('lord condition ' + N.lord.condition + ' held in trace only (budget)');
+  if (N.currentDasha && N.currentDasha.lord === N.lordName && used + sixWords(SIX_NAK_DASHA) <= SIX_INNER_BUDGET){ parts.push(SIX_NAK_DASHA); used += sixWords(SIX_NAK_DASHA); themes.push('Mahadasha of nakshatra lord active'); }
+  parts.push(house);
+  if (used > SIX_INNER_BUDGET) themes.push('OVER BUDGET ' + used + '/' + SIX_INNER_BUDGET + ' words (never shrunk)');
+  SIDEREAL_SUMMARY_TRACE.innerWorld = { sources: src, themes: themes, words: used };
+  return parts.join(' ');
 }
 function buildSiderealFamilyDynamicSection(P){
   var soft = 0, hard = 0, occ = [];
@@ -2641,6 +2813,7 @@ function buildSiderealFamilyDynamicSection(P){
   var sunCond  = SIX_FATHER_HOUSE[P.sun.house]  ? ' ' + SIX_FATHER_HOUSE[P.sun.house]  : '';
   if (moonCond) SIDEREAL_SUMMARY_TRACE.familyDynamic.sources.push('mother condition: Moon in house ' + P.moon.house + ' (dusthana overlay)');
   if (sunCond)  SIDEREAL_SUMMARY_TRACE.familyDynamic.sources.push('father condition: Sun in house ' + P.sun.house + ' (dusthana overlay)');
+  if (P.nak && P.nak.ok) SIDEREAL_SUMMARY_TRACE.familyDynamic.sources.push('mother nakshatra context: Moon in ' + P.nak.name + ', lord ' + P.nak.lordName + ' ' + P.nak.lord.condition + ' (trace only, v19.55)');
   return SIX_MOTHER[P.moon.sign] + overlay + moonCond + ' ' + SIX_FATHER[P.sun.sign] + sunCond + ' ' + SIX_SIBLING[P.thirdSign];
 }
 function buildSiderealDharmaDirectionSection(P){
@@ -2649,6 +2822,7 @@ function buildSiderealDharmaDirectionSection(P){
                'Ketu in ' + SIGNS[P.ketu.sign] + ', house ' + P.ketu.house ],
     themes: ['familiar strength','growth direction','central life tension','contribution']
   };
+  if (P.nak && P.nak.ok && P.nak.currentDasha) SIDEREAL_SUMMARY_TRACE.dharmaDirection.sources.push('timing: current Mahadasha ' + P.nak.currentDasha.lord + ' ' + P.nak.currentDasha.from + '-' + P.nak.currentDasha.to + ' (trace only, v19.55)');
   return SIX_DHARMA[P.rahu.house - 1];
 }
 /* ================== END NEW: SIDEREAL INNER-EXPERIENCE ENGINE ================== */
@@ -2666,6 +2840,7 @@ function buildSiderealProfile(){
   var occ = [];
   for (var i = 0; i < GRAHAS.length; i++) if (GRAHAS[i].house === 4) occ.push(GRAHAS[i].key);
   return {
+    nak: sixMoonNakshatra(),                          /* v19.55: Moon nakshatra, pada, lord, Vimshottari */
     risingSign: ascSign, rulerName: RULERS[ascSign],
     ruler: { sign: ruler.sign, house: ruler.house },
     moon:  { sign: moon.sign,  house: moon.house  },
