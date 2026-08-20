@@ -633,7 +633,7 @@
     font-size:12.5px; line-height:1.6; color:rgba(230,190,110,0.8);
     margin:clamp(20px,5vw,28px) auto 0; max-width:46ch; }
   #unlockCompleteReading { display:block; width:min(94%, 580px);
-    margin:clamp(4px, 1.5vw, 12px) auto 0;
+    margin:clamp(10px, 3vw, 20px) auto 0;
     background:none; border:0; padding:0; cursor:pointer; -webkit-appearance:none; }
   #unlockCompleteReading img { display:block; width:100%; height:auto; }
   #unlockCompleteReading:active { transform:scale(0.99); }
@@ -759,7 +759,7 @@ try { if (window.parent !== window && window.parent.EMERGE_SOUND) window.EMERGE_
       </div>
     </section>
     <button id="unlockCompleteReading" type="button" aria-label="Unlock your complete reading">
-      <img src="sid-unlock.jpg" alt="Unlock your complete reading">
+      <img src="sid-unlock.jpg?v=2" alt="Unlock your complete reading">
     </button>
   </div>
 </main>
@@ -848,7 +848,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.53 rebuilt frame · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.54 unlock box · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
