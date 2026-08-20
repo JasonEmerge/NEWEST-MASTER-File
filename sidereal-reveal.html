@@ -481,7 +481,7 @@
   .sd-frame { position:relative; margin:0 1.5% 3.2%;
     padding:clamp(16px, 4vw, 32px) clamp(12px, 3.5vw, 34px);
     border:18px solid transparent;
-    border-image:url('sid-frame.png') 45 stretch;
+    border-image:url('sid-frame.png?v=3') 48 stretch;   /* v19.53: slice 48 matches the flourish; ?v=3 defeats the cached copy */
     /* v19.51: opaque under the art, and clipped to the padding box so the black
        never tints the ornament. Without this the frame is fully transparent and
        iOS leaves stale text painted behind it as the sticky sky scrolls. */
@@ -848,7 +848,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.52 clean frame · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.53 rebuilt frame · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
