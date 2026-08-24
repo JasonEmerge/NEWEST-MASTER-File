@@ -314,9 +314,17 @@
     border:1px dashed rgba(214,169,134,.55); border-radius:50%;
     width:24px; height:24px; display:flex; align-items:center; justify-content:center; }
   #bdaybar #bd-typed { flex:1; background:none; border:none; outline:none;
-    color:#E8C7A6; font-size:17px; font-weight:600; letter-spacing:.08em;   /* v19.74: was 15px */
-    text-align:center; text-transform:uppercase; }
-  #bdaybar #bd-typed::placeholder { color:#9C7A5F; letter-spacing:.22em; }
+    color:#E8C7A6; font-size:17px; font-weight:600; letter-spacing:.08em;
+    text-align:left; text-transform:uppercase; position:relative; z-index:1; }
+  /* v19.87: the caret always sits at the FIRST slot (month / hour). The mask is a
+     ghost layer behind a left-aligned input: the typed part is measured invisibly
+     so the remaining mask continues exactly where the caret is. */
+  .gm-ghost { position:absolute; left:0; top:50%; transform:translateY(-50%);
+    pointer-events:none; white-space:pre; font-size:17px; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase; z-index:0; }
+  .gm-ghost .gm-typed { visibility:hidden; }
+  .gm-ghost .gm-rest { color:#9C7A5F; }
+  .gm-wrap { position:relative; flex:1; display:flex; align-items:center; }
   #bdaybar.done { opacity:0 !important; transform:translate(-50%,-30px) scale(.92); pointer-events:none !important; }
   #timebar { position:fixed; left:50%; transform:translate(-50%, 24px); width:min(88vw,282px); bottom:25vh; z-index:14;   /* v19.74: widened for the bigger type */
     display:flex; align-items:center; justify-content:flex-start; gap:10px;
@@ -327,6 +335,7 @@
     opacity:0; pointer-events:none;
     transition:opacity .4s ease, transform .4s ease; }
   #timebar.show { opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
+  #timebar #tm-typed { text-align:left !important; }
   #timebar #tm-typed { flex:1; background:none; border:none; outline:none;
     color:#E8C7A6; font-size:17px; font-weight:600; letter-spacing:.08em;   /* v19.74: was 15px */
     text-align:center; text-transform:uppercase; min-width:0; }
@@ -606,14 +615,20 @@
 <div id="bdayPrompt" class="bd-prompt">✦&nbsp;&nbsp;What is your date of birth?</div>
 <div id="bdaybar">
   <span class="bd-star">✦</span>
-  <input type="text" id="bd-typed" inputmode="numeric" autocomplete="off"
-         placeholder="MM – DD – YYYY" aria-label="Birthdate" maxlength="14">
+  <span class="gm-wrap">
+    <span class="gm-ghost" id="bd-ghost"><span class="gm-typed"></span><span class="gm-rest">MM – DD – YYYY</span></span>
+    <input type="text" id="bd-typed" inputmode="numeric" autocomplete="off"
+           placeholder="" aria-label="Birthdate" maxlength="14">
+  </span>
 </div>
 <div id="timePrompt" class="bd-prompt">✦&nbsp;&nbsp;What time were you born?</div>
 <div id="timebar">
   <span class="bd-star">✦</span>
-  <input type="text" id="tm-typed" inputmode="numeric" autocomplete="off"
-         placeholder="HH : MM" aria-label="Birth time" maxlength="7">
+  <span class="gm-wrap">
+    <span class="gm-ghost" id="tm-ghost"><span class="gm-typed"></span><span class="gm-rest">HH : MM</span></span>
+    <input type="text" id="tm-typed" inputmode="numeric" autocomplete="off"
+         placeholder="" aria-label="Birth time" maxlength="7">
+  </span>
   <div id="ampm"><span data-v="AM">AM</span><span data-v="PM">PM</span></div>
 </div>
 <div id="systembar">
@@ -685,7 +700,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.86 · entry caret</div>
+<div id="ver">SCENE 1 · v19.87 · entry caret left</div>
 
 <script>
 /* v19.75: the two-perspectives page owns its own zoom.
@@ -1876,6 +1891,10 @@ window.__setEntryStep = function(step) {
       } catch(_){}
     });
   });
+  const bdGhost = document.getElementById('bd-ghost');
+  function bdGhostSync(){ if (!bdGhost) return;
+    bdGhost.children[0].textContent = inp.value;
+    bdGhost.children[1].textContent = 'MM – DD – YYYY'.slice(inp.value.length); }
   inp.addEventListener('input', () => {
     let dig = inp.value.replace(/\D/g, '').slice(0, 8);      // MMDDYYYY
     try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
@@ -1883,6 +1902,7 @@ window.__setEntryStep = function(step) {
     if (dig.length >= 3) out += ' – ' + dig.slice(2,4);
     if (dig.length >= 5) out += ' – ' + dig.slice(4,8);
     inp.value = out;
+    bdGhostSync();
     if (dig.length === 8) {
       window.__birthDate = dig.slice(4,8) + '-' + dig.slice(0,2) + '-' + dig.slice(2,4);
       console.log('[Birth data] date:', window.__birthDate);
@@ -1921,12 +1941,17 @@ window.__setEntryStep = function(step) {
       finishIfComplete();
     });
   });
+  const tmGhost = document.getElementById('tm-ghost');
+  function tmGhostSync(){ if (!tmGhost) return;
+    tmGhost.children[0].textContent = inp.value;
+    tmGhost.children[1].textContent = 'HH : MM'.slice(inp.value.length); }
   inp.addEventListener('input', () => {
     let dig = inp.value.replace(/\D/g, '').slice(0, 4);   // HHMM
     try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
     let out = dig.slice(0,2);
     if (dig.length >= 3) out += ' : ' + dig.slice(2,4);
     inp.value = out;
+    tmGhostSync();
     finishIfComplete();
     if (dig.length === 4 && !ampm) {
       // v19.53: NO blur — the numeric keyboard stays open and the Time panel
