@@ -519,8 +519,9 @@
      title block centered in the remaining width — then the reading full-width below. */
   .sd-asc { display:flex; flex-direction:column;
     gap:clamp(16px, 4.2vw, 30px); align-items:stretch; }
-  .sd-asc-head { position:relative; display:block; }
-  .sd-asc-left { position:absolute; left:0; top:50%; transform:translateY(-50%); }
+  .sd-asc-head { display:grid; grid-template-columns:auto 1fr;
+    gap:clamp(12px, 3.4vw, 26px); align-items:center; }
+  /* v19.69: the title centers in the space BESIDE the glyph, the mock's geometry */
   .sd-glyph-ring { width:clamp(64px, 17vw, 118px); aspect-ratio:1;
     border:2px solid #C2A481; border-radius:50%;
     display:flex; align-items:center; justify-content:center; margin:0; }
@@ -900,7 +901,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.68 asc refinements · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.69 asc title center · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -1019,7 +1020,7 @@ var NODE_REGRESSION = (function(){
   var ref = F.deva_guru_sidereal_rahu_deg === null ? 'reference_pending'
           : { rahu_diff_deg: rs - F.deva_guru_sidereal_rahu_deg, ketu_diff_deg: ks - F.deva_guru_sidereal_ketu_deg, ayan_diff_deg: ay - F.deva_guru_ayanamsha_deg, recorded_at: F.deva_guru_recorded_at };
   var r = { pass: fails.length === 0, failed_fields: fails, computed: got, deva_guru_comparison: ref,
-            engine_method_version: 'astronomy-engine@2.1.19 | mean node 125.04452-0.05295377*(JD-2451545) | Lahiri cubic-2026.08 22.4881406+1.2025810T+0.2622463T^2-0.1101570T^3 | CozAlyze sidereal v19.68',
+            engine_method_version: 'astronomy-engine@2.1.19 | mean node 125.04452-0.05295377*(JD-2451545) | Lahiri cubic-2026.08 22.4881406+1.2025810T+0.2622463T^2-0.1101570T^3 | CozAlyze sidereal v19.69',
             calculated_at: new Date().toISOString() };
   console.log('[EMERGE FLOW] 6c. MEAN NODE REGRESSION ' + (r.pass ? 'PASS' : 'FAIL ' + fails.join(',')), r);
   return r;

@@ -685,7 +685,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.85 · timezone resolver</div>
+<div id="ver">SCENE 1 · v19.86 · entry caret</div>
 
 <script>
 /* v19.75: the two-perspectives page owns its own zoom.
@@ -1865,6 +1865,17 @@ window.__setEntryStep = function(step) {
   const bar = document.getElementById('bdaybar');
   const inp = document.getElementById('bd-typed');
   bar.addEventListener('click', () => inp.focus());
+  /* v19.86: the cursor always starts at the MONTH — caret to the front when the
+     field is empty, everything selected when a previous date is there, so the
+     first keystroke is always the month, never the middle of the string. */
+  inp.addEventListener('focus', () => {
+    requestAnimationFrame(() => {
+      try {
+        if (inp.value) inp.select();
+        else inp.setSelectionRange(0, 0);
+      } catch(_){}
+    });
+  });
   inp.addEventListener('input', () => {
     let dig = inp.value.replace(/\D/g, '').slice(0, 8);      // MMDDYYYY
     try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
