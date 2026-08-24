@@ -1,0 +1,3051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>EMERGE — Tropical Wheel v3.2</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body {
+    width:100%; height:100%;
+    height:100dvh;
+    overflow:hidden;
+    background:#04060d;
+    position:fixed; inset:0;
+    touch-action:none;
+    overscroll-behavior:none;
+    font-family:Georgia, "Times New Roman", serif;
+  }
+  #stage { position:fixed; inset:0; width:100%; height:100dvh; z-index:0; }
+  canvas { display:block; }
+
+  #whisper {
+    position:fixed;
+    left:50%; top:42%;
+    transform:translate(-50%,-50%);
+    z-index:15;
+    color:rgba(226,196,122,0.85);
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size:clamp(17px, 4.7vw, 20px); font-weight:300;   /* v18.51: was 15px */
+    letter-spacing:0.28em;
+    text-transform:lowercase;
+    text-align:center; width:92vw;
+    opacity:0;
+    transition:opacity 2.2s ease;
+    pointer-events:none;
+  }
+  #whisper.show { opacity:1; }
+
+  /* v-sound-gate: the page arrives dark and still; a tap begins the drawing */
+  #soundGate {
+    position:fixed;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    z-index:16;
+    color:rgba(226,196,122,0.9);
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size:clamp(17px, 4.7vw, 20px); font-weight:300;   /* v18.51: was 15px */
+    letter-spacing:0.28em;
+    text-transform:lowercase;
+    text-align:center; width:92vw;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 1.1s ease;
+  }
+  #soundGate.armed {
+    animation:gateIn 2.4s ease 0.6s forwards, gateBreathe 4.2s ease-in-out 3s infinite;
+  }
+  #soundGate.gone { opacity:0 !important; animation:none; }
+  @keyframes gateIn { to { opacity:1; } }
+  @keyframes gateBreathe { 0%,100% { opacity:1; } 50% { opacity:0.55; } }
+
+  /* locate beat */
+  #locate {
+    position:fixed; inset:0; z-index:12;
+    pointer-events:none;
+  }
+  #locate .h, #locate .v {
+    position:absolute;
+    background:linear-gradient(90deg, transparent, rgba(224,180,100,0.75), transparent);
+    opacity:0;
+  }
+  #locate .h { left:0; width:100%; height:1px; top:50%; }
+  #locate .v { top:0; height:100%; width:1px; left:50%;
+    background:linear-gradient(180deg, transparent, rgba(224,180,100,0.75), transparent); }
+  #locate .ring {
+    position:absolute; left:50%; top:50%;
+    width:180px; height:180px;
+    margin:-90px 0 0 -90px;
+    border:1px solid rgba(224,180,100,0.65);
+    border-radius:50%;
+    opacity:0;
+    transform:scale(2.4);
+  }
+  #coords {
+    position:fixed;
+    left:50%; top:calc(50% + 120px);
+    transform:translateX(-50%);
+    z-index:13;
+    color:rgba(232,214,170,0.9);
+    font-family:-apple-system, "SF Pro Text", sans-serif;
+    font-size:12.5px; font-weight:300;
+    letter-spacing:0.28em;
+    text-align:center;
+    line-height:2.1;
+    opacity:0;
+    transition:opacity 1.4s ease;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  #coords.show { opacity:1; }
+  #coords .place { font-size:11px; color:rgba(217,180,91,0.75); }
+
+  /* chart */
+  #chartWrap {
+    position:fixed; inset:0; z-index:10;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  #chartWrap svg {
+    width:min(96vw, 78dvh);
+    height:min(96vw, 78dvh);
+    overflow:visible;
+  }
+
+  /* QA */
+  #qaToggle {
+    position:fixed;
+    left:10px;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 10px);
+    z-index:40;
+    width:30px; height:30px;
+    border-radius:50%;
+    border:1px solid rgba(217,180,91,0.3);
+    background:transparent;
+    color:rgba(217,180,91,0.45);
+    font-size:13px; line-height:1;
+  }
+  #qaToggle.err { border-color:#e0654f; color:#e0654f; }
+  #qa {
+    display:none;
+    position:fixed;
+    top:calc(env(safe-area-inset-top,0px) + 8px);
+    left:8px; z-index:41;
+    font-family:"SF Mono", Menlo, monospace;
+    font-size:10px; line-height:1.5;
+    color:#d9b45b;
+    background:rgba(0,0,8,0.85);
+    border:1px solid rgba(217,180,91,0.35);
+    border-radius:8px;
+    padding:8px 10px;
+    max-width:86vw; white-space:pre;
+    pointer-events:none;
+  }
+  #qa.open { display:block; }
+  #qa .pass { color:#7fd98b; }
+  #qa .fail { color:#e0654f; font-weight:bold; }
+
+  #fatal {
+    display:none;
+    position:fixed; top:40%; left:50%;
+    transform:translate(-50%,-50%);
+    z-index:60;
+    background:rgba(40,4,4,0.95);
+    border:1px solid #e0654f;
+    color:#ffd9d2;
+    font-family:-apple-system, sans-serif;
+    font-size:14px; line-height:1.5;
+    padding:16px 20px; border-radius:10px;
+    max-width:84vw; text-align:center;
+  }
+  #stamp { position:fixed; right:10px;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 12px); z-index:40;
+    font-family:-apple-system, sans-serif; font-size:10px; letter-spacing:0.14em;
+    color:rgba(217,180,91,0.5); pointer-events:none; }
+  /* ============================================================
+     NEW: 3D CHART SUMMARY REVEAL — styles
+     ============================================================ */
+
+  /* chart tilts back into space (transform on the existing svg only) */
+  #chartWrap svg {
+    transform: perspective(1400px) rotateX(0deg) translateY(0) translateZ(0) scale(1);
+    transition: transform 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  body.tilt3d #chartWrap svg {
+    transform: perspective(1400px) rotateX(52deg) translateY(-16vh) translateZ(-180px) scale(0.78);
+  }
+  @media (max-width:700px){
+    body.tilt3d #chartWrap svg {
+      transform: perspective(1200px) rotateX(44deg) translateY(-23vh) translateZ(-140px) scale(0.68);
+    }
+  }
+  body.pulse #chartWrap svg { filter:brightness(1.28); }
+  #chartWrap svg { transition: transform 1.5s cubic-bezier(0.22,1,0.36,1), filter 0.8s ease; }
+
+  /* the room darkens */
+  #dim {
+    position:fixed; inset:0; z-index:6; pointer-events:none; opacity:0;
+    background:radial-gradient(circle at 50% 28%, rgba(2,4,9,0.15), rgba(1,2,6,0.55) 80%);
+    transition:opacity 1.5s ease;
+  }
+  body.tilt3d #dim { opacity:1; }
+
+  /* prompt: "Your chart is revealed." + REVEAL MY CHART */
+  #revealPrompt {
+    position:fixed; left:0; right:0; z-index:22;
+    bottom:calc(env(safe-area-inset-bottom,0px) + 6px);   /* v18.12: prompt dropped lower for clearance from the wheel */
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    opacity:0; pointer-events:none;
+    transition:opacity 1.1s ease;
+  }
+  #revealPrompt.show { opacity:1; pointer-events:auto; }
+  #revealPrompt.hide { opacity:0; pointer-events:none; transition:opacity 0.35s ease; }
+  #revealPrompt .line {
+    color:rgba(232,214,170,0.92);
+    font-family:Georgia, serif; font-size:17px;
+    letter-spacing:0.13em; text-align:center;
+  }
+  #revealBtn {
+    position:relative; overflow:hidden; cursor:pointer;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size:14.5px; font-weight:400;
+    letter-spacing:0.34em; text-indent:0.34em;
+    color:#e6c887;
+    background:rgba(8,10,16,0.55);
+    border:1px solid rgba(214,181,104,0.75);
+    border-radius:10px;
+    padding:15px 30px 14px;
+    box-shadow:0 0 22px rgba(201,168,76,0.14), inset 0 0 14px rgba(201,168,76,0.06);
+    transition:transform 0.25s ease, box-shadow 0.45s ease;
+    -webkit-user-select:none; user-select:none;
+  }
+  #revealBtn:active { transform:scale(1.01); box-shadow:0 0 30px rgba(201,168,76,0.22), inset 0 0 14px rgba(201,168,76,0.08); }
+  #revealBtn:focus-visible { outline:2px solid rgba(230,200,135,0.85); outline-offset:3px; }
+  #revealBtn .sweep {
+    position:absolute; top:-0.5px; left:-40%; width:38%; height:1.5px;
+    background:linear-gradient(90deg, transparent, rgba(255,232,177,0.95), transparent);
+    opacity:0; pointer-events:none;
+  }
+  #revealBtn:hover .sweep, #revealBtn.touched .sweep { opacity:1; animation:borderSweep 1.5s ease-in-out; }
+  @keyframes borderSweep { from { left:-40%; } to { left:105%; } }
+
+  /* shaft of light from the Ascendant down to the field */
+  #beam {
+    position:fixed; z-index:9; left:50%; top:12%; height:52%;
+    width:3px; transform:translateX(-50%);
+    pointer-events:none; opacity:0;
+    background:linear-gradient(180deg,
+      rgba(255,236,190,0), rgba(255,231,178,0.85) 20%,
+      rgba(224,180,100,0.5) 72%, rgba(224,180,100,0));
+    filter:drop-shadow(0 0 6px rgba(255,225,160,0.8));
+    transition:opacity 1.3s ease;
+  }
+  #beam::before {
+    content:''; position:absolute; inset:0 -14px;
+    background:linear-gradient(180deg,
+      rgba(255,231,178,0), rgba(255,231,178,0.15) 30%,
+      rgba(224,180,100,0.09) 72%, transparent);
+    filter:blur(6px);
+  }
+  body.beamOn #beam { opacity:1; }
+  body.rest #beam { opacity:0.26; }
+
+  /* circular energy field beneath the chart */
+  #field {
+    position:fixed; z-index:7; left:50%; top:61%;
+    width:min(86vw, 440px); aspect-ratio:1;
+    transform:translate(-50%,-50%) perspective(900px) rotateX(72deg);
+    pointer-events:none; opacity:0;
+    transition:opacity 1.4s ease;
+  }
+  body.fieldOn #field { opacity:1; }
+  body.rest #field { opacity:0.45; }
+  #field .ring { position:absolute; border-radius:50%; border:1px solid rgba(224,180,100,0.5); }
+  #field .r1 { inset:0;   animation:spinCW 26s linear infinite; box-shadow:0 0 18px rgba(201,168,76,0.18); }
+  #field .r2 { inset:11%; border-color:rgba(224,180,100,0.34); animation:spinCCW 38s linear infinite; }
+  #field .r3 { inset:24%; border-color:rgba(255,231,178,0.28); animation:spinCW 18s linear infinite; }
+  #field .r1::before, #field .r3::before {
+    content:''; position:absolute; left:50%; top:-2.5px;
+    width:4px; height:4px; margin-left:-2px; border-radius:50%;
+    background:#ffe9b0; box-shadow:0 0 8px rgba(255,231,178,0.9);
+  }
+  #field .glow {
+    position:absolute; inset:6%; border-radius:50%;
+    background:radial-gradient(circle, rgba(224,180,100,0.20), rgba(224,180,100,0.05) 46%, transparent 70%);
+  }
+  #field .sliver {
+    position:absolute; left:50%; top:50%;
+    width:min(56vw, 300px); height:2px;
+    transform:translate(-50%,-50%) scaleX(0); opacity:0;
+    background:linear-gradient(90deg, transparent, rgba(255,236,195,0.95), transparent);
+    filter:blur(0.4px) drop-shadow(0 0 8px rgba(255,225,160,0.9));
+  }
+  body.sliver #field .sliver { animation:sliverFlash 1.1s ease-out forwards; }
+  @keyframes sliverFlash {
+    0%   { transform:translate(-50%,-50%) scaleX(0); opacity:0; }
+    35%  { transform:translate(-50%,-50%) scaleX(1); opacity:1; }
+    100% { transform:translate(-50%,-50%) scaleX(1); opacity:0; }
+  }
+  @keyframes spinCW  { to { transform:rotate(360deg); } }
+  @keyframes spinCCW { to { transform:rotate(-360deg); } }
+
+  /* gold particle canvas */
+  #fx { position:fixed; inset:0; z-index:8; pointer-events:none; display:none; }
+  body.fieldOn #fx { display:block; }
+
+  /* the summary card */
+  #summaryStage {
+    position:fixed; inset:0; z-index:20;
+    display:flex;
+    padding:calc(env(safe-area-inset-top,0px) + 15vh) 5vw calc(env(safe-area-inset-bottom,0px) + 4vh);
+    pointer-events:none;
+  }
+  #cardEmerge {
+    opacity:0;
+    transform:perspective(1200px) translateY(140px) translateZ(-260px) rotateX(72deg) scale(0.28);
+    transition:transform 1.6s cubic-bezier(0.34, 1.22, 0.42, 1), opacity 1.1s ease;
+    pointer-events:none;
+  }
+  body.cardUp #cardEmerge {
+    opacity:1;
+    transform:perspective(1200px) translateY(0) translateZ(0) rotateX(0deg) scale(1);
+    pointer-events:auto;
+  }
+  #cardFloat.settled { animation:cardFloat 6.5s ease-in-out infinite; }
+  @keyframes cardFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+
+  .chart-summary-card {
+    position:relative;
+    width:min(620px, 72vw);
+    border-radius:27px;
+    padding:38px 42px 34px;
+    text-align:center;
+    border:1px solid rgba(214,181,104,0.72);
+    background:
+      radial-gradient(circle at 50% 0%, rgba(201,168,76,0.09), transparent 36%),
+      linear-gradient(145deg, rgba(14,17,23,0.97), rgba(4,7,12,0.985));
+    box-shadow:
+      0 35px 90px rgba(0,0,0,0.72),
+      0 0 36px rgba(201,168,76,0.13),
+      inset 0 1px 0 rgba(255,232,177,0.16),
+      inset 0 -22px 45px rgba(0,0,0,0.34);
+    transform-style:preserve-3d;
+  }
+  .chart-summary-card::before {   /* faint topographic surface */
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    background:
+      repeating-radial-gradient(circle at 30% 18%, rgba(230,200,135,0.55) 0 1px, transparent 1px 27px),
+      repeating-radial-gradient(circle at 80% 88%, rgba(230,200,135,0.45) 0 1px, transparent 1px 35px);
+    opacity:0.04; pointer-events:none;
+    animation:topoDrift 80s linear infinite alternate;
+  }
+  @keyframes topoDrift {
+    from { background-position:0 0, 0 0; }
+    to   { background-position:28px 16px, -22px -12px; }
+  }
+  .chart-summary-card::after {    /* reflected gold light beneath */
+    content:''; position:absolute; left:8%; right:8%; bottom:-26px; height:26px;
+    background:radial-gradient(ellipse at center, rgba(224,180,100,0.22), transparent 70%);
+    filter:blur(8px); pointer-events:none;
+  }
+
+  .summary-star {
+    width:18px; height:18px; margin:0 auto 16px;
+    clip-path:polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+    background:#f2d9a0;
+    filter:drop-shadow(0 0 9px rgba(255,231,178,0.95));
+  }
+  .chart-summary-card h2 {
+    font-family:Georgia, serif; font-weight:400;
+    font-size:24px; letter-spacing:0.06em;
+    color:#e8ce96;
+  }
+  .summary-divider {
+    height:1px; width:0; margin:16px auto 20px;
+    background:linear-gradient(90deg, transparent, rgba(224,180,100,0.85), transparent);
+    transition:width 0.9s cubic-bezier(0.22,1,0.36,1);
+  }
+  .summary-divider.in { width:132px; }
+  .summary-copy p {
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size:16.5px; font-weight:300; line-height:1.66;
+    color:rgba(236,228,210,0.92);
+    margin-bottom:16px;
+  }
+  .summary-copy p:last-child { margin-bottom:6px; }
+  .complete-reading-cta {
+    display:inline-block; margin-top:14px; cursor:pointer;
+    background:none; border:none;
+    border-bottom:1px solid rgba(214,181,104,0.45);
+    padding:4px 2px 7px;
+    color:#e0bd7d;
+    font-family:-apple-system, "SF Pro Text", sans-serif;
+    font-size:16px; font-weight:300; letter-spacing:0.06em;
+    transition:color 0.4s ease, border-color 0.4s ease;
+  }
+  .complete-reading-cta:hover, .complete-reading-cta:active { color:#f4dda4; border-color:rgba(244,221,164,0.8); }
+  .complete-reading-cta:focus-visible { outline:2px solid rgba(230,200,135,0.85); outline-offset:4px; }
+  .complete-reading-cta span { display:inline-block; margin-left:6px; transition:transform 0.4s ease; }
+  .complete-reading-cta:hover span { transform:translateX(4px); }
+
+  /* staged text entrance */
+  .chart-summary-card .t { opacity:0; transform:translateY(13px); transition:opacity 0.85s ease, transform 0.85s ease; }
+  .chart-summary-card .t.in { opacity:1; transform:translateY(0); }
+  .chart-summary-card .summary-divider.t { transform:none; }
+
+  @media (max-width:700px){
+    .chart-summary-card { width:88vw; padding:30px 26px 28px; border-radius:24px; }
+    .chart-summary-card h2 { font-size:21px; }
+    .summary-copy p { font-size:16px; line-height:1.62; }
+    #summaryStage { padding-top:calc(env(safe-area-inset-top,0px) + 20vh); }
+    #field { top:63%; }
+    #beam { top:9%; height:56%; }
+  }
+
+  /* reduced motion: no journey, gentle fade to the final composition */
+  @media (prefers-reduced-motion: reduce){
+    #chartWrap svg, #cardEmerge, #dim, #beam, #field { transition:none !important; }
+    #cardEmerge { transition:opacity 0.3s ease !important; transform:none !important; }
+    #field .ring, #field .r1::before, #field .r3::before,
+    #cardFloat.settled, .chart-summary-card::before { animation:none !important; }
+    .chart-summary-card .t { transition:opacity 0.3s ease !important; transform:none !important; }
+  }
+  /* v4.5: four-paragraph reading */
+  .summary-copy { text-align:left; }
+  .summary-copy p { font-size:16px; line-height:1.62; margin-bottom:14px; }
+  .chart-summary-card { text-align:center; }
+  body.cardUp #summaryStage {
+    pointer-events:auto; overflow-y:auto;
+    touch-action:pan-y; -webkit-overflow-scrolling:touch;
+  }
+  #summaryStage { display:flex; }
+  #summaryStage[hidden] { display:none !important; }   /* ghost card fix: hidden must beat display:flex */
+  #cardEmerge { margin:auto; }   /* centered when it fits, scrollable when it does not */
+  @media (max-width:700px){
+    #summaryStage { padding-top:calc(env(safe-area-inset-top,0px) + 26vh); }
+    .summary-copy p { font-size:16px; }
+  }
+
+
+  /* ============================================================
+     NEW: COMBINED CHART RESULT PAGE — styles
+     ============================================================ */
+  body.result-leaving #chartWrap,
+  body.result-leaving #revealPrompt {
+    opacity:0 !important;
+    transform:translateY(-18px);
+    transition:opacity 650ms ease, transform 650ms cubic-bezier(.22,1,.36,1);
+    pointer-events:none;
+  }
+  /* v18.47: ANIMATION RESULT PAGE — day-to-night hero + framed cards,
+     the Tropical-Chart-Animation design carried into the live result page.
+     Same open/close transitions; only the page's own look changes. */
+  #chartResultPage {
+    position:fixed; inset:0; z-index:30;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    touch-action:pan-y; overscroll-behavior:contain;
+    background:rgb(6,15,30);
+    padding:0 0 calc(44px + env(safe-area-inset-bottom,0px));
+    opacity:0; transform:translateY(24px);
+    transition:opacity 900ms ease, transform 900ms cubic-bezier(.22,1,.36,1);
+  }
+  #chartResultPage.is-visible { opacity:1; transform:translateY(0); }
+  #chartResultPage[hidden] { display:none; }
+  .tr-page { width:100%; max-width:800px; margin:0 auto; position:relative; }
+  /* v18.49: the sky locks to the top and the page scrolls up behind it */
+  #trHero { display:block; width:100%; aspect-ratio:4802 / 2043; object-fit:cover;
+    background:rgb(6,15,30);
+    position:sticky; top:0; z-index:4; }
+  .tr-details, .tr-frame { position:relative; z-index:1; }
+
+  .tr-details { display:flex; align-items:center; justify-content:space-between;
+    padding:22px 2.5% 18px; }
+  .tr-dcell { flex:1 1 0; min-width:0; text-align:center;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    color:#EBE5D0; font-size:clamp(8.5px, 2.4vw, 15px); letter-spacing:0.1em;
+    line-height:1.45; padding:0 5px; }
+  .tr-dcell + .tr-dcell { border-left:1px solid rgba(194,164,129,0.6); }
+
+  .tr-frame { position:relative; margin:0 1.5% 3.2%;
+    padding:clamp(16px, 4vw, 32px) clamp(12px, 3.5vw, 34px);
+    border:24px solid transparent;
+    border-image:url('asc-frame.jpg') 60 fill stretch; }
+  /* v18.50: the side padding was eating room the table needs — the border art
+     already gives the visual inset, so the phone breakpoint keeps its vertical
+     padding and hands the horizontal space back to the columns */
+  @media (max-width:700px){ .tr-frame { border-width:18px; margin:0 1% 3.2%;
+    padding:clamp(14px, 3.6vw, 26px) clamp(3px, 1vw, 10px); } }
+
+  /* planet table: five to a side, gold arrow between */
+  .tr-table { display:grid; grid-template-columns:1fr auto 1fr;
+    gap:clamp(3px, 1.2vw, 16px); align-items:center; }
+  /* v18.50: the column is the grid and each row is display:contents, so all
+     five rows share ONE set of tracks sized to the longest name and the longest
+     sign — nothing can run into its neighbour. justify-content:space-between
+     then spreads whatever is left over across the full width instead of
+     bunching everything against the left edge. Font size is untouched. */
+  .tr-tcol { display:grid;
+    grid-template-columns:1.35em max-content max-content max-content;
+    justify-content:space-between;
+    column-gap:0.6em; row-gap:clamp(11px, 2.9vw, 20px);
+    align-items:baseline; min-width:0;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size:clamp(6.5px, calc(2.25vw - 2px), 12.5px);   /* v18.49: two points down */
+    letter-spacing:0.08em; color:#EBE5D0;
+    white-space:nowrap; }
+  .tr-prow { display:contents; }
+  .tr-pgly { color:#C2A481; font-family:Georgia, serif; font-size:1.4em;
+    line-height:0.9; align-self:center; }
+  .tr-phouse { color:rgba(235,229,208,0.85); letter-spacing:0.05em; }
+  .tr-arrow { display:flex; align-items:center; justify-content:center; height:100%; }
+  .tr-arrow svg { height:clamp(96px, 26vw, 190px); width:auto; display:block;
+    max-width:20px; }   /* v18.50: the arrow keeps its height, gives back its width */
+
+  /* ascendant frame: glyph ring + name | divider | reading */
+  .tr-asc { display:grid; grid-template-columns:auto 1px 1fr;
+    gap:clamp(12px, 3.2vw, 30px); align-items:center; }
+  .tr-asc-left { padding:2px 0; }
+  .tr-glyph-ring { width:clamp(78px, 21vw, 148px); aspect-ratio:1;
+    border:2px solid #C2A481; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; margin:0 auto 10px; }
+  .tr-glyph-ring img { width:60%; height:60%; object-fit:contain; }
+  .tr-asc-label { font-family:'Cormorant Garamond', Georgia, serif;
+    color:#C9A166; font-size:clamp(12px, 3.2vw, 21px); letter-spacing:0.2em;
+    text-align:center; white-space:nowrap; }
+  .tr-asc-name { font-family:'Cormorant Garamond', Georgia, serif; font-weight:600;
+    font-size:clamp(25px, 7vw, 50px); letter-spacing:0.1em; text-align:center;
+    line-height:1.15;
+    background:linear-gradient(180deg, #CCA466, #6D4706);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .tr-asc-div { align-self:stretch;
+    background:linear-gradient(180deg, transparent, rgba(194,164,129,0.85) 18%,
+      rgba(194,164,129,0.85) 82%, transparent); }
+  .tr-body { font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    color:#EDEAE0; font-size:clamp(12.5px, 3.4vw, 19px); line-height:1.52;
+    letter-spacing:0.03em; margin:0; }
+
+  /* reading frame: icon + heading + paragraph rows */
+  .tr-read { display:flex; flex-direction:column; gap:clamp(18px, 4.8vw, 32px); }
+  .tr-row { display:grid; grid-template-columns:clamp(42px, 10.5vw, 70px) 1fr;
+    gap:clamp(12px, 3vw, 24px); align-items:start; }
+  .tr-icon { width:100%; height:auto; object-fit:contain; margin-top:5px; }
+  .tr-row h3 { font-family:'Cormorant Garamond', Georgia, serif; font-weight:600;
+    color:#C9A166; font-size:clamp(15px, 4.1vw, 24px); letter-spacing:0.06em;
+    margin:0 0 6px; }
+  .tr-row h3 .tr-hs { font-size:0.76em; letter-spacing:0.04em; }
+
+  /* unlock: the baked art, tappable */
+  #unlockCompleteReading { display:block; width:min(94%, 580px);
+    margin:clamp(4px, 1.5vw, 12px) auto 0;
+    background:none; border:0; padding:0; cursor:pointer; -webkit-appearance:none; }
+  #unlockCompleteReading img { display:block; width:100%; height:auto; }
+  #unlockCompleteReading:active { transform:scale(0.99); }
+  #unlockCompleteReading:focus-visible { outline:2px solid rgba(230,200,135,0.85); outline-offset:4px; }
+
+  /* ===== v18.31: UNLOCK -> DASHBOARD FINALE ===== */
+  #unlockDash { position:fixed; inset:0; z-index:80; background:#04060b;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    opacity:0; visibility:hidden; transition:opacity 1.4s ease, visibility 0s linear 1.4s; }
+  #unlockDash.is-visible { opacity:1; visibility:visible; transition:opacity 1.4s ease; }
+  #unlockDash img { display:block; width:100%; height:auto; opacity:0; transform:translateY(26px);
+    transition:opacity 1.6s ease, transform 2.1s cubic-bezier(0.22,0.61,0.36,1); }
+  #unlockDash.is-visible img { opacity:1; transform:translateY(0); }
+  body.unlock-leaving #resultPage, body.unlock-leaving #summaryStage {
+    opacity:0 !important; transform:scale(0.985);
+    transition:opacity 1.1s ease, transform 1.1s ease; }
+  @media (prefers-reduced-motion: reduce){
+    #chartResultPage, body.result-leaving #chartWrap, body.result-leaving #revealPrompt {
+      transition:opacity 0.3s ease !important; transform:none !important; }
+  }
+
+
+
+</style>
+<script>/* living page: when displayed inside the index, adopt its already-running engine
+   so sound is alive from this file's very first frame (same-origin) */
+try { if (window.parent !== window && window.parent.EMERGE_SOUND) window.EMERGE_SOUND = window.parent.EMERGE_SOUND; } catch(_){}
+</script>
+<script src="emerge-sound.js?v=27"></script>
+</head>
+<body>
+<div id="stage"></div>
+<div id="soundGate">tap to reveal</div>
+<div id="whisper">the sky has always been here</div>
+<div id="locate"><div class="h"></div><div class="v"></div><div class="ring"></div></div>
+<div id="coords">40.7128&#176; N &nbsp;&#183;&nbsp; 74.0060&#176; W<br><span class="place">NEW YORK &#183; NEW YORK</span></div>
+<div id="chartWrap"></div>
+<button id="qaToggle">&#10022;</button>
+<div id="qa"></div>
+<div id="fatal"></div>
+<div id="stamp"></div>
+<!-- NEW: 3D CHART SUMMARY REVEAL -->
+<div id="dim"></div>
+<div id="beam" aria-hidden="true"></div>
+<div id="field" aria-hidden="true">
+  <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+  <div class="glow"></div><div class="sliver"></div>
+</div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="revealPrompt">
+  <button id="revealBtn" type="button">REVEAL MY CHART<span class="sweep" aria-hidden="true"></span></button>
+</div>
+<div id="summaryStage">
+  <div id="cardEmerge"><div id="cardFloat">
+    <article class="chart-summary-card">
+      <div class="summary-star t" aria-hidden="true"></div>
+      <h2 class="t">Your Chart Summary</h2>
+      <div class="summary-divider t" aria-hidden="true"></div>
+      <div class="summary-copy">
+        <p id="summary-paragraph-one" class="t"></p>
+        <p id="summary-paragraph-two" class="t"></p>
+        <p id="summary-paragraph-three" class="t"></p>
+        <p id="summary-paragraph-four" class="t"></p>
+      </div>
+      <button class="complete-reading-cta t" type="button">Unlock your complete reading <span aria-hidden="true">&#8594;</span></button>
+    </article>
+  </div></div>
+</div>
+<!-- END NEW: 3D CHART SUMMARY REVEAL -->
+
+<!-- NEW: COMBINED CHART RESULT PAGE -->
+<main id="chartResultPage" hidden aria-hidden="true">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+  <div class="tr-page">
+    <video id="trHero" src="day-to-night.mp4" muted playsinline preload="none"></video>
+    <div id="trDetails" class="tr-details"></div>
+    <section class="tr-frame tr-table">
+      <div id="trPlanetsL" class="tr-tcol"></div>
+      <div class="tr-arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 160" fill="none" stroke="#C2A481" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8 V152"/><path d="M4 18 L12 6 L20 18"/><path d="M4 142 L12 154 L20 142"/></svg>
+      </div>
+      <div id="trPlanetsR" class="tr-tcol"></div>
+    </section>
+    <section class="tr-frame tr-asc">
+      <div class="tr-asc-left">
+        <div class="tr-glyph-ring"><img id="trAscGlyph" src="" alt=""></div>
+        <div class="tr-asc-label">YOUR ASCENDANT</div>
+        <div id="trAscName" class="tr-asc-name"></div>
+        <span id="rpOuterRisingIc" hidden></span>
+      </div>
+      <div class="tr-asc-div" aria-hidden="true"></div>
+      <p id="rp-outer-rising" class="tr-body"></p>
+    </section>
+    <section class="tr-frame tr-read">
+      <div class="tr-row">
+        <img class="tr-icon" src="icon-sun.jpg" alt="">
+        <div><h3 id="trSunHead"></h3><p id="rp-outer-sun" class="tr-body"></p></div>
+      </div>
+      <div class="tr-row">
+        <img class="tr-icon" src="icon-moon.jpg" alt="">
+        <div><h3 id="trMoonHead"></h3><p id="rp-outer-moon" class="tr-body"></p></div>
+      </div>
+      <div class="tr-row">
+        <img class="tr-icon" src="icon-career.jpg" alt="">
+        <div><h3>YOUR CAREER PATH</h3><p id="rp-outer-career" class="tr-body"></p></div>
+      </div>
+    </section>
+    <button id="unlockCompleteReading" type="button" aria-label="Unlock your complete reading">
+      <img src="unlock.jpg" alt="Unlock your complete reading">
+    </button>
+  </div>
+</main>
+<!-- END NEW: COMBINED CHART RESULT PAGE -->
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/astronomy.browser.min.js"></script>
+<script>
+"use strict";
+/* ============================================================
+   EMERGE — Tropical Wheel v3
+   Sky scan -> birth coordinates -> the Western wheel template
+   revealed from darkness -> zodiac ring -> house numbers ->
+   calculation -> twelve bodies onto the wheel.
+   The wheel is permanent: house 1 opens at 9 o'clock, houses
+   run counterclockwise and never move. The zodiac ring rotates
+   to the rising sign (whole-sign houses: 1H = the entire
+   Ascendant sign). Planets populate their calculated houses.
+   The wheel is the destination. The journey is art;
+   the arrival is fact.
+   ============================================================ */
+(function(){
+
+var fatal = document.getElementById('fatal');
+function die(m){ fatal.textContent = m; fatal.style.display = 'block'; }
+if (typeof THREE === 'undefined'){ die('three.js failed to load. Check network / CDN.'); return; }
+if (typeof Astronomy === 'undefined'){ die('astronomy-engine failed to load. Check network / CDN.'); return; }
+
+/* the locate beat names the user's actual birthplace (QA text kept as fallback) */
+(function(){
+  var S = null;
+  try { S = JSON.parse(localStorage.getItem('emergeBirthData') || 'null'); } catch(e){}
+  if (!S || !S.location || !isFinite(Number(S.location.latitude))) return;
+  var lat = Number(S.location.latitude), lon = Number(S.location.longitude);
+  var la = Math.abs(lat).toFixed(4) + '\u00B0 ' + (lat >= 0 ? 'N' : 'S');
+  var lo = Math.abs(lon).toFixed(4) + '\u00B0 ' + (lon >= 0 ? 'E' : 'W');
+  var place = [S.location.name, S.location.country].filter(Boolean).join(' \u00B7 ').toUpperCase();
+  document.getElementById('coords').innerHTML =
+    la + ' \u00A0\u00B7\u00A0 ' + lo + (place ? '<br><span class="place">' + place + '</span>' : '');
+})();
+
+/* ---------------- birth data (QA profile) ---------------- */
+/* the one data spine: saved by index.html when Scene 1 completes */
+var SAVED = null;
+try { SAVED = JSON.parse(localStorage.getItem('emergeBirthData') || 'null'); } catch(e){}
+
+/* NEW: hard system guard. This page renders the TROPICAL system only.
+   If the saved birth record was written by the Sidereal door, stop with a
+   visible error instead of rendering a mislabeled chart. No silent fallback. */
+var PAGE_SYSTEM = 'tropical';
+if (SAVED && SAVED.system && SAVED.system !== PAGE_SYSTEM){
+  console.log('[EMERGE FLOW] guard: SYSTEM MISMATCH — page renders', PAGE_SYSTEM,
+              'but saved record says', SAVED.system, '— halting, no chart rendered');
+  fatal.innerHTML = 'System mismatch.<br><br>This page renders the <b>Western Tropical</b> chart, '
+    + 'but the saved birth record was created for the <b>Vedic Sidereal</b> path.<br><br>'
+    + '<a href="index.html" style="color:#E6C887">Return to the beginning and choose again</a>';
+  fatal.style.display = 'block';
+  return;
+}
+
+/* NEW: launch guard. Flip to true before launch so a visitor with no
+   stored birth data is sent to the entry flow instead of seeing the
+   QA fallback chart. Leave false while testing standalone uploads. */
+var REQUIRE_BIRTH_DATA = false;
+var GUARD_REDIRECT = 'index.html';
+if (REQUIRE_BIRTH_DATA && !(SAVED && SAVED.utc && SAVED.location)){
+  console.log('[EMERGE FLOW] guard: no birth data in storage, redirecting to entry flow');
+  location.replace(GUARD_REDIRECT);
+  return;
+}
+var __lat = SAVED && SAVED.location ? Number(SAVED.location.latitude)  : NaN;
+var __lon = SAVED && SAVED.location ? Number(SAVED.location.longitude) : NaN;
+var __utc = SAVED && SAVED.utc ? new Date(SAVED.utc) : null;
+var __ok  = !!(__utc && isFinite(__utc.getTime()) && isFinite(__lat) && isFinite(__lon));
+var BIRTH = __ok ? {
+  utc: __utc,
+  localLabel: (SAVED.birthDate || '') + ', ' + (SAVED.birthTime || ''),
+  lat: __lat, lon: __lon, elev: 0
+} : {
+  utc: new Date('1990-01-01T17:00:00Z'),          // v18.53: synthetic, non-personal regression profile
+  localLabel: 'Jan 1 1990, 12:00 PM EST, New York (synthetic fixture)',
+  lat: 40.7128, lon: -74.0060, elev: 0
+};
+console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
+            SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
+console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
+document.getElementById('stamp').textContent =
+  'TROPICAL v18.57 no crosshair · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+
+var DEG = Math.PI/180, RAD = 180/Math.PI;
+
+/* TEMP DIAG: live audio state in the stamp — remove once phone audio verified */
+setInterval(function(){
+  try {
+    var st = document.getElementById('stamp');
+    var base = st.textContent.split(' \u00b7 snd')[0];
+    var info = (window.EMERGE_SOUND && EMERGE_SOUND.status) ? EMERGE_SOUND.status() : 'snd OLD-ENGINE';
+    st.textContent = base + ' \u00b7 ' + info;
+  } catch(_){}
+}, 600);
+function norm360(d){ d %= 360; return d < 0 ? d + 360 : d; }
+function norm24(h){ h %= 24; return h < 0 ? h + 24 : h; }
+function clamp01(v){ return v < 0 ? 0 : (v > 1 ? 1 : v); }
+function sstep(t){ t = clamp01(t); return t*t*(3 - 2*t); }
+function easeOut(t){ return 1 - Math.pow(1 - clamp01(t), 3); }
+
+var SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+function fmtLon(lon){
+  lon = norm360(lon);
+  var s = Math.floor(lon/30), d = lon - s*30;
+  var dd = Math.floor(d), mm = Math.round((d - dd)*60);
+  if (mm === 60){ dd++; mm = 0; }
+  return dd + '\u00B0' + (mm<10?'0':'') + mm + '\u2032 ' + SIGNS[s];
+}
+
+/* ---------------- astronomy core (tropical) ---------------- */
+var observer = new Astronomy.Observer(BIRTH.lat, BIRTH.lon, BIRTH.elev);
+var time = Astronomy.MakeTime(BIRTH.utc);
+var JD = BIRTH.utc.getTime()/86400000 + 2440587.5;
+var T20 = (JD - 2451545.0)/36525.0;
+var EPS = 23.4392911 - 0.0130042*T20;
+var GAST = Astronomy.SiderealTime(time);
+var LST = norm24(GAST + BIRTH.lon/15);
+var RAMC = LST*15;
+
+function eclToHor(lonDeg){
+  var L = lonDeg*DEG, e = EPS*DEG;
+  var ra = norm24(Math.atan2(Math.sin(L)*Math.cos(e), Math.cos(L))*RAD/15);
+  var dec = Math.asin(Math.sin(L)*Math.sin(e))*RAD;
+  var h = Astronomy.Horizon(time, observer, ra, dec, 'normal');
+  return { alt: h.altitude, az: h.azimuth };
+}
+var ascNote = '';
+var ASC = (function(){
+  var r = RAMC*DEG, e = EPS*DEG, phi = BIRTH.lat*DEG;
+  var lon = norm360(Math.atan2(-Math.cos(r), Math.sin(r)*Math.cos(e) + Math.tan(phi)*Math.sin(e))*RAD);
+  var h = eclToHor(lon);
+  if (h.az > 180){ lon = norm360(lon + 180); ascNote = 'quadrant corrected +180\u00B0'; }
+  return lon;
+})();
+var ascHor = eclToHor(ASC);
+var ascOK = Math.abs(ascHor.alt) <= 1.5;
+
+/* ===== Placidus houses + four angles (CozAlyze TROPICAL working copy) =====
+   Inputs already present in the file: RAMC (deg), EPS (deg), BIRTH.lat, ASC (deg).
+   Exposes: HOUSE_CUSPS[1..12] (deg), MC, IC, DSC, HOUSE_SYSTEM_USED, HOUSE_FALLBACK_REASON, houseOf(lon) */
+function cozPlacidus(RAMC, EPS, lat, ASC, norm360, DEG, RAD){
+  var r = RAMC*DEG, e = EPS*DEG, phi = lat*DEG;
+  var MC = norm360(Math.atan2(Math.sin(r), Math.cos(r)*Math.cos(e))*RAD);
+  if (norm360(ASC - MC) > 180) MC = norm360(MC + 180);   /* MC must sit within the half-circle preceding the ASC */
+  var IC = norm360(MC + 180), DSC = norm360(ASC + 180);
+  var out = { MC:MC, IC:IC, DSC:DSC, system:'placidus', reason:'', cusps:[] };
+
+  function raToLon(ra){ return norm360(Math.atan2(Math.sin(ra), Math.cos(ra)*Math.cos(e))*RAD); }
+  /* f = fraction of the semi-arc; fromIC = nocturnal cusps 2 and 3 measured back from the IC */
+  function cuspRA(f, fromIC){
+    var ra = fromIC ? r + Math.PI - (Math.PI/2)*f*2/2 : r + (Math.PI/2)*f;   /* seed with the equator solution */
+    for (var k = 0; k < 60; k++){
+      var dec = Math.atan(Math.tan(e)*Math.sin(ra));
+      var x = -Math.tan(dec)*Math.tan(phi);
+      if (x > 1 || x < -1 || isNaN(x)) return NaN;
+      var sa = Math.acos(x);                         /* diurnal semi-arc */
+      var next = fromIC ? r + Math.PI - (Math.PI - sa)*f : r + sa*f;
+      var d = Math.abs(next - ra);
+      ra = next;
+      if (d < 1e-9) break;
+    }
+    return ra;
+  }
+  var ra11 = cuspRA(1/3, false), ra12 = cuspRA(2/3, false);
+  var ra2  = cuspRA(2/3, true),  ra3  = cuspRA(1/3, true);
+  if ([ra11, ra12, ra2, ra3].some(function(v){ return isNaN(v); })){
+    out.system = 'whole_sign'; out.reason = 'Placidus undefined at latitude ' + lat.toFixed(4) + ' (semi-arc has no solution)';
+    return out;
+  }
+  var C = [];
+  C[1] = ASC; C[10] = MC; C[4] = IC; C[7] = DSC;
+  C[11] = raToLon(ra11); C[12] = raToLon(ra12); C[2] = raToLon(ra2); C[3] = raToLon(ra3);
+  C[5] = norm360(C[11] + 180); C[6] = norm360(C[12] + 180); C[8] = norm360(C[2] + 180); C[9] = norm360(C[3] + 180);
+  /* order guard: every cusp must advance from the previous one by less than 180 */
+  for (var i = 1; i <= 12; i++){
+    var a = C[i], b = C[i % 12 + 1];
+    var gap = norm360(b - a);
+    if (!(gap > 0 && gap < 180)){ out.system = 'whole_sign'; out.reason = 'Placidus cusp order invalid at latitude ' + lat.toFixed(4) + ' (cusp ' + i + ' to ' + (i%12+1) + ' gap ' + gap.toFixed(2) + ')'; return out; }
+  }
+  out.cusps = C;
+  return out;
+}
+var __H = cozPlacidus(RAMC, EPS, BIRTH.lat, ASC, norm360, DEG, RAD);
+var MC = __H.MC, IC = __H.IC, DSC = __H.DSC;
+var HOUSE_SYSTEM_USED = __H.system;            /* 'placidus' | 'whole_sign' */
+var HOUSE_FALLBACK_REASON = __H.reason;        /* '' when Placidus succeeded */
+var HOUSE_CUSPS = __H.cusps;                   /* [1..12] longitudes, empty on fallback */
+function houseOf(lon){
+  if (HOUSE_SYSTEM_USED !== 'placidus') return ((Math.floor(lon/30) - Math.floor(ASC/30) + 12) % 12) + 1;
+  for (var i = 1; i <= 12; i++){
+    var a = HOUSE_CUSPS[i], b = HOUSE_CUSPS[i % 12 + 1];
+    if (norm360(lon - a) < norm360(b - a)) return i;
+  }
+  return 12;
+}
+console.log('[EMERGE FLOW] 6b. houses:', HOUSE_SYSTEM_USED, HOUSE_FALLBACK_REASON || '', '| MC', MC.toFixed(4));
+/* ===== v18.53 CALCULATION REPRODUCIBILITY TRACE (tropical) ===== */
+try {
+  window.COZ_CALCULATION_TRACE = {
+    birth_utc: BIRTH.utc.toISOString(), birth_lat: BIRTH.lat, birth_lon: BIRTH.lon,
+    generated_at_timestamp: new Date().toISOString(),
+    engine_version: 'astronomy-engine@2.1.19',
+    methodology_version: 'cozalyze-method-2026.08.24 (tropical, Placidus primary, whole-sign fallback, mean node)',
+    zodiac: 'tropical', node_mode: 'mean',
+    house_system_requested: 'placidus', house_system_used: HOUSE_SYSTEM_USED,
+    fallback_reason: HOUSE_FALLBACK_REASON || null,
+    ascendant_deg: ASC, mc_deg: MC, ic_deg: IC, dsc_deg: DSC,
+    house_cusps_deg: HOUSE_SYSTEM_USED === 'placidus' ? HOUSE_CUSPS.slice(1) : null,
+    timezone_resolution: (SAVED && SAVED.timezoneResolution) ? SAVED.timezoneResolution : null
+  };
+  console.log('[EMERGE TRACE tropical-calc]', JSON.stringify(window.COZ_CALCULATION_TRACE));
+} catch(_){}
+
+function tropLonOf(body){
+  var v = Astronomy.GeoVector(body, time, true);
+  var e = Astronomy.Ecliptic(v);
+  return norm360(e.elon);
+}
+var nodeTrop = norm360(125.04452 - 0.05295377*(JD - 2451545.0));
+
+var BODIES = [
+  { key:'Sun',     ab:'Su' }, { key:'Moon',    ab:'Mo' },
+  { key:'Mercury', ab:'Me' }, { key:'Venus',   ab:'Ve' },
+  { key:'Mars',    ab:'Ma' }, { key:'Jupiter', ab:'Ju' },
+  { key:'Saturn',  ab:'Sa' }, { key:'Uranus',  ab:'Ur' },
+  { key:'Neptune', ab:'Ne' }, { key:'Pluto',   ab:'Pl' },
+  { key:'NNode',   ab:'NN', label:'N Node' },
+  { key:'SNode',   ab:'SN', label:'S Node' }
+];
+/* house assignment: Placidus cusps (whole sign on fallback); wsHouse keeps the whole-sign index for the wheel sectors */
+var ascSign = Math.floor(ASC/30);
+var SIGN0 = ascSign*30;   // the wheel's zero: the first degree of the rising sign
+for (var gi = 0; gi < BODIES.length; gi++){
+  var g = BODIES[gi];
+  g.trop = g.key === 'NNode' ? nodeTrop
+         : g.key === 'SNode' ? norm360(nodeTrop + 180)
+         : tropLonOf(g.key);
+  g.wsHouse = ((Math.floor(g.trop/30) - ascSign + 12) % 12) + 1;   // whole-sign sector (wheel geometry)
+  g.house = houseOf(g.trop);                                         // interpretive house (Placidus, or whole sign on fallback)
+  g.label = g.label || g.key;
+}
+/* the Rising: the wheel's anchor — first to arrive, before any planet */
+BODIES.unshift({ key:'Rising', ab:'AC', label: SIGNS[ascSign] + ' Rising',
+                 trop: ASC, house: 1, wsHouse: 1 });
+
+/* ---------------- QA ---------------- */
+(function(){
+  var L = [];
+  L.push('EMERGE Tropical Wheel v3.2 \u2014 QA' + (__ok ? '  [user birth data]' : '  [QA fallback]'));
+  L.push('UT   ' + BIRTH.utc.toISOString().replace('T',' ').slice(0,16) + '  (' + BIRTH.localLabel + ')');
+  L.push('ZODIAC tropical (no ayanamsa)   LST ' + LST.toFixed(4) + 'h');
+  L.push('ASC  ' + fmtLon(ASC) + '  \u2192 1H = ' + SIGNS[ascSign] + (ascNote ? '  [' + ascNote + ']' : ''));
+  L.push('HOUSES ' + (HOUSE_SYSTEM_USED === 'placidus' ? 'Placidus' : 'WHOLE SIGN FALLBACK \u2014 ' + HOUSE_FALLBACK_REASON));
+  L.push('MC   ' + fmtLon(MC) + '   IC  ' + fmtLon(IC));
+  L.push('DSC  ' + fmtLon(DSC));
+  if (HOUSE_SYSTEM_USED === 'placidus'){
+    for (var ci = 1; ci <= 12; ci++) L.push('C' + (ci < 10 ? ' ' : '') + ci + '  ' + fmtLon(HOUSE_CUSPS[ci]));
+  }
+  for (var i = 0; i < BODIES.length; i++){
+    var g = BODIES[i];
+    L.push((g.label + '        ').slice(0,8) + fmtLon(g.trop) + '  H' + g.house + (g.house !== g.wsHouse ? '  [ws H' + g.wsHouse + ']' : '') + (g.key === 'NNode' ? '  (mean node)' : ''));
+  }
+  var qa = document.getElementById('qa');
+  qa.innerHTML = L.join('\n') + '\n<span class="' + (ascOK ? 'pass' : 'fail') + '">Asc-on-horizon check: ' + (ascOK ? 'PASS' : 'FAIL') + '</span>';
+  var tog = document.getElementById('qaToggle');
+  if (!ascOK) tog.classList.add('err');
+  tog.addEventListener('click', function(){ qa.classList.toggle('open'); });
+})();
+
+/* ============================================================
+   BACKGROUND — Interstellar-tone deep space (three.js)
+   Deep blue-black, countless small stars, restrained
+   milky-way dust. No color carnival. Drifts forever.
+   ============================================================ */
+var stage = document.getElementById('stage');
+var renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setClearColor(0x04060d, 1);
+stage.appendChild(renderer.domElement);
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(58, 1, 0.1, 900);
+camera.rotation.order = 'YXZ';
+scene.add(camera);
+function resize(){
+  var w = stage.clientWidth || window.innerWidth;
+  var h = stage.clientHeight || window.innerHeight;
+  renderer.setSize(w, h, false);
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', function(){ setTimeout(resize, 250); });
+resize();
+
+var BAND_N = new THREE.Vector3(0.42, 1, 0.12).normalize();
+function randSphere(r){
+  var u = Math.random()*2 - 1, az = Math.random()*Math.PI*2, ca = Math.sqrt(1 - u*u);
+  return new THREE.Vector3(r*ca*Math.cos(az), r*u, r*ca*Math.sin(az));
+}
+function starLayer(n, size, color, opacity, bandOnly){
+  var pts = [];
+  var tries = 0;
+  while (pts.length/3 < n && tries < n*40){
+    tries++;
+    var p = randSphere(300);
+    var d = Math.abs(p.clone().normalize().dot(BAND_N));
+    if (bandOnly && d > 0.16) continue;
+    if (!bandOnly && Math.random() < 0.25 && d < 0.2) continue;
+    pts.push(p.x, p.y, p.z);
+  }
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pts), 3));
+  var mat = new THREE.PointsMaterial({ color:color, size:size, sizeAttenuation:false, transparent:true, opacity:opacity });
+  scene.add(new THREE.Points(geo, mat));
+}
+starLayer(1500, 1.4, 0xdde4f2, 0.85, false);
+starLayer(700,  1.0, 0x9fb0cc, 0.6,  false);
+starLayer(1600, 1.1, 0xc8d4ea, 0.5,  true);
+starLayer(60,   2.2, 0xf2f5ff, 0.9,  false);
+
+(function dust(){
+  function soft(rgb, size, op){
+    var c = document.createElement('canvas'); c.width = c.height = 128;
+    var g = c.getContext('2d');
+    var grd = g.createRadialGradient(64,64,0,64,64,64);
+    grd.addColorStop(0, 'rgba(' + rgb + ',' + op + ')');
+    grd.addColorStop(1, 'rgba(' + rgb + ',0)');
+    g.fillStyle = grd; g.fillRect(0,0,128,128);
+    var m = new THREE.SpriteMaterial({ map:new THREE.CanvasTexture(c), transparent:true, depthWrite:false });
+    var s = new THREE.Sprite(m);
+    s.scale.set(size, size*0.55, 1);
+    return s;
+  }
+  var t1 = new THREE.Vector3(1,0,0).cross(BAND_N).normalize();
+  var t2 = BAND_N.clone().cross(t1).normalize();
+  for (var i = 0; i < 9; i++){
+    var a = Math.random()*Math.PI*2;
+    var p = t1.clone().multiplyScalar(Math.cos(a)).add(t2.clone().multiplyScalar(Math.sin(a))).multiplyScalar(280);
+    p.add(BAND_N.clone().multiplyScalar((Math.random()-0.5)*40));
+    var warm = Math.random() < 0.3;
+    var s = soft(warm ? '150,135,115' : '120,135,165', 190 + Math.random()*180, 0.10 + Math.random()*0.07);
+    s.position.copy(p);
+    scene.add(s);
+  }
+  for (var k = 0; k < 3; k++){
+    var a2 = Math.random()*Math.PI*2;
+    var p2 = t1.clone().multiplyScalar(Math.cos(a2)).add(t2.clone().multiplyScalar(Math.sin(a2))).multiplyScalar(275);
+    var d = soft('5,7,14', 220, 0.5);
+    d.position.copy(p2);
+    scene.add(d);
+  }
+})();
+
+/* ============================================================
+   PLANET DISC RENDERER — dimensional bodies for the wheel
+   (procedural; canvas-shaded spheres, embedded as data URLs)
+   ============================================================ */
+function texCanvas(w, h, draw){
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  return c;
+}
+function speckle(g, w, h, n, colors, rMin, rMax, alpha){
+  for (var i = 0; i < n; i++){
+    g.fillStyle = colors[(Math.random()*colors.length)|0];
+    g.globalAlpha = alpha*(0.4 + Math.random()*0.6);
+    var r = rMin + Math.random()*(rMax - rMin);
+    g.beginPath(); g.arc(Math.random()*w, Math.random()*h, r, 0, Math.PI*2); g.fill();
+  }
+  g.globalAlpha = 1;
+}
+function banded(palette, wobble){
+  return texCanvas(512, 256, function(g,w,h){
+    var y = 0, i = 0;
+    while (y < h){
+      var bh = 8 + Math.random()*26;
+      g.fillStyle = palette[i % palette.length];
+      g.fillRect(0, y, w, bh + 2);
+      y += bh; i++;
+    }
+    if (wobble){
+      g.globalAlpha = 0.22;
+      for (var k = 0; k < 40; k++){
+        g.strokeStyle = palette[(Math.random()*palette.length)|0];
+        g.lineWidth = 2 + Math.random()*5;
+        g.beginPath();
+        var yy = Math.random()*h; g.moveTo(0, yy);
+        for (var x = 0; x <= w; x += 32) g.lineTo(x, yy + Math.sin(x*0.02 + k)*6);
+        g.stroke();
+      }
+      g.globalAlpha = 1;
+    }
+    speckle(g, w, h, 260, palette, 1, 3, 0.25);
+  });
+}
+var SURF = {
+  Sun: texCanvas(512, 256, function(g,w,h){
+    var grd = g.createLinearGradient(0,0,0,h);
+    grd.addColorStop(0,'#ffd985'); grd.addColorStop(0.5,'#ffab36'); grd.addColorStop(1,'#f78f22');
+    g.fillStyle = grd; g.fillRect(0,0,w,h);
+    speckle(g, w, h, 520, ['#ffe6a8','#ff8c1e','#ffc45e'], 2, 9, 0.35);
+  }),
+  Moon: texCanvas(512, 256, function(g,w,h){
+    g.fillStyle = '#b6b3ad'; g.fillRect(0,0,w,h);
+    speckle(g, w, h, 700, ['#8f8c86','#cfccc6','#a3a09a'], 1, 4, 0.5);
+    for (var i = 0; i < 90; i++){
+      var x = Math.random()*w, y = Math.random()*h, r = 3 + Math.random()*14;
+      g.fillStyle = 'rgba(118,115,110,0.55)';
+      g.beginPath(); g.arc(x,y,r,0,Math.PI*2); g.fill();
+      g.strokeStyle = 'rgba(216,213,206,0.5)'; g.lineWidth = 1.5;
+      g.beginPath(); g.arc(x,y,r,Math.PI*1.1,Math.PI*1.9); g.stroke();
+    }
+  }),
+  Mercury: texCanvas(512, 256, function(g,w,h){
+    g.fillStyle = '#8d8177'; g.fillRect(0,0,w,h);
+    speckle(g, w, h, 900, ['#6f655c','#a79a8e','#7c7168'], 1, 6, 0.5);
+  }),
+  Venus: texCanvas(512, 256, function(g,w,h){
+    g.fillStyle = '#d9b478'; g.fillRect(0,0,w,h);
+    g.globalAlpha = 0.3;
+    for (var i = 0; i < 26; i++){
+      g.strokeStyle = ['#eccf9a','#c49a5c','#e3c088'][(Math.random()*3)|0];
+      g.lineWidth = 6 + Math.random()*16;
+      g.beginPath();
+      var yy = Math.random()*h; g.moveTo(0, yy);
+      for (var x = 0; x <= w; x += 40) g.lineTo(x, yy + Math.sin(x*0.015 + i)*14);
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+  }),
+  Mars: texCanvas(512, 256, function(g,w,h){
+    g.fillStyle = '#b5502f'; g.fillRect(0,0,w,h);
+    speckle(g, w, h, 500, ['#8e3a20','#cf6a41','#a04328'], 2, 10, 0.4);
+    g.fillStyle = 'rgba(240,235,225,0.7)';
+    g.beginPath(); g.ellipse(w*0.5, 8, 70, 12, 0, 0, Math.PI*2); g.fill();
+  }),
+  Jupiter: banded(['#c9a06a','#e8d3ae','#a5713f','#dbb886','#8f5f36','#e2c79a'], true),
+  Saturn:  banded(['#d8c294','#e9dbb8','#c2a877','#e0cda2'], false),
+  Uranus: texCanvas(512, 256, function(g,w,h){
+    var grd = g.createLinearGradient(0,0,0,h);
+    grd.addColorStop(0,'#b8e2e8'); grd.addColorStop(0.35,'#8fd0d9');
+    grd.addColorStop(0.7,'#7cc4cf'); grd.addColorStop(1,'#a5dade');
+    g.fillStyle = grd; g.fillRect(0,0,w,h);
+    g.globalAlpha = 0.12;
+    for (var i = 0; i < 10; i++){
+      g.fillStyle = i % 2 ? '#c8ecef' : '#6fb8c4';
+      var yy = Math.random()*h;
+      g.fillRect(0, yy, w, 10 + Math.random()*22);
+    }
+    g.globalAlpha = 1;
+  }),
+  Neptune: texCanvas(512, 256, function(g,w,h){
+    var grd = g.createLinearGradient(0,0,0,h);
+    grd.addColorStop(0,'#3a63d9'); grd.addColorStop(0.5,'#2a4cc0'); grd.addColorStop(1,'#3358cc');
+    g.fillStyle = grd; g.fillRect(0,0,w,h);
+    g.globalAlpha = 0.25;
+    for (var i = 0; i < 14; i++){
+      g.strokeStyle = ['#5b82ea','#1f3ba5','#4a70df'][(Math.random()*3)|0];
+      g.lineWidth = 4 + Math.random()*12;
+      g.beginPath();
+      var yy = Math.random()*h; g.moveTo(0, yy);
+      for (var x = 0; x <= w; x += 40) g.lineTo(x, yy + Math.sin(x*0.02 + i)*8);
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+    g.fillStyle = 'rgba(14,26,80,0.65)';
+    g.beginPath(); g.ellipse(w*0.6, h*0.42, 44, 22, -0.2, 0, Math.PI*2); g.fill();
+    g.fillStyle = 'rgba(220,232,255,0.35)';
+    g.beginPath(); g.ellipse(w*0.32, h*0.66, 30, 7, 0.1, 0, Math.PI*2); g.fill();
+  }),
+  Pluto: texCanvas(512, 256, function(g,w,h){
+    g.fillStyle = '#c9a582'; g.fillRect(0,0,w,h);
+    speckle(g, w, h, 600, ['#8a6b50','#e0c4a0','#a58060','#77543c'], 2, 9, 0.4);
+    g.fillStyle = 'rgba(238,222,198,0.75)';
+    g.beginPath(); g.ellipse(w*0.55, h*0.62, 74, 46, 0.3, 0, Math.PI*2); g.fill();
+    g.fillStyle = 'rgba(90,62,44,0.5)';
+    g.beginPath(); g.ellipse(w*0.2, h*0.3, 52, 30, -0.2, 0, Math.PI*2); g.fill();
+  })
+};
+/* shaded sphere impostor */
+function discURL(name, px){
+  var pad = name === 'Sun' ? 0.9 : 0.25;
+  var W = Math.round(px*(1 + pad*2)), H = W;
+  var c = texCanvas(W, H, function(g){
+    var cx = W/2, cy = H/2, r = px/2;
+    if (name === 'Sun'){
+      var halo = g.createRadialGradient(cx,cy,r*0.5, cx,cy,r*2.6);
+      halo.addColorStop(0,'rgba(255,190,90,0.55)');
+      halo.addColorStop(0.4,'rgba(255,160,60,0.18)');
+      halo.addColorStop(1,'rgba(255,150,50,0)');
+      g.fillStyle = halo; g.fillRect(0,0,W,H);
+    }
+    g.save();
+    g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.clip();
+    g.drawImage(SURF[name], cx-r, cy-r, r*2, r*2);
+    var sh = g.createRadialGradient(cx - r*0.45, cy - r*0.45, r*0.1, cx, cy, r*1.15);
+    sh.addColorStop(0, 'rgba(255,255,245,0.16)');
+    sh.addColorStop(0.55, 'rgba(0,0,0,0)');
+    sh.addColorStop(1, 'rgba(2,3,10,0.88)');
+    g.fillStyle = sh; g.fillRect(0,0,W,H);
+    g.restore();
+    g.strokeStyle = 'rgba(224,180,100,0.22)';
+    g.lineWidth = 1;
+    g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.stroke();
+  });
+  return c.toDataURL('image/png');
+}
+function saturnURL(px){
+  var W = Math.round(px*2.1), H = Math.round(px*1.35);
+  var c = texCanvas(W, H, function(g){
+    var cx = W/2, cy = H/2, r = px/2;
+    var tilt = -16*DEG;
+    g.translate(cx, cy); g.rotate(tilt); g.translate(-cx, -cy);
+    function ringArc(a0, a1){
+      for (var i = 0; i < 3; i++){
+        var rr = r*(1.45 + i*0.22), rh = rr*0.30;
+        g.strokeStyle = 'rgba(224,203,158,' + (0.55 - i*0.14) + ')';
+        g.lineWidth = r*0.11;
+        g.beginPath(); g.ellipse(cx, cy, rr, rh, 0, a0, a1); g.stroke();
+      }
+    }
+    ringArc(Math.PI*0.02, Math.PI*0.98);
+    g.translate(cx, cy); g.rotate(-tilt); g.translate(-cx, -cy);
+    g.save();
+    g.beginPath(); g.arc(cx,cy,r,0,Math.PI*2); g.clip();
+    g.drawImage(SURF.Saturn, cx-r, cy-r, r*2, r*2);
+    var sh = g.createRadialGradient(cx - r*0.45, cy - r*0.45, r*0.1, cx, cy, r*1.15);
+    sh.addColorStop(0, 'rgba(255,255,245,0.15)');
+    sh.addColorStop(0.55, 'rgba(0,0,0,0)');
+    sh.addColorStop(1, 'rgba(2,3,10,0.88)');
+    g.fillStyle = sh; g.fillRect(0,0,W,H);
+    g.restore();
+    g.translate(cx, cy); g.rotate(tilt); g.translate(-cx, -cy);
+    ringArc(-Math.PI*0.98, -Math.PI*0.02);
+  });
+  return c.toDataURL('image/png');
+}
+function nodeURL(px, tint){
+  var W = Math.round(px*1.5), H = W;
+  var c = texCanvas(W, H, function(g){
+    var cx = W/2, cy = H/2, r = px/2;
+    g.shadowColor = 'rgba(' + tint + ',0.8)'; g.shadowBlur = px*0.12;
+    for (var i = 0; i < 7; i++){
+      var a0 = Math.random()*Math.PI*2;
+      var rr = r*(0.25 + i*0.11);
+      g.strokeStyle = 'rgba(235,238,245,' + (0.5 - i*0.055) + ')';
+      g.lineWidth = 1.4 + Math.random()*1.6;
+      g.beginPath();
+      g.arc(cx + Math.cos(a0)*r*0.06, cy + Math.sin(a0)*r*0.06, rr, a0, a0 + Math.PI*(1.1 + Math.random()*0.5));
+      g.stroke();
+    }
+    g.shadowBlur = 0;
+    var core = g.createRadialGradient(cx,cy,0,cx,cy,r*0.5);
+    core.addColorStop(0,'rgba(' + tint + ',0.5)');
+    core.addColorStop(1,'rgba(' + tint + ',0)');
+    g.fillStyle = core;
+    g.beginPath(); g.arc(cx,cy,r*0.5,0,Math.PI*2); g.fill();
+  });
+  return c.toDataURL('image/png');
+}
+
+/* the Rising emblem: the EMERGE four-pointed spark, gold, softly haloed */
+function risingURL(px){
+  var W = Math.round(px*1.5), H = W;
+  var c = texCanvas(W, H, function(g){
+    var cx = W/2, cy = H/2, r = px/2;
+    var halo = g.createRadialGradient(cx,cy,0, cx,cy,r*1.35);
+    halo.addColorStop(0,'rgba(255,228,155,0.55)');
+    halo.addColorStop(0.5,'rgba(242,200,110,0.18)');
+    halo.addColorStop(1,'rgba(242,200,110,0)');
+    g.fillStyle = halo; g.fillRect(0,0,W,H);
+    g.fillStyle = '#F2DFAE';
+    g.shadowColor = 'rgba(240,209,138,0.9)'; g.shadowBlur = px*0.16;
+    g.beginPath();
+    g.moveTo(cx, cy - r);
+    g.quadraticCurveTo(cx + r*0.10, cy - r*0.10, cx + r, cy);
+    g.quadraticCurveTo(cx + r*0.10, cy + r*0.10, cx, cy + r);
+    g.quadraticCurveTo(cx - r*0.10, cy + r*0.10, cx - r, cy);
+    g.quadraticCurveTo(cx - r*0.10, cy - r*0.10, cx, cy - r);
+    g.fill();
+    g.shadowBlur = 0;
+  });
+  return c.toDataURL('image/png');
+}
+
+/* ============================================================
+   THE CHART — Western tropical wheel, exact template
+   Outer house ring with numerals, graduated degree band,
+   inner circle, faint spokes to center, crosshair axes.
+   Fixed geometry. Only the bodies change.
+   ============================================================ */
+var NS = 'http://www.w3.org/2000/svg';
+var VB = 1000;
+var CX = VB/2, CY = VB/2;
+var R_OUT  = 468;   // outer circle
+var R_RING = 400;   // inner edge of house-number ring / outer tick circle
+var R_TIN  = 366;   // inner tick circle
+var R_NUM  = 434;   // house numerals radius
+var R_PL   = 256;   // planet placement radius
+function el(tag, attrs, parent){
+  var e = document.createElementNS(NS, tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  (parent || svg).appendChild(e);
+  return e;
+}
+var svg = document.createElementNS(NS, 'svg');
+svg.setAttribute('viewBox', '0 0 ' + VB + ' ' + VB);
+document.getElementById('chartWrap').appendChild(svg);
+
+/* glow filter */
+var defs = el('defs', {});
+var filt = el('filter', { id:'gold', x:'-40%', y:'-40%', width:'180%', height:'180%' }, defs);
+el('feGaussianBlur', { 'in':'SourceGraphic', stdDeviation:'2.6', result:'b' }, filt);
+var fm = el('feMerge', {}, filt);
+el('feMergeNode', { 'in':'b' }, fm);
+el('feMergeNode', { 'in':'SourceGraphic' }, fm);
+
+/* longitude -> screen point. House 1 opens at 9 o'clock; houses run
+   counterclockwise. The wheel anchors to the first degree of the rising
+   sign so every house sector holds exactly one whole sign. */
+function pt(lonDeg, r){
+  var a = Math.PI + (lonDeg - SIGN0)*DEG;
+  return { x: CX + r*Math.cos(a), y: CY - r*Math.sin(a) };
+}
+
+/* --- crosshair axes (like the template: extend past the wheel) --- */
+/* v18.57 (Jason's ruling): the crosshair axes are removed from the visual entirely.
+   The group stays in the DOM hidden so every animation index below is untouched. */
+var axisGroup = el('g', { stroke:'rgba(217,180,91,0.28)', 'stroke-width':'1.2', display:'none' });
+var axisEls = [
+  el('line', { x1:0,   y1:CY, x2:VB, y2:CY }, axisGroup),
+  el('line', { x1:CX,  y1:0,  x2:CX, y2:VB }, axisGroup)
+];
+for (var ax = 0; ax < axisEls.length; ax++){
+  axisEls[ax].style.strokeDasharray = VB;
+  axisEls[ax].style.strokeDashoffset = VB;
+}
+
+/* --- the four circles, drawn from darkness --- */
+var circleGroup = el('g', { stroke:'#e0b464', fill:'none', filter:'url(#gold)' });
+var CIRCLES = [
+  { r:R_OUT,  w:2.4 },
+  { r:R_RING, w:2.0 },
+  { r:R_TIN,  w:1.6 }
+];
+var circleEls = [];
+for (var ci = 0; ci < CIRCLES.length; ci++){
+  var cc = CIRCLES[ci];
+  var ce = el('circle', { cx:CX, cy:CY, r:cc.r, 'stroke-width':cc.w }, circleGroup);
+  var len = 2*Math.PI*cc.r;
+  ce.style.strokeDasharray = len;
+  ce.style.strokeDashoffset = len;
+  ce.setAttribute('transform', 'rotate(180 ' + CX + ' ' + CY + ')'); // draw starts at Asc side
+  circleEls.push({ e:ce, len:len });
+}
+
+/* --- house cusp dividers (heavy, across the outer ring) --- */
+var cuspGroup = el('g', { stroke:'#e0b464', 'stroke-width':'2', 'stroke-linecap':'round', filter:'url(#gold)' });
+var cuspEls = [];
+for (var hcu = 0; hcu < 12; hcu++){
+  var lon = norm360(SIGN0 + hcu*30);
+  var p1 = pt(lon, R_RING), p2 = pt(lon, R_OUT);
+  var le = el('line', { x1:p1.x, y1:p1.y, x2:p2.x, y2:p2.y }, cuspGroup);
+  var ll = Math.hypot(p2.x-p1.x, p2.y-p1.y);
+  le.style.strokeDasharray = ll;
+  le.style.strokeDashoffset = ll;
+  cuspEls.push({ e:le, len:ll });
+}
+
+/* --- faint spokes to the center (like the template's light rays) --- */
+var R_CEN = 108;   // the center circle where the chart names itself
+/* v18.56 (Jason's ruling): Placidus is CALCULATION ONLY. The wheel's visual is the
+   original v18.51 composition, byte for byte: equal spokes, equal sectors, numbers at
+   sector midpoints. The unequal cusps live in the math (g.house, readings, QA panel,
+   calculation trace) and are never drawn. */
+var spokeGroup = el('g', { stroke:'rgba(224,180,100,0.22)', 'stroke-width':'1.1' });
+var spokeEls = [];
+for (var sp = 0; sp < 12; sp++){
+  var slon = norm360(SIGN0 + sp*30);
+  var sPt = pt(slon, R_TIN);
+  var sPt0 = pt(slon, R_CEN);
+  var se = el('line', { x1:sPt0.x, y1:sPt0.y, x2:sPt.x, y2:sPt.y }, spokeGroup);
+  var sl = Math.hypot(sPt.x-sPt0.x, sPt.y-sPt0.y);
+  se.style.strokeDasharray = sl;
+  se.style.strokeDashoffset = sl;
+  spokeEls.push({ e:se, len:sl });
+}
+
+/* --- graduated degree band between R_TIN and R_RING --- */
+var tickGroup = el('g', { 'stroke-linecap':'butt' });
+var tickEls = [];
+for (var td = 0; td < 360; td += 2){
+  var tlon = norm360(SIGN0 + td);
+  var major = td % 10 === 0;
+  var cusp30 = td % 30 === 0;
+  var rA = cusp30 ? R_TIN + 2 : (major ? R_TIN + 5 : R_TIN + 9);
+  var rB = cusp30 ? R_RING - 2 : (major ? R_RING - 5 : R_RING - 9);
+  var q1 = pt(tlon, rA), q2 = pt(tlon, rB);
+  var te = el('line', {
+    x1:q1.x, y1:q1.y, x2:q2.x, y2:q2.y,
+    stroke: cusp30 ? '#e8c67a' : '#c9a45e',
+    'stroke-width': cusp30 ? 2.6 : (major ? 1.9 : 1.1),
+    opacity: 0
+  }, tickGroup);
+  tickEls.push({ e:te, off:td, op: cusp30 ? 0.9 : (major ? 0.55 : 0.3) });
+}
+
+/* --- house numbers: "1H"…"12H", floating inside their fixed sectors --- */
+var R_HNUM = 320;
+var numGroup = el('g', { 'font-family':'Georgia, serif', fill:'#d9a94f', 'text-anchor':'middle' });
+var numEls = [];
+for (var hn = 1; hn <= 12; hn++){
+  var nlon = norm360(SIGN0 + (hn - 1)*30 + 15);      /* v18.56: original position, visual unchanged */
+  var np = pt(nlon, R_HNUM);
+  var t = el('text', { x:np.x, y:np.y + 11, 'font-size':'34', opacity:'0' }, numGroup);
+  var tnum = document.createElementNS(NS, 'tspan');
+  tnum.textContent = hn;
+  t.appendChild(tnum);
+  var tH = document.createElementNS(NS, 'tspan');
+  tH.setAttribute('font-size', '23');
+  tH.textContent = 'H';
+  t.appendChild(tH);
+  numEls.push(t);
+}
+
+/* --- the zodiac ring: sign names on the outer band, rotated so the
+   rising sign fills house 1. The band turns; the wheel never does. --- */
+var signGroup = el('g', { 'font-family':'Georgia, serif', fill:'#e8c67a', 'text-anchor':'middle' });
+var signEls = [];
+for (var zs = 0; zs < 12; zs++){
+  var zlon = norm360(SIGN0 + zs*30 + 15);
+  var zp = pt(zlon, R_NUM);
+  var rot = Math.atan2(zp.y - CY, zp.x - CX)*RAD + 90;
+  rot = ((rot % 360) + 360) % 360;
+  if (rot > 90 && rot < 270) rot += 180;   // keep every name right-side up
+  var zt = el('text', { x:zp.x, y:zp.y, dy:'0.34em', 'font-size':'30', opacity:'0',
+    transform:'rotate(' + rot.toFixed(2) + ' ' + zp.x.toFixed(2) + ' ' + zp.y.toFixed(2) + ')' }, signGroup);
+  zt.textContent = SIGNS[(ascSign + zs) % 12];
+  signEls.push(zt);
+}
+
+/* --- the center: the chart names itself --- */
+var cenCircle = el('circle', { cx:CX, cy:CY, r:R_CEN, stroke:'#e0b464', 'stroke-width':'1.4',
+  fill:'rgba(4,6,13,0.55)', opacity:'0', filter:'url(#gold)' });
+var cenT1 = el('text', { x:CX, y:CY - 8, 'text-anchor':'middle',
+  'font-family':'Georgia, serif', 'font-size':'26', fill:'#f0e0b4', opacity:'0' });
+cenT1.textContent = 'Tropical Chart';
+var cenT2 = el('text', { x:CX, y:CY + 26, 'text-anchor':'middle',
+  'font-family':'Georgia, serif', 'font-size':'20', fill:'#d9b45b', opacity:'0' });
+cenT2.textContent = '(Western)';
+
+/* calculation shimmer: one gold light pass across the template */
+var grad = el('linearGradient', { id:'sweep', x1:'0', y1:'0', x2:'1', y2:'0' }, defs);
+el('stop', { offset:'0', 'stop-color':'#ffe9b0', 'stop-opacity':'0' }, grad);
+el('stop', { offset:'0.5', 'stop-color':'#ffe9b0', 'stop-opacity':'0.5' }, grad);
+el('stop', { offset:'1', 'stop-color':'#ffe9b0', 'stop-opacity':'0' }, grad);
+var sweep = el('rect', { x:-380, y:CY - R_OUT - 20, width:340, height:R_OUT*2 + 40, fill:'url(#sweep)', opacity:'0',
+  transform:'rotate(14 ' + CX + ' ' + CY + ')' });
+
+/* ---------------- bodies onto the wheel ---------------- */
+var SIZE = {
+  Sun:66, Moon:54, Mercury:38, Venus:48, Mars:44,
+  Jupiter:60, Saturn:56, Uranus:48, Neptune:48, Pluto:34,
+  NNode:42, SNode:42, Rising:46
+};
+
+/* per-house placement: a body is ALWAYS displayed inside its own
+   whole-sign house sector — it can never drift across a cusp.
+   Singles sit at their true degree within the sign; crowds spread
+   across the sector and step inward on staggered radii, so a
+   stellium stacks rather than spills into the next house.
+   The gold pointer always marks the exact degree on the band.
+   The Rising is pinned to the eastern horizon — the 9 o'clock
+   horizontal — permanently. It is the wheel's anchor, not a body. */
+(function(){
+  var groups = {};
+  for (var i = 0; i < BODIES.length; i++){
+    var b = BODIES[i];
+    if (b.key === 'Rising'){
+      b.disp = 0;                 // exactly on the eastern horizon
+      b.rad = R_PL;
+      b.crowd = 1;
+      continue;
+    }
+    (groups[b.wsHouse] = groups[b.wsHouse] || []).push(b);
+  }
+  for (var h in groups){
+    var list = groups[h].sort(function(a, b2){ return (a.trop % 30) - (b2.trop % 30); });
+    var n = list.length;
+    var sectorStart = (h - 1)*30;
+    if (n === 1){
+      var d = list[0].trop % 30;
+      list[0].disp = sectorStart + Math.min(24, Math.max(6, d));
+      list[0].rad = R_PL;
+      list[0].crowd = 1;
+      continue;
+    }
+    var sp = Math.min(22/(n - 1), 12);
+    var base = 15 - sp*(n - 1)/2;
+    for (var j = 0; j < n; j++){
+      list[j].disp = sectorStart + base + j*sp;
+      list[j].rad = n >= 5 ? [R_PL + 26, R_PL - 44, R_PL - 112][j % 3]
+                  : (j % 2 ? R_PL - 62 : R_PL + 14);
+      list[j].crowd = n >= 5 ? 0.62 : (n >= 3 ? 0.8 : 0.92);
+    }
+  }
+})();
+
+var bodyGroup = el('g', {});
+var bodyEls = [];
+for (var bi = 0; bi < BODIES.length; bi++){
+  var bb = BODIES[bi];
+  var px = Math.round(SIZE[bb.key]*(bb.crowd || 1));
+  var url = bb.key === 'Saturn' ? saturnURL(px)
+          : bb.key === 'Rising' ? risingURL(px)
+          : bb.key === 'NNode'  ? nodeURL(px, '150,110,220')
+          : bb.key === 'SNode'  ? nodeURL(px, '90,200,180')
+          : discURL(bb.key, px);
+  var iw = bb.key === 'Saturn' ? px*2.1 : (bb.key === 'Sun' ? px*2.8 : px*1.5);
+  var ih = bb.key === 'Saturn' ? px*1.35 : iw;
+
+  var dispLon = norm360(SIGN0 + bb.disp);
+  var pp = pt(dispLon, bb.rad);
+
+  /* leader: from near the body toward its true degree on the band */
+  var lStart = pt(dispLon, bb.rad + px*0.5 + 14);
+  var lEnd   = pt(bb.trop, R_TIN - 10);
+  var leader = el('line', { x1:lStart.x, y1:lStart.y, x2:lEnd.x, y2:lEnd.y,
+    stroke:'rgba(224,180,100,0.35)', 'stroke-width':'1.1', opacity:'0' }, bodyGroup);
+  /* gold pointer tick at the exact degree */
+  var pA = pt(bb.trop, R_TIN - 8), pB2 = pt(bb.trop, R_TIN + 6);
+  var pointer = el('line', { x1:pA.x, y1:pA.y, x2:pB2.x, y2:pB2.y,
+    stroke:'#f0d18a', 'stroke-width':'2.4', 'stroke-linecap':'round', opacity:'0', filter:'url(#gold)' }, bodyGroup);
+
+  var node = el('g', { opacity:'0' }, bodyGroup);
+  node.setAttribute('transform', 'translate(' + pp.x + ' ' + (pp.y + 26) + ') scale(0.7)');
+  el('image', { href:url, x:-iw/2, y:-ih/2, width:iw, height:ih }, node);
+  var lbl = el('text', { x:0, y:px*0.5 + 30, 'text-anchor':'middle',
+    'font-family':'Georgia, serif', 'font-size':'22', fill:'#f0e8d6' }, node);
+  lbl.textContent = bb.label;
+  var ab = el('text', { x:0, y:px*0.5 + 52, 'text-anchor':'middle',
+    'font-family':'Georgia, serif', 'font-size':'17', fill:'#d9b45b' }, node);
+  ab.textContent = '(' + bb.ab + ')';
+  bodyEls.push({ node:node, leader:leader, pointer:pointer, x:pp.x, y:pp.y });
+}
+
+/* ============================================================
+   TIMELINE
+   ============================================================ */
+var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var SPEED = REDUCED ? 2.54 : 1.21;   // whole timeline +21% (10% on top of the last cut)
+
+var whisper = document.getElementById('whisper');
+var coords = document.getElementById('coords');
+var locate = document.getElementById('locate');
+var locH = locate.querySelector('.h'), locV = locate.querySelector('.v'), locRing = locate.querySelector('.ring');
+
+var T = {
+  whisperIn: 0.9, whisperOut: 4.2,
+  locA: 4.6, locHold: 6.0,
+  coordsIn: 5.4, coordsOut: 7.6,
+  axes: 8.0, axesDur: 1.6,
+  circ: 8.4, circDur: 2.0, circStep: 0.3,
+  cusp: 10.4, cuspDur: 0.9, cuspStep: 0.08,
+  spoke: 10.9, spokeDur: 1.1, spokeStep: 0.07,
+  ticks: 11.8, tickDur: 2.2,
+  cenA: 11.4,
+  signsA: 13.4, signStep: 0.10,
+  numsA: 15.0, numStep: 0.12,
+  sweepA: 16.8, sweepDur: 1.3,
+  bodyA: 18.2, bodyStep: 0.45, bodyDur: 1.1
+};
+
+var t0 = null;
+var revealGateArmed = false;
+
+// v-void-waits: the waiting screen plays the void; the field holds until the tap
+window.EMERGE_HOLD_AMBIENT = true;
+try { EMERGE_SOUND.loop('voidatm'); } catch(_){}
+
+function beginChartRevealFromTap(){
+  if (!revealGateArmed){ return; }
+  revealGateArmed = false;
+  try { EMERGE_SOUND.unlock(); } catch(_){}
+  // the tap: the VOID rises and stays as the bed for the whole chart drawing;
+  // the ambient field keeps holding until REVEAL MY CHART.
+  try { EMERGE_SOUND.loop('voidatm'); } catch(_){}
+  t0 = performance.now();
+  var g = document.getElementById('soundGate');
+  if (g){
+    g.classList.add('gone');
+    setTimeout(function(){ if (g && g.parentNode){ g.remove(); } }, 1400);
+  }
+  console.log('[EMERGE FLOW] user tapped — existing chart reveal timeline begins');
+}
+
+function armExistingRevealGate(){
+  if (revealGateArmed){ return; }
+  revealGateArmed = true;
+  var g = document.getElementById('soundGate');
+  if (g){ g.classList.add('armed'); }
+  window.addEventListener('pointerdown', beginChartRevealFromTap, { once:true, passive:true });
+  console.log('[EMERGE FLOW] tap-to-reveal gate armed');
+}
+
+/* ============================================================
+   OPENING SEQUENCE (reversed): star field is already live,
+   the whisper speaks first, then the tap-to-reveal gate arms.
+   Same whisper element, same 2.2s CSS fade, same on-screen
+   window as the old timeline beat (in ~0.9s, out ~4.2s).
+   ============================================================ */
+(function runOpeningSequence(){
+// whisper home: this page owns its whole opening — the index only routes
+  // here. Whisper in ~0.9s, out ~4.2s, tap-to-reveal arms at 5.6s. The void
+  // is this page's waiting bed (starts on the page's first touch — iPhone
+  // allows no sound before that), the ambient field holds until REVEAL MY CHART.
+  window.setTimeout(function(){ whisper.classList.add('show'); }, 900);
+  window.setTimeout(function(){ whisper.classList.remove('show'); }, 4200);
+  window.setTimeout(function(){ armExistingRevealGate(); }, 5600);
+})();
+
+function frame(now){
+  requestAnimationFrame(frame);
+  var t = (t0 === null) ? 0 : (now - t0)/1000*SPEED;
+  if (window.__numPulsed === undefined) window.__numPulsed = 0;
+  while (window.__numPulsed < 12 && t >= T.numsA + window.__numPulsed * T.numStep) {
+    window.__numPulsed++;
+    try { EMERGE_SOUND.numpulse(); } catch(_){}
+  }
+  try { EMERGE_SOUND.tick({ drawbed: T.coordsIn, construction: T.axes, sweep: T.sweepA, tokens: T.bodyA }, t); } catch(_){}
+
+  /* background drifts forever */
+  camera.rotation.y = 0.35 + t*0.0045;
+  camera.rotation.x = 0.14 + 0.05*Math.sin(t*0.021);
+
+  /* whisper beat moved before the tap gate; timeline slot retired,
+     all later beats keep their original times */
+
+  /* locate beat */
+  var lIn = sstep((t - T.locA)/0.9);
+  var lOut = 1 - sstep((t - T.locHold - 0.9)/0.7);
+  var lop = Math.min(lIn, Math.max(0, lOut));
+  locH.style.opacity = lop*0.8;
+  locV.style.opacity = lop*0.8;
+  locRing.style.opacity = lop*0.9;
+  locRing.style.transform = 'scale(' + (2.4 - 1.9*sstep((t - T.locA)/1.4)) + ')';
+  if (t > T.coordsIn && t < T.coordsOut) coords.classList.add('show');
+  else coords.classList.remove('show');
+
+  /* crosshair axes */
+  for (var a2 = 0; a2 < axisEls.length; a2++){
+    var pa = easeOut((t - T.axes - a2*0.25)/T.axesDur);
+    axisEls[a2].style.strokeDashoffset = VB*(1 - pa);
+  }
+
+  /* circles drawn from darkness */
+  for (var i = 0; i < circleEls.length; i++){
+    var pc = easeOut((t - T.circ - i*T.circStep)/T.circDur);
+    circleEls[i].e.style.strokeDashoffset = circleEls[i].len*(1 - pc);
+  }
+
+  /* house cusp dividers */
+  for (var c2 = 0; c2 < cuspEls.length; c2++){
+    var pcu = easeOut((t - T.cusp - c2*T.cuspStep)/T.cuspDur);
+    cuspEls[c2].e.style.strokeDashoffset = cuspEls[c2].len*(1 - pcu);
+  }
+
+  /* faint spokes */
+  for (var s2 = 0; s2 < spokeEls.length; s2++){
+    var ps = easeOut((t - T.spoke - s2*T.spokeStep)/T.spokeDur);
+    spokeEls[s2].e.style.strokeDashoffset = spokeEls[s2].len*(1 - ps);
+  }
+
+  /* degree band sweeps around from the Ascendant */
+  var tp = clamp01((t - T.ticks)/T.tickDur);
+  var reach = tp*372;   // slight overshoot so the last ticks land
+  for (var td2 = 0; td2 < tickEls.length; td2++){
+    var tk = tickEls[td2];
+    var vis = reach > tk.off ? sstep((reach - tk.off)/14) : 0;
+    tk.e.setAttribute('opacity', tk.op*vis);
+  }
+
+  /* the center names the chart */
+  var cp = sstep((t - T.cenA)/1.2);
+  cenCircle.setAttribute('opacity', cp*0.9);
+  cenT1.setAttribute('opacity', cp*0.95);
+  cenT2.setAttribute('opacity', cp*0.85);
+
+  /* the zodiac ring takes the outer band, house 1 first */
+  for (var z2 = 0; z2 < 12; z2++)
+    signEls[z2].setAttribute('opacity', 0.95*sstep((t - T.signsA - z2*T.signStep)/0.8));
+
+  /* house numbers */
+  for (var n = 0; n < 12; n++)
+    numEls[n].setAttribute('opacity', 0.85*sstep((t - T.numsA - n*T.numStep)/0.8));
+
+  /* calculation: one pass of light */
+  var sp2 = (t - T.sweepA)/T.sweepDur;
+  if (sp2 > 0 && sp2 < 1){
+    sweep.setAttribute('opacity', Math.sin(sp2*Math.PI));
+    sweep.setAttribute('x', -380 + (VB + 760)*sp2);
+  } else sweep.setAttribute('opacity', 0);
+
+  /* the twelve bodies take the wheel */
+  for (var g2 = 0; g2 < bodyEls.length; g2++){
+    var ge = bodyEls[g2];
+    var dly = g2 === 0 ? 0 : 0.7 + g2*T.bodyStep;   // the Rising leads; a breath; then the procession
+    var pg = sstep((t - T.bodyA - dly)/T.bodyDur);
+    ge.node.setAttribute('opacity', pg);
+    ge.leader.setAttribute('opacity', pg*0.9);
+    ge.pointer.setAttribute('opacity', pg);
+    var sc = 0.7 + 0.3*easeOut(pg);
+    var dy = 26*(1 - easeOut(pg));
+    ge.node.setAttribute('transform', 'translate(' + ge.x + ' ' + (ge.y + dy) + ') scale(' + sc + ')');
+  }
+
+  /* NEW: 3D CHART SUMMARY REVEAL — completion watch + animation hook */
+  if (!chartRevealFired && t > CHART_DONE_T){ chartRevealFired = true; onChartRevealComplete(); }
+  if (summaryTick) summaryTick(now);
+
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(frame);
+
+/* ============================================================
+   NEW: 3D CHART SUMMARY REVEAL — Tropical
+   A presentation layer only. It consumes the validated wheel
+   data (ascSign, BODIES) and never calculates positions itself.
+   Tropical voice: outward expression, character, and how the
+   world experiences you. The inner map belongs to the Sidereal.
+   ============================================================ */
+
+var chartSummaryRevealStarted = false;
+var chartRevealFired = false;
+var summaryTick = null;
+
+/* the moment the last body finishes settling (timeline units) */
+var CHART_DONE_T = T.bodyA + 0.7 + (bodyEls.length - 1)*T.bodyStep + T.bodyDur + 0.35;
+
+var bodyEl = document.body;
+var promptEl = document.getElementById('revealPrompt');
+var revealBtn = document.getElementById('revealBtn');
+var cardEmerge = document.getElementById('cardEmerge');
+var cardFloat = document.getElementById('cardFloat');
+var cardEl = document.querySelector('.chart-summary-card');
+var ctaEl = document.querySelector('.complete-reading-cta');
+var IS_COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+/* ---------- central star activation art (wheel center, in the existing svg) ---------- */
+var ascGlow = el('g', { opacity:'0' });
+(function(){
+  var rg = el('radialGradient', { id:'ascPulse' }, defs);
+  el('stop', { offset:'0',    'stop-color':'#fff3d4', 'stop-opacity':'0.95' }, rg);
+  el('stop', { offset:'0.35', 'stop-color':'#ffe9b0', 'stop-opacity':'0.45' }, rg);
+  el('stop', { offset:'1',    'stop-color':'#e0b464', 'stop-opacity':'0' }, rg);
+  el('circle', { cx:CX, cy:CY, r:170, fill:'url(#ascPulse)' }, ascGlow);
+  el('line', { x1:CX, y1:CY-140, x2:CX, y2:CY+140, stroke:'#ffeec2',
+    'stroke-width':'2.2', 'stroke-linecap':'round', filter:'url(#gold)' }, ascGlow);
+  el('line', { x1:CX-92, y1:CY, x2:CX+92, y2:CY, stroke:'#ffeec2',
+    'stroke-width':'1.6', 'stroke-linecap':'round', filter:'url(#gold)' }, ascGlow);
+})();
+
+
+/* ---------- v17 adapter: tropical bodies -> engine chart objects ---------- */
+var RULERS = ['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+var ORD = ['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth','eleventh','twelfth'];
+var EXALT = { Sun:0, Moon:1, Mars:9, Mercury:5, Jupiter:3, Venus:11, Saturn:6 };
+var GRAHAS = (function(){
+  var keep = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn'];
+  var out = [];
+  for (var bi = 0; bi < BODIES.length; bi++){
+    var b = BODIES[bi];
+    if (keep.indexOf(b.key) >= 0)
+      out.push({ key:b.key, sid:b.trop, sign:Math.floor(b.trop/30), house:b.house });
+  }
+  return out;
+})();
+
+function findGraha(key){
+  for (var i = 0; i < GRAHAS.length; i++) if (GRAHAS[i].key === key) return GRAHAS[i];
+  return null;
+}
+/* ============================================================
+   EMERGE SUMMARY ENGINE v17 — theme-first, person-first
+   Flow: verified chart data -> human themes -> ranked personal
+   insights -> coherent personal summary in four sections.
+   The visible text never names a planet, sign, house, node,
+   nakshatra, or any technical term. All astrology stays in the
+   hidden trace. Sections map to the card's four paragraphs:
+   one   WHO YOU ARE
+   two   YOUR INNER WORLD
+   three YOUR NATURAL GIFTS
+   four  YOUR DIRECTION AND GROWTH
+   ============================================================ */
+
+/* ---------- human vocabulary: life arenas, no house numbers ---------- */
+var ARENA_HUMAN = [
+  'your own identity and the life you are building firsthand',
+  'what you value, what you keep, and how you provide',
+  'learning, communication, and skills you teach yourself',
+  'home, family, and your private emotional world',
+  'creative work and personal self-expression',
+  'daily work, health, and being genuinely useful',
+  'close relationships and real partnership',
+  'deep change, trust, and shared lives',
+  'meaning, belief, and the search for a bigger picture',
+  'your work in the world and what you contribute publicly',
+  'friendship, community, and long-term hopes',
+  'quiet, reflection, and the life you live away from view'
+];
+
+/* ---------- WHO YOU ARE: temperament by rising sign ---------- */
+var ASC_HUMAN = [
+  'You move through life directly and with real energy. When something matters to you, you act, and people around you feel that momentum. You would rather try and adjust than wait for perfect conditions.',
+  'You move through life steadily and on your own timing. People experience you as calm, dependable, and hard to rattle, someone who builds things that last rather than chasing what is briefly exciting.',
+  'You move through life with curiosity and quickness. You connect easily, ask real questions, and keep learning long after most people settle, which makes you interesting company and a fast study.',
+  'You move through life with strong sensitivity to people and atmosphere. You often notice what others are feeling before they explain it, which gives you compassion and an ability to make people feel understood.',
+  'You move through life with warmth and natural presence. People tend to notice when you enter a room, and you have an instinct for encouraging others while still holding your own center.',
+  'You move through life attentively. You see the detail everyone else missed, you improve whatever you touch, and your care shows up in practical ways more often than in speeches.',
+  'You move through life with grace and a feel for balance. You read the space between people accurately, and you have a gift for making situations fairer and more beautiful than you found them.',
+  'You move through life with depth and focus. You are not satisfied by surfaces, in people or in work, and the people who earn your trust discover unusual loyalty underneath the reserve.',
+  'You move through life openly and honestly, with an appetite for meaning. You need a horizon, something to believe in and move toward, and your candor tends to clear the air wherever you go.',
+  'You move through life with quiet determination. You take responsibility seriously, you play the long game, and you earn respect by simply continuing when others stop.',
+  'You move through life independently and on principle. You think for yourself, you care about the bigger picture, and you are usually a few steps ahead of the conventional view.',
+  'You move through life with imagination and unusual empathy. There is a highly creative side to you, drawn to beauty, meaning, and work that expresses something personal rather than following a conventional path.'
+];
+var ASC_EDGE = [
+  'You are at your best when your drive is paired with patience, so what you start has time to become what you meant. Finishing, for you, is the acquired art.',
+  'You are at your best when steadiness stays open, letting change in before life has to insist on it. Flexibility costs you less than being forced to bend.',
+  'You are at your best when your curiosity picks a direction, so all that quickness can accumulate into mastery. Depth is the one thing speed cannot give you.',
+  'Because you take in so much from your surroundings, you are at your best when your sensitivity is supported by clear boundaries and a strong sense of direction. Knowing which feelings are yours is half the work.',
+  'You are at your best when your warmth shines from your own center rather than depending on an audience. Applause is enjoyable, but it was never the point.',
+  'You are at your best when you extend to yourself the patience you so readily give to everything you fix. Good enough is sometimes exactly right.',
+  'You are at your best when keeping the peace does not mean losing your own position inside it. Your preferences deserve the same fairness you give everyone else.',
+  'You are at your best when you let yourself be known as fully as you know others. Trust given is the risk that finally matches your depth.',
+  'You are at your best when the big picture comes down into one faithful next step. Vision needs a foothold to become a life.',
+  'You are at your best when rest and feeling count as accomplishments too, not just finished work. Softness is not the opposite of strength, it is part of it.',
+  'You are at your best when you stay personally close to people while you serve the larger idea. The cause needs your presence, not just your plans.',
+  'You are at your best when your compassion has structure around it, so giving does not become disappearing. Boundaries are how your kindness survives.'
+];
+var SUN_CORE = [
+  'Underneath it all runs a self-starting spirit that would rather lead than follow.',
+  'Underneath it all runs a grounded persistence that gives your life its staying power.',
+  'Underneath it all runs a lively mind that needs variety and exchange to feel awake.',
+  'Underneath it all runs a deep loyalty to the people and places you consider yours.',
+  'Underneath it all runs a creative pride that wants your life to be an original, not a copy.',
+  'Underneath it all runs a craftsman\u2019s conscience that cares how things are actually done.',
+  'Underneath it all runs a genuine need for fairness, in your own life and around you.',
+  'Underneath it all runs an intensity that gives everything you commit to its full weight.',
+  'Underneath it all runs an optimism that keeps finding reasons to begin again.',
+  'Underneath it all runs an ambition that is quieter than most but more durable.',
+  'Underneath it all runs an originality that resists being averaged into the crowd.',
+  'Underneath it all runs a gentleness that is stronger than it looks.'
+];
+
+/* ---------- YOUR INNER WORLD: the emotional nature ---------- */
+var MOON_EMO = [
+  'Your emotional life is quick and honest. Feelings arrive fast, get expressed, and clear again, and you recover from setbacks sooner than most people expect.',
+  'Your emotional life is steady and deep. You process slowly, hold on firmly, and dislike being rushed through anything that matters to you.',
+  'Your emotional life moves through words and understanding. Talking something through is how you digest it, and confusion troubles you more than difficulty does.',
+  'Your emotional life runs deep and close to the surface at once. You feel things fully, remember what mattered, and care for the people you love with real devotion.',
+  'Your emotional life is warm and wholehearted. You need to feel valued by the people who matter to you, and you return that recognition generously.',
+  'Your emotional life is observant and careful. You often tend to everyone else first, and your worry usually means you care more than you are saying.',
+  'Your emotional life is shaped by a strong need for connection and fairness. You naturally seek harmony, but surface-level relationships rarely satisfy you.',
+  'Your emotional life is intense and private. Few things touch you lightly, you rarely forget what matters, and you reveal your depths slowly and deliberately.',
+  'Your emotional life is buoyant and candid. You need room to move, and your optimism is a real resource, not a pose.',
+  'Your emotional life is composed and self-contained. You feel more than you show, and you show it on your own schedule.',
+  'Your emotional life is thoughtful and a little independent. You need space to process before you share, and you guard that space on principle.',
+  'Your emotional life is porous and deeply empathic. You absorb the feelings around you, sometimes without noticing whose they were first.'
+];
+var MOON_NEED = [
+  'You feel most secure with something of your own to move toward and the freedom to pursue it. Being fenced in, even kindly, wears on you faster than hardship does.',
+  'You feel most secure when life is stable and built on things you can count on. Sudden change is survivable for you, but it always costs more than it looks like it should.',
+  'You feel most secure when you understand what is happening and can talk it through. Uncertainty bothers you less once it has words around it.',
+  'You feel most secure when home is settled and the people you love are close and well. When that base is right, you can face nearly anything outside it.',
+  'You feel most secure when your loyalty is recognized and returned. Being taken for granted quietly hurts you more than open conflict does.',
+  'You feel most secure when your days have order and you are genuinely useful to someone. Idle time without purpose unsettles you more than a heavy schedule ever will.',
+  'You want honesty, loyalty, and the feeling that another person is genuinely meeting you beneath appearances. Politeness alone has never been enough for you.',
+  'You feel most secure when you know the whole truth of a situation, even a hard one. Half-answers cost you more peace than bad news does.',
+  'You feel most secure when life has meaning and the future holds an open road. A closed horizon weighs on you more than any single setback.',
+  'You feel most secure when your responsibilities are handled and your ground is solid. You relax by earning the right to, which is a strength worth softening sometimes.',
+  'You feel most secure among people who share your ideals and respect your independence. Belonging matters to you, but never at the price of becoming interchangeable.',
+  'You feel most secure with regular quiet. Time alone is not a luxury for you, it is maintenance, and skipping it shows faster than you expect.'
+];
+var MOON_ARENA_LINE = [
+  'Much of that inner life is tied to your sense of self. People can usually read your weather, and honestly owning it serves you better than pretending calm.',
+  'Much of that inner life pours into what you build and provide. Security and feeling are woven together for you, providing is one of the ways you love.',
+  'Much of that inner life moves through conversation and learning. You think out loud with the people you trust, and being heard settles you.',
+  'Family, home, and emotional security play an important role in your life. Creating a place where you feel safe and understood is not a luxury for you, it is part of what allows you to thrive.',
+  'Much of that inner life comes alive through what you create. Your feelings need somewhere to play, and expression keeps them healthy.',
+  'Much of that inner life gets worked out through effort and usefulness. Being needed steadies you, and true rest is a skill you are still allowed to learn.',
+  'Much of that inner life awakens in close relationship. Other people are the mirror where you finally see yourself, which makes who you choose profoundly important.',
+  'You may go through periods of real inner transformation, especially where trust and attachment are involved. You are resilient, but you usually process change privately before showing others how deeply it moved you.',
+  'Much of that inner life reaches upward. Belief and meaning are emotional necessities for you, not abstractions, and losing the why costs you more than losing the how.',
+  'Much of that inner life pours into your work in the world. What you do publicly and what you feel privately are nearly the same thing, so work that violates your feelings never lasts.',
+  'Much of that inner life breathes through friendship and shared hopes. Your feelings need a wider circle to move in, isolation dims you faster than difficulty does.',
+  'Much of that inner life happens away from view, in solitude and reflection. You refill in private or not at all, and the people who love you learn to honor that.'
+];
+var NAK_TOUCH = [
+  'There is a quickness in you that acts while others are still deciding.',
+  'You carry experience through its whole cycle before you let it go.',
+  'You cut through pretense faster than people expect.',
+  'You hold tightly to what you love, and it shows in how you tend it.',
+  'Part of you is always quietly searching for something just out of frame.',
+  'Your truest renewals have tended to follow upheaval.',
+  'After every scattering, something in you gathers itself and begins again.',
+  'You steady other people almost without trying.',
+  'You read undercurrents and motives with unsettling accuracy.',
+  'Being treated as ordinary wounds you more than criticism does.',
+  'Life feels wrong to you when it becomes only work.',
+  'Once you commit, your loyalty outlasts nearly everything.',
+  'You need to shape things with your own hands and get the details right.',
+  'You see the finished form before anyone else can.',
+  'You bend without breaking, and you quietly resist being pinned down.',
+  'Once you lock onto a goal, you do not let go easily.',
+  'You keep faith across distance and difficulty.',
+  'You protect others readily and hide your own vulnerability behind competence.',
+  'You are compelled to dig beneath every surface until you reach what is true.',
+  'When you believe, you believe completely, and it carries you.',
+  'You win by refusing to become someone else along the way.',
+  'You listen, you remember, and you carry other people\u2019s stories with care.',
+  'You come alive in front of others and grow restless when the music stops.',
+  'You help profoundly while keeping a circle around yourself that few enter.',
+  'Ordinary comfort has never been quite enough for you.',
+  'People bring you their storms without ever seeing yours.',
+  'Your compassion has no natural border, which is beautiful and needs protecting.'
+];
+
+/* ---------- YOUR NATURAL GIFTS: per planet, arena-aware ---------- */
+function giftStatement(planet, house){
+  var arena = ARENA_HUMAN[house - 1];
+  switch (planet){
+    case 'Mercury': return 'You have a real way with words and ideas, and it shows most in ' + arena + '.';
+    case 'Venus':   return 'You bring warmth, taste, and a feel for beauty into ' + arena + '.';
+    case 'Jupiter': return 'You have a natural gift for guidance, encouragement, and seeing the larger meaning, especially in ' + arena + '.';
+    case 'Mars':    return 'You have more drive and courage than your manner may advertise, and it fuels ' + arena + '.';
+    case 'Saturn':  return 'You are capable of rare persistence, the kind that keeps showing up for ' + arena + ' long after novelty wears off.';
+  }
+  return '';
+}
+
+/* ---------- YOUR DIRECTION AND GROWTH: the axis, translated ---------- */
+var NODE_FAMILIAR = [
+  'You know how to rely on yourself, and there may be times when doing everything alone feels safer or simpler. Self-sufficiency is real strength, and it can also become a place to hide.',
+  'You know how to manage on your own resources and keep your own counsel. What you have, you earned, and no one can take that competence from you.',
+  'You know how to figure things out with your own hands and wits. Capability has never been your question, courage and cleverness come almost pre-installed.',
+  'You know how to hold your inner world steady and make your own shelter. Retreating into the familiar comes easily, sometimes too easily.',
+  'You know how to create and perform on your own terms. Trusting your own intelligence is second nature, you rarely need permission to begin.',
+  'You know how to work, fix, and endure. Handling difficulty is old skill for you, a grind that would break others barely registers.',
+  'You know how to read people and adapt to them. Accommodating others comes almost too naturally, you can disappear into what a relationship needs.',
+  'You know your way around depth and crisis. Intensity does not frighten you the way it frightens others, you have been there before.',
+  'You know what you believe and how to share it. Certainty has always felt close at hand, conviction is your native ground.',
+  'You know how to carry responsibility and hold a position. Being depended on is familiar ground, weight sits naturally on your shoulders.',
+  'You know how to move in groups and shared efforts. Networks and common causes hold no mystery for you, you understand how people combine.',
+  'You know how to be alone with yourself and let things go. Solitude and release are skills you seem to have arrived with.'
+];
+var NODE_GROWTH = [
+  'Some of your greatest development comes through claiming a life and identity that are unmistakably your own. Standing at the center of your own story is the newer, braver territory.',
+  'Some of your greatest development comes through building your own values and speaking in your own voice. What you create yourself will always feed you more than what you inherit.',
+  'Some of your greatest development comes through acting with courage a little before you feel ready. Confidence, for you, is built by motion, not by preparation.',
+  'Some of your greatest development comes through putting down roots and letting yourself belong somewhere fully. Depth of home is the adventure this time.',
+  'Some of your greatest development comes through creating openly and letting your work be seen. Your heart on the table is the risk that repays.',
+  'Some of your greatest development comes through daily discipline and real care of your health and craft. The unglamorous practices are where your power compounds.',
+  'But some of your greatest development occurs through meaningful collaboration, emotional honesty, and allowing other people to contribute to your life without losing your identity. Letting someone truly matter is the braver path for you.',
+  'Some of your greatest development comes through sharing power and allowing change to go all the way through. What asks everything of you here also gives the most back.',
+  'Some of your greatest development comes through testing what you believe against your own lived experience. Borrowed answers are outgrown, earned ones endure.',
+  'Some of your greatest development comes through visible work and public responsibility. Your contribution is meant to be seen, deferring the spotlight has an expiration date.',
+  'Some of your greatest development comes through community and aims larger than any one person. Your gifts multiply when they are shared with a cause.',
+  'Some of your greatest development comes through trusting the quiet, and what you cannot control. Surrender, for you, is not defeat, it is the door.'
+];
+var NODE_TAKEAWAY = [
+  'Keep choosing experiences that ask you to stand on your own ground, and let your older strengths support the new growth rather than replace it.',
+  'Keep building what is yours. Your voice and your values grow every time you use them.',
+  'Act, then refine. Courage here is built by use, not by waiting.',
+  'Invest in belonging. The roots you grow become the steadiness everything else stands on.',
+  'Make things and let them be seen. Visibility is not vanity here, it is growth.',
+  'Trust daily practice. Small faithful efforts will build what talent alone cannot.',
+  'Stay at the table with people. Real partnership will teach you what solitude never could.',
+  'Let change finish its work. What transforms you here also strengthens you.',
+  'Live by what you have tested yourself. Earned meaning carries further than inherited answers.',
+  'Your direction involves turning what you have learned internally into work and contributions that can reach and help other people.',
+  'Give your gifts to something larger than your own story. Shared purpose repays in kind.',
+  'Protect your quiet. What you find in stillness is not escape, it is direction.'
+];
+
+
+var ASC_OTHERS = [
+  'People often experience you as energizing, someone whose confidence gives them permission to move too.',
+  'People often experience you as a steadying presence, the one who does not panic and does not disappear.',
+  'People often experience you as bright company, quick to understand and generous with what you know.',
+  'People often experience you as safe to open up to, and they usually do.',
+  'People often experience you as encouraging, someone who makes them feel more capable than they did an hour before.',
+  'People often experience you as the one who quietly makes everything work better.',
+  'People often experience you as fair and easy to be around, someone who lowers the temperature of a room.',
+  'People often experience you as someone worth trusting with the real story.',
+  'People often experience you as refreshing, honest without cruelty and hopeful without pretending.',
+  'People often experience you as someone who can be counted on when it actually matters.',
+  'People often experience you as interesting and a little ahead of the curve.',
+  'People often experience you as gentle, and they are sometimes surprised by how strong you turn out to be.'
+];
+var GIFT_LEAD = [
+  'You have a natural ability to turn conviction into momentum, and to bring others along with you.',
+  'You have a natural ability to make things solid, beautiful, and lasting.',
+  'You have a natural ability to translate complicated things into words people actually understand.',
+  'You have a natural ability to combine empathy with creativity, understanding what people need and giving it a form.',
+  'You have a natural ability to inspire, to perform, and to give whatever you touch some heart.',
+  'You have a natural ability to see how anything could be improved, and the patience to actually do it.',
+  'You have a natural ability to create harmony, in rooms, in relationships, and in whatever you make.',
+  'You have a natural ability to go beneath the surface and return with something true.',
+  'You have a natural ability to lift people\u2019s eyes toward a bigger picture.',
+  'You have a natural ability to build, organize, and finish what others only start.',
+  'You have a natural ability to see the future a little sooner than the people around you.',
+  'You have a natural ability to combine empathy with imagination, and to make people feel less alone in what they carry.'
+];
+var ARENA_ALIAS = [
+  'that same personal ground',
+  'that same territory of value and voice',
+  'that same territory of learning and skill',
+  'your private world',
+  'your creative territory',
+  'your daily work',
+  'that same territory of partnership',
+  'that same deep territory',
+  'that same search for meaning',
+  'that same public work',
+  'that same shared territory',
+  'that same quiet territory'
+];
+
+
+var VENUS_REL = [
+  'In love and friendship you are direct and generous, you pursue openly and you protect what is yours.',
+  'In love and friendship you are steadfast and physical, affection for you is something shown, not just said.',
+  'In love and friendship you need conversation as much as closeness, being understood is half of being loved.',
+  'In love and friendship you are tender and protective, you bond deeply and you do not let go easily.',
+  'In love and friendship you are warm and wholehearted, and you need admiration to flow both ways.',
+  'In love and friendship you show care through attention and usefulness, small acts more than declarations.',
+  'In love and friendship you are gracious and giving, and fairness matters to you as much as passion.',
+  'In love and friendship you are intense and private, you offer real depth and you expect it in return.',
+  'In love and friendship you are honest and expansive, you need a companion for the journey, not a warden.',
+  'In love and friendship you are loyal and serious, slow to commit and slower to leave.',
+  'In love and friendship you are independent and openhearted at once, closeness must never feel like a cage.',
+  'In love and friendship you are romantic and selfless, and learning where you end and the other begins is part of your path.'
+];
+
+/* ============================================================
+   STEP 1 — verified chart data -> human themes
+   ============================================================ */
+function deriveThemes(MODE){
+  var SID = MODE !== 'tropical';
+  var T = [];
+  var ruler = findGraha(RULERS[ascSign]);
+  var moon  = findGraha('Moon');
+  var rahu  = SID ? findGraha('Rahu') : null;
+  var ketu  = SID ? findGraha('Ketu') : null;
+  var sun   = findGraha('Sun');
+  var nak   = SID ? Math.floor(moon.sid / (360/27)) % 27 : 0;
+
+  function add(id, cat, statement, sources, strength, tags){
+    T.push({ id:id, category:cat, statement:statement, sources:sources, strength:strength, tags:tags || [] });
+  }
+
+  add('temperament', 'identity', ASC_HUMAN[ascSign], [SIGNS[ascSign] + ' Ascendant'], 0.95,
+      ascSign === 3 || ascSign === 11 ? ['empathy'] : []);
+  add('temperament-edge', 'identity', ASC_EDGE[ascSign], [SIGNS[ascSign] + ' Ascendant'], 0.80, ['edge']);
+  add('core-drive', 'identity', SUN_CORE[sun.sign], ['Sun in ' + SIGNS[sun.sign]], 0.62, []);
+  add('as-others-see-you', 'identity', ASC_OTHERS[ascSign], [SIGNS[ascSign] + ' Ascendant'], 0.74, []);
+  add('vitality-arena', 'identity',
+      '',
+      ['Sun in house ' + sun.house], 0.64, []);
+  add('life-emphasis', 'identity',
+      '',
+      [RULERS[ascSign] + ' (chart ruler) in house ' + ruler.house], 0.84, []);
+
+  add('emotional-nature', 'innerWorld', MOON_EMO[moon.sign], ['Moon in ' + SIGNS[moon.sign]], 0.94,
+      moon.sign === 11 || moon.sign === 3 ? ['empathy'] : []);
+  add('emotional-need', 'innerWorld', MOON_NEED[moon.sign], ['Moon in ' + SIGNS[moon.sign]], 0.90, []);
+  add('emotional-arena', 'innerWorld', MOON_ARENA_LINE[moon.house - 1], ['Moon in house ' + moon.house], 0.86, []);
+  var MODALITY_EMO = [
+    'When something is wrong in your world, your instinct is to act on it rather than sit with it. Motion is how you metabolize difficulty.',
+    'Your feelings have staying power. What you love, you keep loving, and what hurt you takes real time to finish hurting, which is loyalty\u2019s honest price.',
+    'Your feelings are adaptable. You process by moving through moods rather than camping in one, and that flexibility is quiet resilience.'
+  ];
+  add('emotional-style', 'innerWorld', MODALITY_EMO[moon.sign % 3], ['Moon modality'], 0.58, []);
+  if (SID) add('emotional-texture', 'innerWorld', NAK_TOUCH[nak], ['Moon nakshatra ' + nak], 0.45, []);
+  if (SID && moon.sign === 1) add('emotional-steadiness', 'innerWorld',
+      'However complicated life becomes, your inner steadiness is one of your genuine strengths. It recovers, and the people close to you can feel that it holds.',
+      ['Moon exalted in Taurus'], 0.88, []);
+  if (SID && moon.sign === 7) add('emotional-depth-work', 'innerWorld',
+      'Your feelings run deeper than average and ask for more conscious care than most, and the work you do there tends to become rare emotional wisdom.',
+      ['Moon debilitated in Scorpio'], 0.88, []);
+  if (SID && moon.sign === 3) add('emotional-wholeness', 'innerWorld',
+      'Feeling, memory, and care work together in you rather than pulling in different directions, and that integration is a quiet lifelong asset.',
+      ['Moon in own sign Cancer'], 0.85, []);
+
+  /* gifts: benefics and strong malefics, arena-aware, top few survive ranking */
+  add('gift-lead', 'gifts', GIFT_LEAD[ascSign], [SIGNS[ascSign] + ' Ascendant'], 0.85, []);
+  (function(){
+    var ma = findGraha('Mars'), sa = findGraha('Saturn');
+    var strong = (ma.house===1||ma.house===4||ma.house===7||ma.house===10||ma.sign===EXALT.Mars||ma.sign===0||ma.sign===7)
+              || (sa.house===1||sa.house===4||sa.house===7||sa.house===10||sa.sign===EXALT.Saturn||sa.sign===9||sa.sign===10);
+    if (strong && (ascSign===3||ascSign===6||ascSign===11)){
+      add('gift-determination', 'gifts',
+        'You are also more determined than your gentle exterior may suggest. Once something has deep personal meaning for you, you can become remarkably focused and persistent.',
+        ['Mars in house ' + ma.house, 'Saturn in house ' + sa.house], 0.72, []);
+    }
+  })();
+  ['Mercury','Venus','Jupiter','Mars','Saturn'].forEach(function(p){
+    var g = findGraha(p);
+    var s = p === 'Mercury' || p === 'Venus' || p === 'Jupiter' ? 0.66 : 0.58;
+    if (g.house === 1 || g.house === 4 || g.house === 7 || g.house === 10) s += 0.10;
+    if (EXALT[p] !== undefined && g.sign === EXALT[p]) s += 0.12;
+    add('gift-' + p.toLowerCase(), 'gifts', giftStatement(p, g.house), [p + ' in house ' + g.house], s, []);
+  });
+  if (moon.house === 8 || moon.house === 12 || ascSign === 7){
+    add('gift-lived-experience', 'gifts',
+      'Your strongest work tends to come from lived experience. You can take difficult periods and personal reinvention and turn them into something genuinely useful for other people.',
+      ['Moon in house ' + moon.house], 0.78, []);
+  }
+
+  /* structural patterns */
+  var counts = {}, i;
+  for (i = 0; i < GRAHAS.length; i++) counts[GRAHAS[i].house] = (counts[GRAHAS[i].house] || 0) + 1;
+  for (var h = 1; h <= 12; h++){
+    if (counts[h] >= 3){
+      add('concentration', h >= 7 && h !== 8 && h !== 12 ? 'direction' : 'innerWorld',
+        'One area of life keeps drawing your energy back to it: ' + ARENA_HUMAN[h - 1] + '. It asks a lot of you, and it repays what it asks.',
+        [counts[h] + ' grahas in house ' + h], 0.92, []);
+    }
+  }
+  var ang = 0;
+  for (i = 0; i < GRAHAS.length; i++){ var hh = GRAHAS[i].house; if (hh===1||hh===4||hh===7||hh===10) ang++; }
+  if (ang >= 4) add('engagement', 'identity',
+    'Your life rarely stays theoretical. Situations keep arriving that must be lived rather than merely considered, and you grow through engagement more than through planning.',
+    [ang + ' grahas angular'], 0.72, []);
+
+  (function(){
+    var ve = findGraha('Venus');
+    add('relationship-pattern', 'direction', VENUS_REL[ve.sign], ['Venus in ' + SIGNS[ve.sign]], 0.64, []);
+    var sa2 = findGraha('Saturn');
+    add('gift-endurance', 'gifts',
+      'Pressure has taught you endurance. You can keep showing up for ' + ARENA_HUMAN[sa2.house - 1] + ' long after the early excitement is gone, and that staying power becomes its own kind of talent.',
+      ['Saturn in house ' + sa2.house], 0.56, []);
+    var tenants = [];
+    for (var ti = 0; ti < GRAHAS.length; ti++){
+      var gk = GRAHAS[ti].key;
+      if (GRAHAS[ti].house === 10 && ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn'].indexOf(gk) >= 0) tenants.push(gk);
+    }
+    if (tenants.length){
+      var GQ = { Sun:'presence and purpose', Moon:'care and instinct', Mercury:'intelligence and clear words',
+        Venus:'grace and good taste', Mars:'drive and initiative', Jupiter:'wisdom and generosity', Saturn:'discipline and follow-through' };
+      add('career-focus', 'direction',
+        'Part of you is built for ' + ARENA_HUMAN[9] + ', and what you bring there, ' + GQ[tenants[0]] + ', tends to get noticed.',
+        [tenants[0] + ' in house 10'], 0.66, []);
+    }
+  })();
+  add('direction-contribution', 'direction',
+      'Your sense of purpose grows strongest when your gifts are serving ' + ARENA_HUMAN[sun.house - 1] + '.',
+      ['Sun in house ' + sun.house], 0.60, []);
+  if (SID){
+    add('growth-familiar', 'direction', NODE_FAMILIAR[ketu.house - 1], ['Ketu in house ' + ketu.house], 0.80, []);
+    add('growth-direction', 'direction', NODE_GROWTH[rahu.house - 1], ['Rahu in house ' + rahu.house], 0.82, []);
+    add('growth-takeaway', 'direction', NODE_TAKEAWAY[rahu.house - 1], ['Rahu in house ' + rahu.house], 0.78, []);
+  } else {
+    add('growth-direction', 'direction', NODE_GROWTH[ruler.house - 1], ['chart ruler in house ' + ruler.house], 0.82, []);
+    var sat = findGraha('Saturn');
+    add('growth-steadiness', 'direction',
+      'What you commit to over time tends to become your strongest ground, especially in ' + ARENA_HUMAN[sat.house - 1] + '.',
+      ['Saturn in house ' + sat.house], 0.70, []);
+    add('growth-takeaway', 'direction', NODE_TAKEAWAY[ruler.house - 1], ['chart ruler in house ' + ruler.house], 0.76, []);
+  }
+
+  /* integrations: contradictory pulls become one honest insight */
+  if (moon.sign === 6 && (moon.house === 8 || moon.house === 12)){
+    add('integration-harmony-honesty', 'innerWorld',
+      'You value peace, but your growth often asks you to speak honestly rather than keep everything calm, and to stay honest about your own needs instead of preserving harmony at your own expense.',
+      ['Moon in Libra', 'Moon in house ' + moon.house], 0.89, ['integration']);
+  }
+  var privatePull = (moon.house === 4 || moon.house === 8 || moon.house === 12 || ruler.house === 4 || ruler.house === 12);
+  var publicPull  = ((SID && rahu.house === 10) || sun.house === 10 || ruler.house === 10);
+  if (privatePull && publicPull){
+    add('integration-private-public', 'direction',
+      'There is a continuing pull between protecting your private world and bringing your gifts into public view. Home and inner stability remain essential, but you are not meant to remain hidden inside them.',
+      ['private houses emphasized', 'public houses emphasized'], 0.83, ['integration']);
+  }
+  return T;
+}
+
+/* ============================================================
+   STEP 2 + 3 — rank, merge overlaps, resolve redundancy
+   ============================================================ */
+function selectThemes(T){
+  /* merge: if two themes share a tag, keep the stronger, absorb sources */
+  var byTag = {};
+  T.forEach(function(t){ t.tags.forEach(function(tag){ (byTag[tag] = byTag[tag] || []).push(t); }); });
+  Object.keys(byTag).forEach(function(tag){
+    if (tag === 'integration' || tag === 'edge') return;
+    var cats = {};
+    byTag[tag].forEach(function(t){ (cats[t.category] = cats[t.category] || []).push(t); });
+    Object.keys(cats).forEach(function(cat){
+      var group = cats[cat].slice().sort(function(a,b){ return b.strength - a.strength; });
+      for (var k = 1; k < group.length; k++){
+        group[0].sources = group[0].sources.concat(group[k].sources);
+        group[k].dropped = true;
+      }
+    });
+  });
+  /* merge gifts that live in the same house so the arena is named once */
+  var giftPlanets = T.filter(function(t){ return /^gift-(mercury|venus|jupiter|mars|saturn)$/.test(t.id) && !t.dropped; });
+  var byHouse = {};
+  giftPlanets.forEach(function(t){
+    var m = t.sources[0].match(/house (\d+)/);
+    if (m) (byHouse[m[1]] = byHouse[m[1]] || []).push(t);
+  });
+  var GIFT_QUALITY = { mercury:'clear words and quick understanding', venus:'warmth and a feel for beauty',
+    jupiter:'wisdom and encouragement', mars:'drive and courage', saturn:'steadiness and follow-through' };
+  Object.keys(byHouse).forEach(function(h){
+    if (byHouse[h].length >= 2){
+      var g = byHouse[h].sort(function(a,b){ return b.strength - a.strength; });
+      var quals = g.map(function(t){ return GIFT_QUALITY[t.id.replace('gift-','')]; });
+      g[0].statement = 'You bring ' + (quals.length === 2 ? quals[0] + ' together with ' + quals[1]
+        : quals.slice(0,-1).join(', ') + ', together with ' + quals[quals.length-1]) +
+        ' into ' + ARENA_HUMAN[+h - 1] + ', a combination people remember.';
+      for (var k = 1; k < g.length; k++){ g[0].sources = g[0].sources.concat(g[k].sources); g[k].dropped = true; }
+      g[0].strength += 0.08;
+    }
+  });
+
+  var pick = function(cat, n){
+    return T.filter(function(t){ return t.category === cat && !t.dropped; })
+            .sort(function(a,b){ return b.strength - a.strength; })
+            .slice(0, n);
+  };
+  return {
+    identity:  pick('identity', 6),
+    innerWorld:pick('innerWorld', 6),
+    gifts:     pick('gifts', 4),
+    direction: pick('direction', 6)
+  };
+}
+
+/* ============================================================
+   STEP 4 — write the visible summary + hidden trace
+   ============================================================ */
+function buildHumanSummary(MODE){
+  var T = deriveThemes(MODE);
+  var S = selectThemes(T);
+  var trace = [];
+  var usedArenas = {};
+
+  function compose(sectionName, themes, order){
+    var ordered = order
+      ? order.map(function(id){ return themes.filter(function(t){ return t.id === id; })[0]; }).filter(Boolean)
+        .concat(themes.filter(function(t){ return order.indexOf(t.id) === -1; }))
+      : themes;
+    var text = ordered.map(function(t){
+      var s = t.statement;
+      for (var ai = 0; ai < 12; ai++){
+        if (s.indexOf(ARENA_HUMAN[ai]) >= 0){
+          if (usedArenas[ai]) s = s.split(ARENA_HUMAN[ai]).join(ARENA_ALIAS[ai]);
+          usedArenas[ai] = true;
+        }
+      }
+      return s;
+    }).join(' ');
+    trace.push({ section: sectionName,
+      themesUsed: ordered.map(function(t){ return t.id; }),
+      sourcePlacements: ordered.reduce(function(a,t){ return a.concat(t.sources); }, []) });
+    return { text: text, themes: ordered };
+  }
+
+  var one   = compose('WHO YOU ARE', S.identity, ['temperament','as-others-see-you','core-drive','vitality-arena','life-emphasis','engagement','temperament-edge']);
+  var two   = compose('YOUR INNER WORLD', S.innerWorld,
+                ['emotional-nature','emotional-need','integration-harmony-honesty','emotional-arena','emotional-style','emotional-texture']);
+  var three = compose('YOUR NATURAL GIFTS', S.gifts, ['gift-lead']);
+  var four  = compose('YOUR DIRECTION AND GROWTH', S.direction,
+                ['growth-familiar','growth-direction','integration-private-public','concentration','relationship-pattern','career-focus','direction-contribution','growth-takeaway']);
+
+  /* word budget 450-650: trim the lowest-strength optional themes first */
+  function words(s){ return s.split(/\s+/).filter(Boolean).length; }
+  var total = words(one.text) + words(two.text) + words(three.text) + words(four.text);
+  var optional = ['emotional-texture','core-drive','engagement'];
+  var sections = [one, two, three, four];
+  for (var oi = 0; oi < optional.length && total > 650; oi++){
+    for (var si = 0; si < sections.length; si++){
+      var idx = sections[si].themes.findIndex(function(t){ return t.id === optional[oi]; });
+      if (idx >= 0){
+        total -= words(sections[si].themes[idx].statement);
+        sections[si].themes.splice(idx, 1);
+        sections[si].text = sections[si].themes.map(function(t){ return t.statement; }).join(' ');
+      }
+    }
+  }
+  try { console.log('[EMERGE TRACE]', JSON.stringify(trace)); } catch(e){}
+  return { one: one.text, two: two.text, three: three.text, four: four.text, __trace: trace };
+}
+
+
+function setSummaryContent(summary){
+  document.getElementById('summary-paragraph-one').textContent = summary.one;
+  document.getElementById('summary-paragraph-two').textContent = summary.two;
+  document.getElementById('summary-paragraph-three').textContent = summary.three;
+  document.getElementById('summary-paragraph-four').textContent = summary.four;
+}
+
+/* ---------- particles: a small 2d canvas, no second WebGL renderer ---------- */
+var fx = document.getElementById('fx');
+var fxc = null, dots = [], DOT_MAX = (window.innerWidth < 700 ? 42 : 90);
+var fieldPt = { x:0, y:0 };
+function fxResize(){
+  var d = Math.min(window.devicePixelRatio || 1, 2);
+  fx.width = window.innerWidth * d;
+  fx.height = window.innerHeight * d;
+  fx.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  fieldPt.x = window.innerWidth/2;
+  fieldPt.y = window.innerHeight * (window.innerWidth < 700 ? 0.63 : 0.61);
+}
+function spawnDot(gather){
+  var a = Math.random()*Math.PI*2;
+  var r = (Math.min(window.innerWidth, 440)*0.42) * (0.55 + Math.random()*0.5);
+  var x = fieldPt.x + Math.cos(a)*r;
+  var y = fieldPt.y + Math.sin(a)*r*0.28;
+  return {
+    x:x, y:y,
+    vx: gather ? (fieldPt.x - x)*0.006 : (Math.random()-0.5)*0.12,
+    vy: gather ? (fieldPt.y - y)*0.006 - 0.15 : -0.12 - Math.random()*0.2,
+    life: 0, span: 2.4 + Math.random()*3.2,
+    r: 0.6 + Math.random()*1.3
+  };
+}
+
+/* ---------- state machine ---------- */
+var phase = 'idle';           // idle -> arming -> tilting -> resting
+var phaseT0 = 0;
+var parallax = { tx:0, ty:0, rx:0, ry:0 };
+
+function onChartRevealComplete(){
+  window.dispatchEvent(new CustomEvent('EMERGE_CHART_REVEAL_COMPLETE'));
+  // the drawing's one-shots have ended — the void asserts itself as the button
+  // appears, so the bed is unmistakably still there until REVEAL MY CHART.
+  try { EMERGE_SOUND.swell('voidatm', 1.7, 1.4); } catch(_){}
+  setTimeout(function(){ promptEl.classList.add('show'); }, 1200);
+}
+
+function stageText(){
+  var star = cardEl.querySelector('.summary-star');
+  var h2 = cardEl.querySelector('h2');
+  var div = cardEl.querySelector('.summary-divider');
+  var p1 = document.getElementById('summary-paragraph-one');
+  var p2 = document.getElementById('summary-paragraph-two');
+  var p3 = document.getElementById('summary-paragraph-three');
+  var p4 = document.getElementById('summary-paragraph-four');
+  setTimeout(function(){ star.classList.add('in'); }, 0);
+  setTimeout(function(){ h2.classList.add('in'); }, 180);
+  setTimeout(function(){ div.classList.add('in'); }, 420);
+  setTimeout(function(){ p1.classList.add('in'); }, 600);
+  setTimeout(function(){ p2.classList.add('in'); }, 850);
+  setTimeout(function(){ p3.classList.add('in'); }, 1100);
+  setTimeout(function(){ p4.classList.add('in'); }, 1350);
+  setTimeout(function(){
+    ctaEl.classList.add('in');
+    window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
+  }, 1650);
+}
+
+function completeSummaryReveal(){
+  var chartSvg = document.querySelector('#chartWrap svg');
+  chartSvg.style.willChange = '';
+  cardEmerge.style.willChange = '';
+  bodyEl.classList.add('rest');
+  cardFloat.classList.add('settled');
+  phase = 'resting';
+}
+
+function startChartSummaryReveal(){
+  if (chartSummaryRevealStarted) return;
+  chartSummaryRevealStarted = true;
+
+  setSummaryContent(buildHumanSummary('tropical'));
+  promptEl.classList.remove('show');
+  promptEl.classList.add('hide');
+
+  if (REDUCED){
+    /* no journey: dim, place, fade the card in */
+    bodyEl.classList.add('tilt3d');
+    bodyEl.classList.add('cardUp');
+    var ts = cardEl.querySelectorAll('.t');
+    for (var i = 0; i < ts.length; i++) ts[i].classList.add('in');
+    bodyEl.classList.add('rest');
+    phase = 'resting';
+    window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
+    return;
+  }
+
+  var chartSvg = document.querySelector('#chartWrap svg');
+  chartSvg.style.willChange = 'transform';
+  cardEmerge.style.willChange = 'transform, opacity';
+
+  fxResize();
+  window.addEventListener('resize', fxResize);
+  fxc = fx.getContext('2d');
+  dots = [];
+
+  phase = 'arming';
+  phaseT0 = performance.now();
+  summaryTick = tickReveal;
+
+  setTimeout(function(){                       /* 350ms: prompt gone; the space deepens */
+    bodyEl.classList.add('tilt3d');            /* chart tilts back 1.5s */
+    bodyEl.classList.add('pulse');             /* a soft pulse through the gold lines */
+    setTimeout(function(){ bodyEl.classList.remove('pulse'); }, 1100);
+  }, 350);
+  setTimeout(function(){ bodyEl.classList.add('beamOn'); bodyEl.classList.add('fieldOn'); phase = 'tilting'; }, 800);
+  setTimeout(function(){ bodyEl.classList.add('sliver'); }, 1900);
+  setTimeout(function(){ bodyEl.classList.add('cardUp'); }, 2300);
+  setTimeout(function(){ stageText(); }, 3950);
+  setTimeout(function(){ completeSummaryReveal(); }, 4600);
+}
+
+/* per-frame work, driven by the existing render loop */
+function tickReveal(now){
+  var s = (now - phaseT0)/1000;
+
+  /* Ascendant star awakens as the chart begins its tilt */
+  var g = sstep((s - 0.55)/1.4);
+  var breathe = phase === 'resting' ? 0.86 + 0.1*Math.sin(now*0.0012) : 1;
+  ascGlow.setAttribute('opacity', String(0.95*g*breathe));
+
+  /* particles */
+  if (fxc){
+    var gather = phase !== 'resting';
+    if (dots.length < DOT_MAX && Math.random() < (gather ? 0.7 : 0.25)) dots.push(spawnDot(gather));
+    fxc.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    fxc.globalCompositeOperation = 'lighter';
+    for (var i = dots.length - 1; i >= 0; i--){
+      var d = dots[i];
+      d.life += 1/60;
+      d.x += d.vx; d.y += d.vy;
+      d.vx *= 0.985; d.vy *= 0.992;
+      var a = Math.sin(Math.PI*clamp01(d.life/d.span)) * 0.55;
+      if (d.life >= d.span){ dots.splice(i, 1); continue; }
+      fxc.beginPath();
+      fxc.arc(d.x, d.y, d.r, 0, Math.PI*2);
+      fxc.fillStyle = 'rgba(240, 210, 140,' + a.toFixed(3) + ')';
+      fxc.fill();
+    }
+    fxc.globalCompositeOperation = 'source-over';
+  }
+
+  /* restrained dimensional response on the card */
+  if (bodyEl.classList.contains('cardUp')){
+    var rx, ry;
+    if (IS_COARSE){
+      ry = 2.0*Math.sin(now*0.00023);
+      rx = 1.2*Math.sin(now*0.00017 + 1.4);
+    } else {
+      ry = parallax.ty; rx = parallax.tx;
+      parallax.ry += (ry - parallax.ry)*0.06;
+      parallax.rx += (rx - parallax.rx)*0.06;
+      ry = parallax.ry; rx = parallax.rx;
+    }
+    cardEl.style.transform = 'rotateY(' + ry.toFixed(2) + 'deg) rotateX(' + rx.toFixed(2) + 'deg)';
+  }
+}
+
+if (!IS_COARSE){
+  window.addEventListener('pointermove', function(e){
+    parallax.ty = ((e.clientX / window.innerWidth) - 0.5) * 5;    /* max ±2.5deg */
+    parallax.tx = (0.5 - (e.clientY / window.innerHeight)) * 3;   /* max ±1.5deg */
+  });
+}
+
+
+/* ================== NEW: COMBINED CHART RESULT PAGE ==================
+   Reveal My Chart now opens one scrollable result page:
+   official eMERGE logo -> complete chart reference -> person-first
+   summary -> Unlock CTA. Rendered only from the same validated data
+   spine used by the reveal (BIRTH / computed placements). Nothing here
+   recalculates positions. */
+/* v18.47: CozAlyze lockup removed with the result-page header — restore from repo history when the logo returns */
+var resultPage = document.getElementById('chartResultPage');
+var unlockBtn = document.getElementById('unlockCompleteReading');
+var resultBuilt = false, resultOpened = false;
+
+var RP_MODE = 'tropical';
+var RP_SIGN_GLYPH = ['\u2648','\u2649','\u264A','\u264B','\u264C','\u264D','\u264E','\u264F','\u2650','\u2651','\u2652','\u2653'];
+var RP_STYLE = {
+  Sun:{g:'\u2609',c:'#F5A623'},     Moon:{g:'\u263D',c:'#E8EAF0'},
+  Mars:{g:'\u2642',c:'#E8604A'},    Mercury:{g:'\u263F',c:'#7FC98A'},
+  Jupiter:{g:'\u2643',c:'#E0A85C'}, Venus:{g:'\u2640',c:'#E88AB0'},
+  Saturn:{g:'\u2644',c:'#8FA8E8'},  Rahu:{g:'\u260A',c:'#B08FE8'},
+  Ketu:{g:'\u260B',c:'#7FD8C8'},    Uranus:{g:'\u2645',c:'#7FD0E8'},
+  Neptune:{g:'\u2646',c:'#6E8FE0'}, Pluto:{g:'\u2647',c:'#C9A0B8'},
+  NNode:{g:'\u260A',c:'#B08FE8'},   SNode:{g:'\u260B',c:'#7FD8C8'}
+};
+var RP_NAK = ['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','P.Phalguni','U.Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','P.Ashadha','U.Ashadha','Shravana','Dhanishta','Shatabhisha','P.Bhadrapada','U.Bhadrapada','Revati'];
+var RP_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+var RP_DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function rpEsc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function rpHouse(h){
+  var s = (h % 10 === 1 && h !== 11) ? 'st' : (h % 10 === 2 && h !== 12) ? 'nd'
+        : (h % 10 === 3 && h !== 13) ? 'rd' : 'th';
+  return h + s + ' House';
+}
+function rpDegIn(lon){
+  var d = lon - Math.floor(lon/30)*30;
+  var dd = Math.floor(d), mm = Math.round((d - dd)*60);
+  if (mm === 60){ dd++; mm = 0; }
+  return dd + '\u00B0' + (mm<10?'0':'') + mm + '\u2032';
+}
+function rpBirthDisplay(){
+  var out = { date:'', weekday:'', time:'', place:'' };
+  if (__ok && SAVED){
+    var p = String(SAVED.birthDate || '').split('-');           /* YYYY-MM-DD */
+    if (p.length === 3){
+      var dt = new Date(+p[0], +p[1]-1, +p[2]);
+      out.date = RP_MONTHS[dt.getMonth()] + ' ' + dt.getDate() + ', ' + dt.getFullYear();
+      out.weekday = RP_DAYS[dt.getDay()];
+    } else out.date = SAVED.birthDate || '';
+    out.time = SAVED.birthTime || '';
+    out.place = [SAVED.location && SAVED.location.name,
+                 SAVED.location && SAVED.location.country].filter(Boolean).join('<br>');
+  } else {
+    /* v18.53: mirrors the synthetic fixture only; placements stay computed */
+    out.date = 'January 1, 1990'; out.weekday = 'Monday';
+    out.time = '12:00 PM'; out.place = 'New York, New York<br>USA';
+  }
+  var now = new Date();
+  out.generated = RP_MONTHS[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+  return out;
+}
+function rpBodies(){
+  var list = [], i;
+  if (RP_MODE === 'sidereal'){
+    var order = ['Sun','Moon','Mars','Mercury','Jupiter','Venus','Saturn','Rahu','Ketu'];
+    for (i = 0; i < order.length; i++){
+      for (var j = 0; j < GRAHAS.length; j++){
+        if (GRAHAS[j].key === order[i]){
+          list.push({ key:GRAHAS[j].key, label:GRAHAS[j].key,
+                      sign:GRAHAS[j].sign, house:GRAHAS[j].house });
+        }
+      }
+    }
+  } else {
+    for (i = 0; i < BODIES.length; i++){
+      var b = BODIES[i];
+      if (b.key === 'Rising') continue;
+      list.push({ key:b.key, label:b.label || b.key,
+                  sign:Math.floor(b.trop/30), house:b.house });
+    }
+  }
+  return list;
+}
+function rpFind(list, key){
+  for (var i = 0; i < list.length; i++) if (list[i].key === key) return list[i];
+  return null;
+}
+
+/* ================== NEW: TROPICAL OUTER-EXPRESSION ENGINE ==================
+   Replaces the theme-bridge summary for the Tropical result only. Four fixed
+   sections rendered from the verified tropical placements already computed
+   above (BODIES / ascSign / RULERS). Nothing is recalculated. All technical
+   values stay internal; the visible text speaks directly to the person. */
+
+var OX_RISING = [
+'You approach life with courage and directness. Your first instinct is to act, and you would rather begin imperfectly than wait for perfect conditions. People tend to experience you as energetic, honest, and unafraid to speak your mind, so it is easy to know where they stand with you. You thrive when you are free to move, explore, and cut your own path. Your challenge is patience, staying with what you begin long enough to let it fully develop.',
+'You approach life with steadiness and calm. You begin things deliberately, and once you commit you are hard to move. People tend to experience you as grounded, dependable, and quietly warm, someone whose presence settles a room. You thrive when life has rhythm, comfort, and things of real quality in it. Your challenge is telling the difference between what is stable and what has simply become familiar, and letting change in when it is needed.',
+'You approach life through curiosity. Your first instinct is to ask, to talk, to connect one thing to another, and you learn faster in motion than in stillness. People tend to experience you as lively, quick, and easy to talk to. You thrive on variety, conversation, and having more than one thing going at once. Your challenge is depth, choosing a few threads and following them further than your curiosity alone would carry you.',
+'You approach life carefully, feeling your way in before you commit. Your first instinct is to protect, to notice who needs what, and to make a situation safe before you open up in it. People tend to experience you as warm, attentive, and genuinely caring once you let them close. You thrive when your people and your place feel secure. Your challenge is asking directly for what you need instead of quietly withdrawing when it is missing.',
+'You approach life with warmth and presence. You enter a room the way some people enter a stage, and even when you say nothing, you are rarely overlooked. People tend to experience you as generous, expressive, and confident, and they often look to you to set the tone. You thrive when you can contribute something visible and be met with real appreciation. Your challenge is holding your own worth steady even when the applause is quiet.',
+'You approach life with attention. You notice what others miss, and your first instinct is to understand how a thing works and how it could work better. People tend to experience you as capable, modest, and genuinely useful, the one who quietly fixes what everyone else talks about. You thrive when you have a craft to refine and a standard to meet. Your challenge is turning that sharp eye on yourself with less severity than you do.',
+'You approach life with grace and a feel for other people. You read a room quickly, and your first instinct is to find the fair arrangement, the one everyone can live with. People tend to experience you as charming, considerate, and easy company. You thrive in partnership and in settings with beauty and civility in them. Your challenge is choosing clearly and saying no plainly, even when it costs a little harmony.',
+'You approach life with quiet intensity. You watch before you commit, and when you do commit, you are all the way in. People tend to experience you as private, composed, and somehow magnetic, aware there is more to you than you show. You thrive where depth is welcome, in bonds and work that ask for everything real. Your challenge is letting yourself be seen before trust has been proven beyond all doubt.',
+'You approach life with openness and appetite. Your first instinct is to say yes and work out the details on the way, and your honesty arrives before your diplomacy does. People tend to experience you as candid, funny, and encouraging, someone who makes the world feel larger. You thrive when there is a horizon in front of you, something to learn, somewhere to go. Your challenge is finishing, giving your enthusiasm the follow-through it deserves.',
+'You approach life with composure and intent. You begin things in a measured way, thinking in years where others think in weeks, and you carry responsibility as if it were natural to you. People tend to experience you as serious, dependable, and quietly ambitious. You thrive when you are building toward something worth the climb. Your challenge is letting ease and play count as part of the life you are constructing, not a distraction from it.',
+'You approach life from your own angle. Your first instinct is to question the usual way and find the one that actually makes sense, even if no one else is doing it yet. People tend to experience you as original, friendly, and a little uncatchable. You thrive when you are free to think differently and to belong on your own terms. Your challenge is letting people past your ideas and into what you actually feel.',
+'You approach life with gentle openness, feeling your way through situations more than forcing them. Your first instinct is to sense the mood, imagine possibilities, and leave room for what cannot be explained. People tend to experience you as kind, imaginative, and easy to confide in. You thrive where there is meaning, beauty, or someone to help. Your challenge is boundaries, staying open to the world without absorbing every current that moves through it.'
+];
+var OX_RISING_THEMES = [
+['initiative','directness','visible confidence','impatience'],
+['steadiness','reliability','sensory calm','resistance to change'],
+['curiosity','quickness','communication','scattered focus'],
+['protectiveness','sensitivity','warmth','indirectness'],
+['warmth','presence','generosity','need for recognition'],
+['precision','usefulness','modesty','self-criticism'],
+['grace','fairness','partnership instinct','indecision'],
+['intensity','privacy','magnetism','guardedness'],
+['candor','optimism','expansion','follow-through'],
+['composure','ambition','endurance','severity'],
+['originality','independence','detachment','distance'],
+['empathy','imagination','openness','porous boundaries']
+];
+
+var OX_SUN = [
+'At your core you are direct, brave, and built to begin. You feel most alive when something depends on your nerve, and you take pride in going first where others hesitate. You want to be recognized as someone real, someone who acted. Challenges that would exhaust other people tend to focus you, and a life with no contest in it would leave you restless.',
+'At your core you are steady, sensual, and devoted to what lasts. You take pride in what you build slowly and keep well, and you come alive around beauty, comfort, and work you can touch. You want your life to feel solid and genuinely yours. You measure success by what endures, and there is quiet satisfaction for you in watching something you tended grow more valuable with time.',
+'At your core you are curious, verbal, and endlessly interested. You take pride in understanding things and saying them well, and you come alive in exchange, when ideas move between people and something new appears. You want to be known as someone worth talking to. A day that teaches you nothing feels wasted to you, and your interest in the world stays genuinely young.',
+'At your core you are protective, deep-feeling, and loyal. You take pride in the people and places you care for, and you come alive when your presence makes someone feel safe. You want a life with real belonging at the center of it. Your loyalty runs deeper than most people ever test, and the bonds you keep become part of who you are.',
+'At your core you are warm, creative, and expressive. You want your life to stand for something you can be proud of, and you come alive when you can inspire, lead, entertain, or bring a personal vision into form. You are generous with your energy, and recognition means the most when it reflects something you genuinely believe in.',
+'At your core you are precise, sincere, and quietly devoted to doing things right. You take pride in mastery, in work that holds up under inspection, and you come alive when your skill genuinely helps. You want to be valued for substance rather than show. Excellence is personal for you, and you would rather do one thing impeccably than ten things approximately.',
+'At your core you are relational, fair-minded, and drawn to beauty. You take pride in bringing balance where there was friction, and you come alive in true partnership, where two people make each other better. You want a life with harmony you helped create. Ugliness and unfairness genuinely trouble you, and making things more beautiful or more just never feels like small work to you.',
+'At your core you are intense, perceptive, and unwilling to live on the surface. You take pride in facing what others avoid, and you come alive in transformation, in seeing something false burn away and something true remain. You want depth, and you would rather have it than comfort. You are not afraid of endings, because you have learned they are usually beginnings wearing a disguise.',
+'At your core you are honest, expansive, and hungry for meaning. You take pride in what you have seen and understood, and you come alive when life feels like a journey rather than a routine. You want your existence to add up to something you believe in. Cynicism never suits you for long; some part of you keeps insisting the world is larger and better than it looks.',
+'At your core you are determined, capable, and built for the long game. You take pride in earned achievement, in standing at the top of something you climbed yourself. You come alive when your discipline visibly pays off, and you want respect that was deserved rather than given. You understand instinctively that anything worth having has a price, and you have never minded paying it.',
+'At your core you are independent, inventive, and loyal to your own vision of what could be. You take pride in thinking freely, and you come alive when your ideas improve something larger than yourself. You want to matter to the future, not just the present. Convention has little hold on you, and being early to a good idea matters more to you than being popular with it.',
+'At your core you are compassionate, imaginative, and tuned to what runs beneath the surface. You take pride in the gentleness you bring, and you come alive in creating, dreaming, and helping. You want your life to mean something beyond yourself. The line between your inner world and your art, faith, or care for others has always been thin, and that is your strength.'
+];
+var OX_SUN_HOUSE = [
+'Your own presence is the instrument, and life keeps handing you moments where simply being fully yourself is the work.',
+'That fire burns brightest when you are building real value, developing a talent or resource until it can stand on its own.',
+'It shows most in your words, your ideas, and the everyday exchanges where your voice carries further than you realize.',
+'Home, roots, and the people closest to you are where that light matters most, and where you most want it to land.',
+'Play, romance, performance, and anything made by your own hand are where that fire burns brightest.',
+'Craft, service, and the quality of your daily work are where that pride finds its truest expression.',
+'It comes forward most in partnership, where who you choose and how you meet them reveals who you are.',
+'It burns strongest in depth, in shared trust, and in the moments that change you rather than merely entertain you.',
+'Travel, learning, teaching, and questions of belief are where that vitality feels most like itself.',
+'Your public work carries it, and achievement in the open is where you feel most fully expressed.',
+'Friendship, community, and causes larger than one life are where that energy finds its scale.',
+'Solitude, imagination, and quiet work behind the scenes are where that light gathers its strength.'
+];
+
+var OX_MOON = [
+'You need honesty, movement, and the freedom to feel things at full strength. You are quick to react and quick to recover, and you feel most secure with people who can handle your fire without flinching. Slow simmering does not suit you; you would rather have the argument and be done. Learning to pause one breath before you respond is what steadies you.',
+'You need calm, comfort, and affection you can count on. You feel most secure when life is predictable in the ways that matter, with good food, familiar places, and people who stay. Upheaval unsettles you more than you show. Letting yourself bend a little when life insists on change is what steadies you. Small rituals, a good meal, a familiar evening, do more for your heart than grand gestures ever will.',
+'You need conversation, stimulation, and room to think your feelings out loud. You process emotion through words, and you feel most secure with people you can genuinely talk to about anything. Silence and stonewalling unsettle you more than conflict does. Naming the feeling underneath the commentary is what steadies you. Being truly understood matters more to you than being agreed with, and you know the difference immediately.',
+'You need closeness, tenderness, and a place that truly feels like home. Your moods move like tides, and you feel most secure with people who stay gentle through all of them. You give care instinctively and sometimes forget to ask for it back. Letting yourself receive as openly as you give is what steadies you. Your memory for emotional moments is long, and the past stays alive in you, tender and vivid.',
+'You need warmth, affection, and to genuinely matter to the people you love. You feel most secure when appreciation is spoken out loud rather than assumed. Being overlooked wounds you more than you admit. Trusting that you are loved even in the quiet moments is what steadies you. When you feel genuinely celebrated, you become the most generous person in any room.',
+'You need order, usefulness, and quiet reassurance that things are handled. You feel most secure when daily life runs well and you can do something concrete for the people you love. Chaos and vagueness wear on you. Accepting care that arrives imperfectly is what steadies you. Being quietly, concretely helpful is one of the main ways you say that you love someone.',
+'You need balance, connection, and emotional fairness. The atmosphere around you affects you deeply, and you feel most secure when your closest relationships are peaceful, honest, and mutual. You are drawn to beauty and to people who treat you as an equal. Because conflict lands hard on you, you can delay saying what you really need in order to keep the peace, and learning to say it anyway is what steadies you.',
+'You need depth, loyalty, and emotional truth, even when it is uncomfortable. You feel most secure with people who have proven they will not use what they know of you. You feel everything more intensely than you show. Letting trusted people see you before the test is finished is what steadies you. Forgiveness comes slowly to you, but your devotion, once truly given, is nearly impossible to exhaust.',
+'You need space, honesty, and a sense that life is still open. You feel most secure when no one is fencing you in and the future holds somewhere left to go. Heaviness and drama drain you quickly. Staying present with hard feelings instead of outrunning them is what steadies you. Laughter is one of your genuine emotional needs, not a decoration on top of them.',
+'You need respect, reliability, and emotions that keep their word. You feel most secure when you are competent and needed, and you tend to carry your feelings privately, handling them like responsibilities. Softness can feel like risk to you. Letting someone carry you occasionally is what steadies you. You show love through steadiness and provision more naturally than through words, and it counts just as much.',
+'You need friendship inside love, and the freedom to be your own person within any bond. You feel most secure when closeness does not cost you your independence. Emotional pressure makes you step back. Staying in the room when feelings get personal is what steadies you. You care more deeply than your calm exterior suggests, and the people who truly know you know it.',
+'You need gentleness, imagination, and a bond that feels almost unspoken. You absorb the moods around you, and you feel most secure with people whose inner weather is kind. The hard edges of the world tire you. Knowing where you end and others begin is what steadies you. Music, water, and dreams restore you in ways you have stopped trying to explain.'
+];
+var OX_MOON_HOUSE = [
+'Those feelings live close to the surface, and people can usually read the weather in you at a glance.',
+'Material steadiness soothes you, and security you can touch calms feelings that words cannot reach.',
+'You settle yourself by talking things through, and the right conversation can change your whole day.',
+'Home is your anchor, and however far you range, your sense of safety begins there.',
+'Making things, playing, and loving openly are how your heart restores itself.',
+'Your feelings show up in your body and your routines, and tending the ordinary is how you tend yourself.',
+'Partnership is where those needs live most, so who you choose to stand beside shapes how at home you feel in the world.',
+'Your emotional life runs deep and mostly out of sight, and intimacy is where it finally surfaces.',
+'Faith, learning, and the open road restore you when nothing closer to home can.',
+'Your feelings and your public life intertwine, and being valued for your work touches something personal.',
+'Friendship holds real emotional weight for you, and your people are part of how you stay whole.',
+'You need regular retreat, and time alone is not a luxury for you but a form of maintenance.'
+];
+
+var OX_CAREER = [
+'You are drawn to work where you can open ground, move first, and compete honestly. You do best with clear goals, real stakes, and the freedom to act on your own judgment, and you lose patience in roles that are mostly maintenance. People come to recognize you for courage, drive, and the ability to get a stalled thing moving.',
+'You are drawn to work that builds real, tangible value, something that exists and endures because you made it sound. You do best with stability, quality, and ownership of the result, and you distrust shortcuts on principle. People come to recognize you for reliability, taste, and the kind of judgment that compounds over years. Given enough time and trust, you turn slow beginnings into results nobody can argue with.',
+'You are drawn to work that runs on words, ideas, and connection, writing, teaching, selling, explaining, linking people who need each other. You do best with variety and an audience for your thinking. People come to recognize you for versatility and for making complicated things feel clear. The right role keeps your mind moving, your calendar varied, and your curiosity gainfully employed.',
+'You are drawn to work that shelters, feeds, or genuinely takes care of people. You do best where loyalty matters and where what you build becomes a home for others, a team, a practice, a place. People come to recognize you for dedication and for the safety others feel in your hands. Work without heart in it never holds you for long, whatever it pays.',
+'You are drawn to work that carries your personal signature, where creativity and leadership are welcome and the result visibly bears your mark. You do best with an audience, a stage, or a team that looks to you. People come to recognize you for warmth, originality, and the confidence you lend a room. Anonymous excellence frustrates you; your best work has always wanted witnesses.',
+'You are drawn to work where precision matters and real problems get solved, craft, analysis, health, service done properly. You do best with a standard to uphold and the room to keep improving it. People come to recognize you for competence and for being the one who actually gets it right. Sloppy standards around you are harder for you to bear than heavy workloads are.',
+'You are drawn to work involving people, fairness, and form, advising, designing, negotiating, bringing opposing sides to a workable middle. You do best in partnership and in settings where grace counts. People come to recognize you for diplomacy and an eye for what balances, and for making cooperation feel natural rather than forced. You do your finest work where relationships are healthy and respect runs in both directions.',
+'You are drawn to work with depth and consequence, research, healing, strategy, managing what others find too heavy to hold. You do best with autonomy and matters of real weight. People come to recognize you for penetration, discretion, and nerve that holds when everything is on the line. Surface-level work bores you quickly; you want the version with real stakes in it.',
+'You are drawn to work that teaches, publishes, travels, or otherwise widens the map, for yourself and for others. You do best with a mission you believe in and room to roam. People come to recognize you for vision, honesty, and an enthusiasm that spreads to everyone around the work. A paycheck alone has never been reason enough for you to stay anywhere.',
+'You are drawn to work that lets you build something real and lasting, and you take professional responsibility more seriously than most. You do best when you can set a high standard, carry genuine authority, and be measured by results rather than noise. People come to recognize you for competence, persistence, and the ability to create momentum where others stall.',
+'You are drawn to work that improves the system itself, innovation, reform, technology, or any effort organized around a better future. You do best with intellectual freedom and colleagues who think. People come to recognize you for originality and for seeing around corners before anyone else has thought to look. Being told it has always been done this way is, for you, an argument to change it.',
+'You are drawn to work with imagination or compassion at its center, the arts, healing, or service to something larger than profit. You do best when the work means something and the atmosphere is humane. People come to recognize you for vision, empathy, and an unusual creative sensibility. When the meaning drains out of work, so does your energy, and you treat that as information.'
+];
+var OX_TENTH_PLANET = {
+  Sun:     'Your work tends to put you personally in view, and that visibility suits you more than you sometimes admit.',
+  Moon:    'The public responds to something genuine in you, and work that touches people\'s real lives fits you best.',
+  Mercury: 'Your voice is part of your profession, and what you write, say, or explain travels further than you expect.',
+  Venus:   'Charm and taste open professional doors for you, and what you make pleases as much as it holds.',
+  Mars:    'You bring visible drive to your work, and people learn quickly that you compete to win.',
+  Jupiter: 'Opportunity finds your working life more often than most, and growth tends to follow wherever you commit.',
+  Saturn:  'Your reputation is built the slow way, and the authority you earn holds because everyone watched you earn it.'
+};
+var OX_CAREER_CLOSE = [
+/*0 expression/visibility (Sun in 1,5,10,11)*/ 'Because so much of you comes alive in creating and being seen, your strongest path pairs ambition with personal expression, work that carries your own signature rather than someone else\'s vision.',
+/*1 mastery/depth (2,6,8)*/ 'Your strongest path rewards depth over display, letting mastery accumulate quietly until the quality of the work speaks louder than any introduction you could give it.',
+/*2 ideas/reach (3,9)*/ 'Your strongest path gives your ideas reach, work where the things you understand become things other people can learn from, use, and carry further.',
+/*3 meaning/quiet (4,12)*/ 'Your strongest path honors what the work means to you privately, and in the end lasting satisfaction will matter more to you than public applause ever could.',
+/*4 partnership (7)*/ 'Your strongest path is built with others, and choosing the right partners and allies will shape your success as much as your own considerable talent does.'
+];
+
+var TROPICAL_SUMMARY_TRACE = { rising:{sources:[],themes:[]}, sun:{sources:[],themes:[]},
+                               moon:{sources:[],themes:[]}, career:{sources:[],themes:[]} };
+
+function oxBody(key){
+  for (var i = 0; i < BODIES.length; i++) if (BODIES[i].key === key) return BODIES[i];
+  return null;
+}
+function buildTropicalRisingSection(P){
+  TROPICAL_SUMMARY_TRACE.rising = {
+    sources: [SIGNS[P.risingSign] + ' rising', P.rulerName + ' as its guide'],
+    themes: OX_RISING_THEMES[P.risingSign]
+  };
+  return OX_RISING[P.risingSign];
+}
+function buildTropicalSunSection(P){
+  TROPICAL_SUMMARY_TRACE.sun = {
+    sources: ['Sun in ' + SIGNS[P.sun.sign], 'Sun house ' + P.sun.house + ' (internal)'],
+    themes: ['identity','pride','creative drive','recognition']
+  };
+  return OX_SUN[P.sun.sign] + ' ' + OX_SUN_HOUSE[P.sun.house - 1];
+}
+function buildTropicalMoonSection(P){
+  TROPICAL_SUMMARY_TRACE.moon = {
+    sources: ['Moon in ' + SIGNS[P.moon.sign], 'Moon house ' + P.moon.house + ' (internal)'],
+    themes: ['emotional needs','security','relationships','regulation']
+  };
+  return OX_MOON[P.moon.sign] + ' ' + OX_MOON_HOUSE[P.moon.house - 1];
+}
+function buildTropicalCareerSection(P){
+  var text = OX_CAREER[P.tenthSign];
+  var srcs = [SIGNS[P.tenthSign] + ' on the tenth (internal)'];
+  if (P.tenthPlanets.length){
+    text += ' ' + OX_TENTH_PLANET[P.tenthPlanets[0]];
+    srcs.push(P.tenthPlanets[0] + ' in the tenth (internal)');
+  }
+  var sh = P.sun.house, group;
+  if (sh === 1 || sh === 5 || sh === 10 || sh === 11) group = 0;
+  else if (sh === 2 || sh === 6 || sh === 8) group = 1;
+  else if (sh === 3 || sh === 9) group = 2;
+  else if (sh === 4 || sh === 12) group = 3;
+  else group = 4;
+  text += ' ' + OX_CAREER_CLOSE[group];
+  srcs.push('Sun house emphasis (internal)');
+  TROPICAL_SUMMARY_TRACE.career = {
+    sources: srcs,
+    themes: ['public contribution','work style','recognition','direction']
+  };
+  return text;
+}
+function buildTropicalProfile(){
+  var sun = oxBody('Sun'), moon = oxBody('Moon');
+  var tenthSign = HOUSE_SYSTEM_USED === 'placidus' ? Math.floor(MC/30) : (ascSign + 9) % 12;   /* MC sign under Placidus */
+  var order = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn'];
+  var tenthPlanets = [];
+  for (var i = 0; i < order.length; i++){
+    var b = oxBody(order[i]);
+    if (b && b.house === 10) tenthPlanets.push(b.key);
+  }
+  return {
+    risingSign: ascSign,
+    rulerName: RULERS[ascSign],
+    sun: { sign: Math.floor(sun.trop/30), house: sun.house },
+    moon: { sign: Math.floor(moon.trop/30), house: moon.house },
+    tenthSign: tenthSign,
+    tenthPlanets: tenthPlanets
+  };
+}
+function renderTropicalOuterExpression(){
+  var P = buildTropicalProfile();
+  var tropicalOuterExpression = {
+    rising: buildTropicalRisingSection(P),
+    sun:    buildTropicalSunSection(P),
+    moon:   buildTropicalMoonSection(P),
+    career: buildTropicalCareerSection(P)
+  };
+  document.getElementById('rpOuterRisingIc').textContent = RP_SIGN_GLYPH[P.risingSign];
+  document.getElementById('rp-outer-rising').textContent = tropicalOuterExpression.rising;
+  document.getElementById('rp-outer-sun').textContent    = tropicalOuterExpression.sun;
+  document.getElementById('rp-outer-moon').textContent   = tropicalOuterExpression.moon;
+  document.getElementById('rp-outer-career').textContent = tropicalOuterExpression.career;
+  try { console.log('[EMERGE TRACE tropical-outer]', JSON.stringify(TROPICAL_SUMMARY_TRACE)); } catch(e){}
+}
+/* ================== END NEW: TROPICAL OUTER-EXPRESSION ENGINE ================== */
+
+/* v18.47: renders the animation-page design from the same verified data spine.
+   Nodes are not shown on the tropical free chart. All reading copy comes
+   unchanged from the outer-expression engine below. */
+var TR_GLYPH_FILE = ['aries','taurus','gemini','cancer','leo','virgo','libra','scorpio','sagittarius','capricorn','aquarius','pisces'];
+function trCoords(){
+  function dm(v){ var d = Math.floor(Math.abs(v)), m = Math.round((Math.abs(v) - d)*60);
+    if (m === 60){ d++; m = 0; } return { d:d, m:(m<10?'0':'')+m }; }
+  var la = dm(BIRTH.lat), lo = dm(BIRTH.lon);
+  return la.d + '\u00B0' + (BIRTH.lat >= 0 ? 'N' : 'S') + ' ' + la.m + '\u2032 \u00B7 '
+       + lo.d + '\u00B0' + (BIRTH.lon >= 0 ? 'E' : 'W') + ' ' + lo.m + '\u2032';
+}
+/* v18.50: the result page owns its own zoom.
+   v18.49 turned on BROWSER pinch by rewriting the viewport meta. That is what
+   made the page disappear: #chartResultPage is position:fixed inside a fixed
+   parent, and iOS does not pan fixed layers with the visual viewport, so the
+   first pinch pushed the reading off screen with no way back. The viewport
+   stays locked at scale 1 in both documents; instead the page transforms its
+   own content, so a zoom holds until the reader ends it — nothing times out,
+   nothing scrolls away, and the reading stays exactly where they put it.
+   Pinch to scale 1x-4x, one finger to pan while zoomed, pinch back to 1x to
+   return to normal scrolling. */
+var TR_ZMIN = 1, TR_ZMAX = 4;
+var trZ = 1, trTX = 0, trTY = 0;
+var trPinch = null, trPan = null;
+
+function trZoomApply(){
+  var page = document.getElementById('chartResultPage');
+  var inner = page && page.querySelector('.tr-page');
+  if (!inner) return;
+  if (trZ <= 1.001){
+    trZ = 1;
+    inner.style.transform = '';                    /* clean at 1x so position:sticky keeps working */
+    inner.style.transformOrigin = '';
+    page.style.overflowY = 'auto';
+    page.style.touchAction = 'pan-y';
+    if (trTY){ page.scrollTop = -trTY; trTX = 0; trTY = 0; }
+  } else {
+    inner.style.transformOrigin = '0 0';
+    inner.style.transform = 'translate(' + trTX.toFixed(2) + 'px,' + trTY.toFixed(2) + 'px) scale(' + trZ.toFixed(4) + ')';
+    page.style.overflowY = 'hidden';
+    page.style.touchAction = 'none';
+  }
+}
+function trZoomClamp(){
+  var page = document.getElementById('chartResultPage');
+  var inner = page && page.querySelector('.tr-page');
+  if (!inner) return;
+  var vw = page.clientWidth, vh = page.clientHeight;
+  var cw = inner.offsetWidth * trZ, ch = inner.offsetHeight * trZ;
+  var left = inner.offsetLeft * trZ;
+  trTX = (cw <= vw) ? (vw - cw)/2 - left : Math.min(-left, Math.max(vw - cw - left, trTX));
+  trTY = (ch <= vh) ? 0 : Math.min(0, Math.max(vh - ch, trTY));
+}
+function trTouchMid(t0, t1, page){
+  var r = page.getBoundingClientRect();
+  return { x:(t0.clientX + t1.clientX)/2 - r.left, y:(t0.clientY + t1.clientY)/2 - r.top };
+}
+function trTouchDist(t0, t1){
+  return Math.hypot(t0.clientX - t1.clientX, t0.clientY - t1.clientY) || 1;
+}
+function trZoomWire(){
+  var page = document.getElementById('chartResultPage');
+  if (!page || page.__zoomWired) return;
+  page.__zoomWired = true;
+
+  page.addEventListener('touchstart', function(e){
+    if (e.touches.length === 2){
+      if (trZ === 1){ trTY = -page.scrollTop; trTX = 0; }   /* fold the current scroll into the transform */
+      var m = trTouchMid(e.touches[0], e.touches[1], page);
+      trPinch = { d:trTouchDist(e.touches[0], e.touches[1]), z:trZ, tx:trTX, ty:trTY, m:m };
+      trPan = null;
+      e.preventDefault();
+    } else if (e.touches.length === 1 && trZ > 1){
+      trPan = { x:e.touches[0].clientX, y:e.touches[0].clientY, tx:trTX, ty:trTY };
+    }
+  }, { passive:false });
+
+  page.addEventListener('touchmove', function(e){
+    if (trPinch && e.touches.length === 2){
+      var k = trTouchDist(e.touches[0], e.touches[1]) / trPinch.d;
+      var nz = Math.max(TR_ZMIN, Math.min(TR_ZMAX, trPinch.z * k));
+      var cx = (trPinch.m.x - trPinch.tx) / trPinch.z;      /* content point under the first midpoint */
+      var cy = (trPinch.m.y - trPinch.ty) / trPinch.z;
+      var m = trTouchMid(e.touches[0], e.touches[1], page);
+      trZ = nz; trTX = m.x - cx*nz; trTY = m.y - cy*nz;
+      trZoomClamp(); trZoomApply();
+      e.preventDefault();
+    } else if (trPan && e.touches.length === 1 && trZ > 1){
+      trTX = trPan.tx + (e.touches[0].clientX - trPan.x);
+      trTY = trPan.ty + (e.touches[0].clientY - trPan.y);
+      trZoomClamp(); trZoomApply();
+      e.preventDefault();
+    }
+  }, { passive:false });
+
+  function end(e){
+    if (e.touches.length < 2) trPinch = null;
+    if (e.touches.length === 0) trPan = null;
+    trZoomClamp(); trZoomApply();
+  }
+  page.addEventListener('touchend', end);
+  page.addEventListener('touchcancel', end);
+  window.addEventListener('resize', function(){ trZoomClamp(); trZoomApply(); });
+}
+
+var trHeroDone = false;
+function trHeroWire(){
+  var v = document.getElementById('trHero');
+  if (!v || v.__wired) return;
+  v.__wired = true;
+  v.addEventListener('ended', function(){ trHeroDone = true; });   /* hold the night pose */
+  v.addEventListener('pointerdown', function(){
+    if (trHeroDone){ trHeroDone = false; v.currentTime = 0; v.play().catch(function(){}); }
+  });
+}
+window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){
+  var v = document.getElementById('trHero');
+  if (v && resultOpened){ try { v.play().catch(function(){}); } catch(_){} }
+});
+function buildResultPage(){
+  var bd = rpBirthDisplay();
+  document.getElementById('trDetails').innerHTML =
+      '<div class="tr-dcell">' + rpEsc(bd.date).toUpperCase() + '</div>'
+    + '<div class="tr-dcell">' + rpEsc(bd.time).toUpperCase() + '</div>'
+    + '<div class="tr-dcell">' + bd.place.replace('<br>', ', ').toUpperCase() + '</div>'
+    + '<div class="tr-dcell">' + trCoords() + '</div>';
+
+  var bodies = rpBodies();
+  var L = ['Sun','Moon','Mercury','Mars','Venus'];
+  var R = ['Jupiter','Saturn','Neptune','Uranus','Pluto'];
+  function col(keys){
+    var h = '';
+    for (var i = 0; i < keys.length; i++){
+      var b = rpFind(bodies, keys[i]); if (!b) continue;
+      var st = RP_STYLE[b.key];
+      h += '<div class="tr-prow"><span class="tr-pgly">' + st.g + '</span>'
+        + '<span class="tr-pname">' + rpEsc(b.label).toUpperCase() + '</span>'
+        + '<span class="tr-psign">' + SIGNS[b.sign].toUpperCase() + '</span>'
+        + '<span class="tr-phouse">' + rpHouse(b.house) + '</span></div>';
+    }
+    return h;
+  }
+  document.getElementById('trPlanetsL').innerHTML = col(L);
+  document.getElementById('trPlanetsR').innerHTML = col(R);
+
+  document.getElementById('trAscGlyph').src = 'glyph-' + TR_GLYPH_FILE[ascSign] + '.png';
+  document.getElementById('trAscGlyph').alt = SIGNS[ascSign];
+  document.getElementById('trAscName').textContent = SIGNS[ascSign].toUpperCase();
+
+  var P = buildTropicalProfile();
+  document.getElementById('trSunHead').innerHTML =
+    'YOUR SUN IN ' + SIGNS[P.sun.sign].toUpperCase() + ' <span class="tr-hs">' + rpHouse(P.sun.house) + '</span>';
+  document.getElementById('trMoonHead').innerHTML =
+    'YOUR MOON IN ' + SIGNS[P.moon.sign].toUpperCase() + ' <span class="tr-hs">' + rpHouse(P.moon.house) + '</span>';
+
+  renderTropicalOuterExpression();
+  trHeroWire();
+}
+function openCompleteChartResult(){
+  if (resultOpened) return;
+  resultOpened = true;
+  try { EMERGE_SOUND.stopLoop('drawbed', 2.5); EMERGE_SOUND.loop('hum'); } catch(_){}
+  revealBtn.setAttribute('disabled', 'true');
+  if (!resultBuilt){
+    try { buildResultPage(); resultBuilt = true; }
+    catch(e){ console.log('[EMERGE FLOW] result page build error:', e); }
+  }
+  promptEl.classList.remove('show');
+  promptEl.classList.add('hide');
+  bodyEl.classList.add('result-leaving');
+  window.setTimeout(function(){
+    var gone = ['chartWrap','revealPrompt','dim','beam','field','fx','summaryStage'];
+    for (var i = 0; i < gone.length; i++){
+      var el = document.getElementById(gone[i]);
+      if (el){ el.hidden = true; el.setAttribute('aria-hidden', 'true'); }
+    }
+    resultPage.hidden = false;
+    resultPage.setAttribute('aria-hidden', 'false');
+    resultPage.scrollTop = 0;
+    trZoomWire();                         /* v18.50: the page owns its zoom */
+    requestAnimationFrame(function(){ resultPage.classList.add('is-visible'); });
+    console.log('[EMERGE FLOW] 7. reveal -> combined chart result page (logo + reference + summary)');
+    window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
+  }, REDUCED ? 0 : 650);
+}
+/* ===== v18.31: UNLOCK -> DASHBOARD FINALE =====
+   Both unlock prompts now end on the new dashboard page: the current
+   screen sinks away and the CozAlyze dashboard rises in as the last
+   part of the animation. Listens on the existing unlock event so both
+   buttons (summary CTA + result page) trigger it unchanged. */
+var DASH_SRC = 'pricing.jpg';
+var dashOverlay = null, dashStarted = false;
+function buildDashOverlay(){
+  if (dashOverlay) return dashOverlay;
+  dashOverlay = document.createElement('div');
+  dashOverlay.id = 'unlockDash';
+  var im = document.createElement('img');
+  im.src = DASH_SRC;
+  im.alt = 'CozAlyze — Discover yourself through multiple perspectives';
+  dashOverlay.appendChild(im);
+  document.body.appendChild(dashOverlay);
+  return dashOverlay;
+}
+function startUnlockTransition(){
+  if (dashStarted) return;
+  dashStarted = true;
+  try { EMERGE_SOUND.play('impact'); EMERGE_SOUND.haptic(10); } catch(_){}
+  var ov = buildDashOverlay();
+  bodyEl.classList.add('unlock-leaving');
+  window.setTimeout(function(){
+    ov.classList.add('is-visible');
+    ov.scrollTop = 0;
+    console.log('[EMERGE FLOW] 9. unlock -> dashboard finale');
+  }, REDUCED ? 0 : 550);
+}
+window.addEventListener('EMERGE_UNLOCK_READING_REQUESTED', startUnlockTransition);
+window.setTimeout(function(){ try { (new Image()).src = DASH_SRC; } catch(_){} }, 4000);  /* preload after the drawing settles */
+/* ===== END v18.31: UNLOCK -> DASHBOARD FINALE ===== */
+
+unlockBtn.addEventListener('click', function(){
+  window.dispatchEvent(new CustomEvent('EMERGE_UNLOCK_READING_REQUESTED'));
+  console.log('[EMERGE FLOW] 8. combined result -> unlock complete reading requested');
+});
+/* ================== END NEW: COMBINED CHART RESULT PAGE ================== */
+
+/* ================== NEW v18.10: TROPICAL REVEAL TRANSITION ==================
+   The Sidereal v18.8 cinematic, performed by the circular Tropical wheel.
+   Tap REVEAL MY CHART and the wheel pulls backward into 3D (circle becomes
+   an ellipse), the gold orbital rings form beneath it, the vertical beam
+   rises from the wheel's center, the rounded card lifts through the light,
+   and only then does the scene dissolve into the combined Tropical result
+   page, which is untouched. Identical classes, CSS, timeline, particles,
+   and parallax as sidereal-reveal v18.8; openCompleteChartResult is kept
+   below, unused, for rollback. */
+var chartRevealTransitionStarted = false;
+function stageCardShell(){
+  var star = cardEl.querySelector('.summary-star');
+  var h2 = cardEl.querySelector('h2');
+  var div = cardEl.querySelector('.summary-divider');
+  setTimeout(function(){ star.classList.add('in'); }, 1000);
+  setTimeout(function(){ h2.classList.add('in'); }, 1180);
+  setTimeout(function(){ div.classList.add('in'); }, 1420);
+}
+function finishRevealTransition(fadeMs){
+  if (resultOpened) return;
+  resultOpened = true;
+  try { EMERGE_SOUND.stopLoop('drawbed', 2.5); EMERGE_SOUND.loop('hum'); } catch(_){}
+  bodyEl.classList.add('result-leaving');
+  window.setTimeout(function(){
+    summaryTick = null;
+    var gone = ['chartWrap','revealPrompt','dim','beam','field','fx','summaryStage'];
+    for (var i = 0; i < gone.length; i++){
+      var el = document.getElementById(gone[i]);
+      if (el){ el.hidden = true; el.setAttribute('aria-hidden', 'true'); }
+    }
+    resultPage.hidden = false;
+    resultPage.setAttribute('aria-hidden', 'false');
+    resultPage.scrollTop = 0;
+    trZoomWire();                         /* v18.50: the page owns its zoom */
+    requestAnimationFrame(function(){ resultPage.classList.add('is-visible'); });
+    console.log('[EMERGE FLOW] 7. reveal transition -> combined chart result page');
+    window.dispatchEvent(new CustomEvent('EMERGE_FREE_SUMMARY_COMPLETE'));
+  }, fadeMs);
+}
+function startRevealTransition(){
+  if (resultOpened || chartRevealTransitionStarted) return;
+  chartRevealTransitionStarted = true;
+  // REVEAL MY CHART: the void's journey ends here — it breathes out and the
+  // Uncle John ambient field begins, continuing throughout from now on.
+  window.EMERGE_HOLD_AMBIENT = false;
+  try { EMERGE_SOUND.stopLoop('voidatm', 2.0); } catch(_){}
+  try { EMERGE_SOUND.loop('ambient', 1.4);   /* the field returns a step louder for the reading */ } catch(_){}
+  try { EMERGE_SOUND.play('impact'); EMERGE_SOUND.play('ascension'); EMERGE_SOUND.haptic(12); } catch(_){}
+  revealBtn.setAttribute('disabled', 'true');
+
+  if (!resultBuilt){
+    try { buildResultPage(); resultBuilt = true; }
+    catch(e){ console.log('[EMERGE FLOW] result page build error:', e); }
+  }
+
+  promptEl.classList.remove('show');
+  promptEl.classList.add('hide');
+
+  if (REDUCED){ finishRevealTransition(0); return; }
+
+  var chartSvg = document.querySelector('#chartWrap svg');
+  if (chartSvg) chartSvg.style.willChange = 'transform';
+  cardEmerge.style.willChange = 'transform, opacity';
+
+  fxResize();
+  window.addEventListener('resize', fxResize);
+  fxc = fx.getContext('2d');
+  dots = [];
+
+  phase = 'arming';
+  phaseT0 = performance.now();
+  summaryTick = tickReveal;
+
+  setTimeout(function(){                       /* 350ms: prompt gone; the space deepens */
+    bodyEl.classList.add('tilt3d');            /* wheel pulls backward, 1.5s */
+    bodyEl.classList.add('pulse');             /* a soft pulse through the gold lines */
+    setTimeout(function(){ bodyEl.classList.remove('pulse'); }, 1100);
+  }, 350);
+  setTimeout(function(){ bodyEl.classList.add('beamOn'); bodyEl.classList.add('fieldOn'); phase = 'tilting'; }, 800);
+  setTimeout(function(){ bodyEl.classList.add('sliver'); }, 1900);
+  setTimeout(function(){ bodyEl.classList.add('cardUp'); stageCardShell(); }, 5300);   /* extended beam + orbiting light before the card */
+  setTimeout(function(){ finishRevealTransition(650); }, 7450);                        /* summary arrives after, same crossfade */
+}
+/* ================== END NEW v18.10: TROPICAL REVEAL TRANSITION ================== */
+
+revealBtn.addEventListener('click', startRevealTransition);
+revealBtn.addEventListener('touchstart', function(){
+  revealBtn.classList.add('touched');
+  setTimeout(function(){ revealBtn.classList.remove('touched'); }, 1600);
+}, { passive:true });
+
+ctaEl.addEventListener('click', function(){
+  window.dispatchEvent(new CustomEvent('EMERGE_UNLOCK_READING_REQUESTED'));
+  console.log('[EMERGE FLOW] 7. free summary -> unlock complete reading requested');
+});
+/* ================== END NEW: 3D CHART SUMMARY REVEAL ================== */
+
+})();
+</script>
+</body>
+</html>
