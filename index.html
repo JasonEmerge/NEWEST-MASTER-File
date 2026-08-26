@@ -77,16 +77,16 @@
   #finale.ready .fn-sub      { opacity:1; transform:none; transition-delay:.08s; }
   #finale.ready .fn-pill     { opacity:1; transform:none; transition-delay:.10s; }
   #finale.ready .fn-hint     { opacity:1; transform:none; transition-delay:.14s; }
-  #finale .fn-logo { width:min(40vw,171px); margin-top:5vh; margin-bottom:6px;   /* v19.47: -5%, lowered 5vh */
+  #finale .fn-logo { width:min(48vw,205px); margin-top:5vh; margin-bottom:8px;   /* v19.88: +20% */
     filter:drop-shadow(0 0 14px rgba(214,169,134,.28)); }
   #finale .fn-discover { font-family:Georgia,'Times New Roman',serif; font-style:italic;
     font-size:19px; color:var(--emerge-champagne-light); letter-spacing:.06em;
     text-shadow:0 0 22px rgba(214,169,134,.35); }
-  #finale .fn-sub { font-size:10px; letter-spacing:.32em; text-transform:uppercase;
-    color:#C9A27F; line-height:2; margin:18px 0 24px; margin-right:-.32em; }
+  #finale .fn-sub { font-size:clamp(12px,3.2vw,14px); letter-spacing:.24em; text-transform:uppercase;
+    color:#C9A27F; line-height:1.95; margin:18px 0 24px; margin-right:-.24em; }   /* v19.88: was 10px / .32em */
   #finale .fn-pill { pointer-events:auto; cursor:pointer; border:0; font:inherit;
-    padding:14px 30px; border-radius:999px; letter-spacing:.2em; text-transform:uppercase;
-    font-size:12px; font-weight:600; color:#2B1D13;
+    padding:15px 26px; border-radius:999px; letter-spacing:.15em; text-transform:uppercase;
+    font-size:clamp(13px,3.6vw,15px); font-weight:600; color:#2B1D13;   /* v19.88: was 12px / .2em, padding traded so it holds one line */
     background:linear-gradient(180deg, #E8C7A6, #C99378);
     box-shadow:0 0 30px rgba(214,169,134,.35), inset 0 1px 0 rgba(255,240,220,.6); }
   #finale .fn-hint { margin-top:14px; font-size:11px; color:#B08A6E; letter-spacing:.06em; }
@@ -208,28 +208,28 @@
 #search-head .spark { -webkit-text-fill-color:#D6A986; margin-right:8px; font-size:13px; }
 #searchbox { position:relative; }
 #search {
-  width:100%; box-sizing:border-box; padding:13px 16px 13px 42px; border-radius:12px;
+  width:100%; box-sizing:border-box; padding:15px 16px 15px 45px; border-radius:12px;
   background:rgba(18,16,10,.72); border:1px solid rgba(214,169,134,.35);
-  color:#F5E9D6; font-size:17.5px; outline:none; backdrop-filter:blur(6px);   /* v19.74: was 16px */
+  color:#F5E9D6; font-size:19.5px; outline:none; backdrop-filter:blur(6px);   /* v19.88: was 17.5px, box grows with it */
 }
 #search::placeholder { color:#B08A6E; }
 #search:focus { border-color:rgba(214,169,134,.75); box-shadow:0 0 18px rgba(214,169,134,.18); }
-#searchbox::before {
-  content:''; position:absolute; left:14px; top:24px; width:15px; height:15px;
+#searchbox::before {   /* v19.88: recentred and +1px for the taller field */
+  content:''; position:absolute; left:15px; top:27px; width:16px; height:16px;
   transform:translateY(-62%); border:1.6px solid #B08A6E; border-radius:50%;
 }
 #searchbox::after {
-  content:''; position:absolute; left:26px; top:27px; width:7px; height:1.6px;
+  content:''; position:absolute; left:28px; top:30px; width:8px; height:1.6px;
   background:#B08A6E; transform:rotate(45deg);
 }
 #dropdown { text-align:left; margin-top:8px; }
 .opt {
-  padding:11px 13px; margin:5px 0; border-radius:10px; cursor:pointer; font-size:15px;   /* v19.74: was 13px */
+  padding:12px 13px; margin:5px 0; border-radius:10px; cursor:pointer; font-size:16.5px;   /* v19.88: was 15px */
   background:rgba(18,16,10,.9); border:1px solid rgba(214,169,134,.22); color:#F5E9D6;
   transition:.12s; backdrop-filter:blur(6px);
 }
 .opt:hover { background:rgba(60,48,20,.9); border-color:rgba(214,169,134,.5); }
-.hint { font-size:13px; color:#C1997D; padding:7px 3px; line-height:1.5; }   /* v19.74: was 11.5px */
+.hint { font-size:14px; color:#C1997D; padding:7px 3px; line-height:1.5; }   /* v19.88: was 13px */
 .hint.err { color:#ff9a9a; }
 .marker { pointer-events:none; transform:translate(-50%,-58%); text-align:center;
   opacity:0; animation:rise2 1.2s ease .4s forwards; }
@@ -700,7 +700,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.87 · entry caret left</div>
+<div id="ver">SCENE 1 · v19.88 · entry type + breath</div>
 
 <script>
 /* v19.75: the two-perspectives page owns its own zoom.
@@ -1371,6 +1371,25 @@ const FULL_EARTH_CENTER_Y       = 0.50;
 const birthState = { point:0, energy:0, surface:0, atmosphere:0, light:0 };
 let earthBirthStart = 0, settleStart = 0;
 
+/* v19.88 — THE BREATH. The continuous Uncle John field is the only thing touched
+   here. It rides down with the growth of the Earth so that by the time the world
+   has fully emerged there is silence, and it does not return until the reader
+   starts typing their birth date. The 06 growth cue layered on top is untouched:
+   it ends on its own, exactly as it always has. */
+window.__ambFadeState = window.__ambFadeState || 'full';
+/* swell() is a silent no-op until the ambient loop is actually decoded and
+   running, so the ramp is re-issued a couple of times with the remaining time
+   decremented. Re-issuing is harmless: each call simply continues the same ramp
+   from wherever the gain currently sits toward the same target. */
+function ambFade(level, secs){
+  [0, 700, 1500].forEach(function(delay){
+    setTimeout(function(){
+      var left = Math.max(0.5, secs - delay / 1000);
+      try { EMERGE_SOUND.swell('ambient', level, left); } catch(_){}
+    }, delay);
+  });
+}
+
 function startEarthBirth(){
   // Reset to the true deep-space starting position every time.
   world.pointOfView({ lat: FRAME.lat, lng: FRAME.lng, altitude: BIRTH_CAMERA.startAlt }, 0);
@@ -1378,6 +1397,9 @@ function startEarthBirth(){
   try { world.atmosphereAltitude(0.005); } catch(_){}
   earthBirthStart = performance.now();
   try { EMERGE_SOUND.play('growth'); } catch(_){}   /* dot chime removed — pulse then Earth */
+  /* the bed drops away over the whole approach — silent as the Earth arrives */
+  window.__ambFadeState = 'fading';
+  ambFade(0.0, 9.8);
   window.__earthBirth = earthBirthStart + 1100;   // energy motes ride the energy stage
   requestAnimationFrame(birthFrame);
 }
@@ -1898,6 +1920,11 @@ window.__setEntryStep = function(step) {
   inp.addEventListener('input', () => {
     let dig = inp.value.replace(/\D/g, '').slice(0, 8);      // MMDDYYYY
     try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
+    /* v19.88: the breath ends here — the bed rises back in under the first digit */
+    if (dig.length && window.__ambFadeState !== 'full') {
+      window.__ambFadeState = 'full';
+      try { ambFade(1.0, 6.0); } catch(_){}
+    }
     let out = dig.slice(0,2);
     if (dig.length >= 3) out += ' – ' + dig.slice(2,4);
     if (dig.length >= 5) out += ' – ' + dig.slice(4,8);
@@ -2517,8 +2544,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1955'
-      : 'tropical-reveal.html?v=1851';
+      ? 'sidereal-reveal.html?v=1971'
+      : 'tropical-reveal.html?v=1863';
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
