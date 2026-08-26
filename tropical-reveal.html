@@ -750,7 +750,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.67 no abbrev · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.68 hero fix · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2904,6 +2904,12 @@ function buildResultPage(){
 
   renderTropicalOuterExpression();
   trHeroWire();
+  /* v18.68: THE MISSING LINE. Sidereal starts its hero right here at the end of its
+     build; tropical only ever relied on the EMERGE_FREE_SUMMARY_COMPLETE listener,
+     which is guarded by resultOpened and does not reliably fire after this build. With
+     preload="none" nothing is fetched until play() is called, so the hero was not just
+     paused, it was never loaded, and the slot rendered empty. */
+  try { var trv = document.getElementById('trHero'); if (trv) trv.play().catch(function(){}); } catch(_){}
 }
 function openCompleteChartResult(){
   if (resultOpened) return;
