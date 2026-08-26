@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Your Vedic Reading · CozAlyze</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Montserrat:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0f16;
+    --gold:#c9a15e;
+    --gold-dim:#8f7343;
+    --champagne:#e9d7ae;
+    --ivory:#ddd3c2;
+    --hairline:rgba(201,161,94,.28);
+    --nav-h:64px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--bg);color:var(--ivory);font-family:'EB Garamond',Georgia,serif;
+    -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+  body.locked{overflow:hidden;height:100dvh}
+
+  /* ---------- transition + black beat ---------- */
+  #transit{position:fixed;inset:0;z-index:55;background:#000;display:none;
+    transition:opacity .4s ease}
+  #transit.fading{opacity:0}
+  #transit.on{display:block}
+  #transit video{width:100%;height:100%;object-fit:cover;display:block}
+  #veil{position:fixed;inset:0;z-index:54;background:#000;opacity:0;pointer-events:none;
+    transition:opacity .7s ease}
+  #veil.on{opacity:1;pointer-events:auto}
+
+  /* ---------- hero (sign animation) ---------- */
+  #hero{position:fixed;top:0;left:0;right:0;height:100dvh;z-index:20;background:#000;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    will-change:height;transition:none}
+  #hero.settling{transition:height 1.4s cubic-bezier(.22,.61,.21,1)}
+  #heroScale{width:100%;height:100%;transform-origin:center 46%;will-change:transform}
+  #hero video{width:100%;height:100%;object-fit:contain;display:block;opacity:0;
+    transition:opacity .9s ease}
+  #hero.playing video{opacity:1}
+  #hero.bloom #heroScale{transform:scale(.06)}
+  #hero.bloom.grown #heroScale{animation:bloomGrow 3s linear forwards}
+  @keyframes bloomGrow{from{transform:scale(.06)}to{transform:scale(1)}}
+
+  /* ---------- rising content panel ---------- */
+  #content{position:fixed;top:0;left:0;right:0;z-index:19;background:var(--bg);
+    transform:translateY(100dvh);will-change:transform;visibility:hidden}
+  #content.rising{visibility:visible;transition:transform 1.4s cubic-bezier(.22,.61,.21,1)}
+  /* settled: the sky locks to the top like the chart pages, the reading scrolls up behind it */
+  body.done #hero{position:fixed;top:0;left:0;right:0;height:var(--settled-h);z-index:20;background:#000}
+  body.done #content{position:relative;z-index:1;margin-top:var(--settled-h);transform:none;visibility:visible;transition:none}
+
+  .wrap{max-width:640px;margin:0 auto;padding:34px 24px calc(var(--nav-h) + env(safe-area-inset-bottom) + 72px)}
+
+  .eyebrow{display:flex;align-items:center;gap:14px;justify-content:center;
+    color:var(--champagne);font-size:18px;letter-spacing:.38em;text-transform:uppercase;
+    font-family:'Cormorant Garamond',serif;font-weight:600;padding-left:.38em}
+  .eyebrow::before,.eyebrow::after{content:"";flex:0 0 44px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--hairline));}
+  .eyebrow::after{background:linear-gradient(90deg,var(--hairline),transparent)}
+  .eyebrow .dot{font-size:9px;color:var(--gold);letter-spacing:0;padding:0}
+
+  h1{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--champagne);
+    text-align:center;font-size:44px;line-height:1.05;letter-spacing:.10em;
+    margin:10px 0 4px;padding-left:.10em;text-shadow:0 0 26px rgba(233,215,174,.18)}
+  .subtitle{display:flex;align-items:center;justify-content:center;gap:10px;
+    font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;
+    color:var(--champagne);font-size:23px}
+  .subtitle .orn{color:var(--gold);font-style:normal;font-size:.62em;transform:translateY(1px)}
+  .head-rule{width:min(320px,72%);margin:20px auto 0;height:12px;position:relative}
+  .head-rule::before{content:"";position:absolute;left:0;right:0;top:5px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--hairline) 18%,var(--hairline) 82%,transparent)}
+  .head-rule::after{content:"◆";position:absolute;left:50%;top:0;transform:translateX(-50%);
+    color:var(--gold);font-size:9px;background:var(--bg);padding:0 8px;line-height:12px}
+
+  section{margin-top:42px}
+  h2{font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--gold);
+    font-size:26px;line-height:1.25;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px}
+  .reading-copy p{font-size:22px;line-height:1.65;color:var(--ivory);margin-bottom:18px;
+    text-shadow:0 1px 2px rgba(0,0,0,.5)}
+  .reading-copy p:last-child{margin-bottom:0}
+  .divider{margin:40px auto 0;width:100%;height:12px;position:relative}
+  .divider::before{content:"";position:absolute;left:0;right:0;top:5px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--hairline) 20%,var(--hairline) 80%,transparent)}
+  .divider::after{content:"◆";position:absolute;left:50%;top:0;transform:translateX(-50%);
+    color:var(--gold);font-size:9px;background:var(--bg);padding:0 8px;line-height:12px}
+
+  /* ---------- bottom navigation ---------- */
+  #nav{position:fixed;left:0;right:0;bottom:0;z-index:40;height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+    background:rgba(8,11,17,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-top:1px solid rgba(201,161,94,.18);display:flex;opacity:0;pointer-events:none;
+    transition:opacity .8s ease}
+  body.done #nav{opacity:1;pointer-events:auto}
+  #nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;text-decoration:none;color:#8b8272;font-size:10.5px;letter-spacing:.06em;
+    font-family:'EB Garamond',serif}
+  #nav a svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.4;
+    stroke-linecap:round;stroke-linejoin:round}
+  #nav a.active{color:var(--gold)}
+
+  #stamp{position:fixed;right:8px;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 6px);
+    z-index:300;font-size:9px;letter-spacing:.08em;color:rgba(201,161,94,.34);
+    font-family:'EB Garamond',serif;pointer-events:none}
+
+  @media (prefers-reduced-motion: reduce){
+    #hero.settling{transition:none}
+    #content.rising{transition:none}
+  }
+
+/* ============================================================
+   VEDIC READING DASHBOARD (V1 measured build) lives inside #dash.
+   1 design px = var(--p). Locked palette: bg #050505, gold #C9A56B, body #E7DED0.
+   ============================================================ */
+#dash{position:fixed;inset:0;z-index:200;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  background:#050505;color:#E7DED0;font-family:'Montserrat',sans-serif;-webkit-font-smoothing:antialiased;
+  --bg:#050505;--gold:#C9A56B;--body:#E7DED0;--muted:#B8AE9E;--border:rgba(201,165,107,.45);--btn:#AC9169;--btn-ink:#1A1611;
+  opacity:1;transition:opacity .3s ease}
+#dash.gone{opacity:0;pointer-events:none}
+#dash .page{width:min(100vw,875px);margin:0 auto;container-type:inline-size;padding-bottom:calc(60 * var(--p));--p:0.1142857cqw}
+/* ---------- Sky header (placeholder, swaps for the animation) ---------- */
+#dash #skyHeader{position:relative;width:100%;aspect-ratio:5257/2438;overflow:hidden;background:#000}  /* his art's own proportion, nothing cropped */
+#dash #skyHeader .sky-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+#dash .hdr-btn{
+  position:absolute;top:calc(48 * var(--p));
+  width:calc(74 * var(--p));height:calc(74 * var(--p));
+  background:none;border:0;padding:0;cursor:pointer;display:block
+}
+#dash .hdr-btn svg{width:100%;height:100%;display:block}
+#dash #btnMenu{left:calc(42 * var(--p))}
+#dash #btnBookmark{left:calc(758 * var(--p))}
+
+/* ---------- Cards ---------- */
+#dash .card{
+  position:relative;
+  margin:0 calc(33 * var(--p));
+  width:calc(806 * var(--p));
+  border:2px solid var(--border);
+  border-radius:calc(24 * var(--p));
+  background:var(--bg);
+}
+#dash #readingCard{margin-top:calc(36 * var(--p))}
+
+/* divider sits on the top border of the reading card */
+#dash .dv-divider{
+  position:absolute;left:50%;top:0;transform:translate(-50%,-50%);
+  width:calc(600 * var(--p));height:calc(30 * var(--p));
+  display:block;pointer-events:none
+}
+#dash .dv-divider-mask{
+  position:absolute;left:50%;top:0;transform:translate(-50%,-50%);
+  width:calc(80 * var(--p));height:calc(30 * var(--p));
+  background:var(--bg);pointer-events:none
+}
+
+#dash .rc-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(40 * var(--p)) calc(52 * var(--p)) 0 calc(54 * var(--p));
+}
+#dash .rc-title{
+  font-family:'Cormorant Garamond',serif;font-weight:400;
+  font-size:calc(68 * var(--p));line-height:1;letter-spacing:.005em;
+  color:var(--body);white-space:nowrap;text-align:left;margin:0;padding:0;text-shadow:none
+}
+#dash .pill{
+  display:inline-flex;align-items:center;gap:calc(12 * var(--p));
+  height:calc(49 * var(--p));padding:0 calc(22 * var(--p)) 0 calc(20 * var(--p));
+  border:1.5px solid var(--gold);border-radius:calc(30 * var(--p));
+  font-size:calc(20 * var(--p));font-weight:400;color:var(--body);letter-spacing:.01em;white-space:nowrap
+}
+#dash .pill i{width:calc(11 * var(--p));height:calc(11 * var(--p));border-radius:50%;background:var(--gold);display:block}
+
+#dash .rc-art{
+  display:block;width:calc(795 * var(--p));height:auto;
+  margin:calc(30 * var(--p)) auto 0;border-radius:calc(6 * var(--p))
+}
+#dash .rc-desc{
+  padding:calc(34 * var(--p)) calc(60 * var(--p)) 0 calc(62 * var(--p));
+  font-size:calc(28 * var(--p));line-height:calc(44 * var(--p));
+  color:var(--body);letter-spacing:.005em
+}
+#dash .rc-btn{
+  position:relative;display:block;
+  width:calc(685 * var(--p));height:calc(101 * var(--p));
+  margin:calc(50 * var(--p)) auto calc(36 * var(--p));
+  border:0;border-radius:calc(16 * var(--p));background:var(--btn);
+  font-family:'Cormorant Garamond',serif;font-weight:500;font-size:calc(38 * var(--p));
+  color:var(--btn-ink);letter-spacing:.01em;cursor:pointer
+}
+#dash .rc-btn svg{
+  position:absolute;right:calc(30 * var(--p));top:50%;
+  width:calc(40 * var(--p));height:calc(40 * var(--p));
+  transform:translateY(-50%) rotate(-90deg)
+}
+
+/* ---------- Collapsed tabs ---------- */
+#dash .tab{margin-top:calc(12 * var(--p))}
+#dash .tab-head{
+  display:grid;grid-template-columns:calc(177 * var(--p)) 1fr calc(120 * var(--p));
+  align-items:center;height:calc(150 * var(--p));
+  width:100%;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer
+}
+#dash .tab-icon{
+  width:calc(93 * var(--p));height:calc(93 * var(--p));
+  margin-left:calc(34 * var(--p));display:block
+}
+#dash .tab-icon svg{width:100%;height:100%;display:block}
+#dash .tab-text{min-width:0}
+#dash .tab-title{
+  font-family:'Cormorant Garamond',serif;font-weight:500;
+  font-size:calc(40 * var(--p));line-height:1.05;color:var(--body);white-space:nowrap
+}
+#dash .tab-sub{
+  margin-top:calc(8 * var(--p));
+  font-size:calc(22 * var(--p));line-height:1.2;color:var(--muted);letter-spacing:.005em;white-space:nowrap
+}
+#dash .tab-chev{
+  width:calc(52 * var(--p));height:calc(52 * var(--p));
+  justify-self:end;margin-right:calc(46 * var(--p));
+  transition:transform .35s ease
+}
+#dash .tab.open .tab-chev{transform:rotate(180deg)}
+#dash .tab-body{
+  display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s ease
+}
+#dash .tab.open .tab-body{grid-template-rows:1fr}
+#dash .tab-body>div{overflow:hidden}
+#dash .tab-content{
+  padding:0 calc(50 * var(--p)) calc(44 * var(--p)) calc(52 * var(--p));
+  font-size:calc(26 * var(--p));line-height:calc(42 * var(--p));color:var(--body)
+}
+#dash .tab-content:empty{padding:0}
+
+@media (prefers-reduced-motion:reduce){
+  #dash .tab-chev,#dash .tab-body{transition:none}
+}
+
+/* sequence frame: the page never navigates, so the sound survives */
+#dash #seq{position:fixed;inset:0;z-index:100;border:0;width:100%;height:100%;background:#000;opacity:0;transition:opacity .35s ease}
+#dash #seq.on{opacity:1}
+body.seq-open{overflow:hidden}
+
+</style>
+</head>
+<body class="locked">
+
+<div id="transit"><video id="transitVid" muted playsinline preload="auto"></video></div>
+<div id="veil"></div>
+
+<div id="hero"><div id="heroScale"><video id="signVid" muted playsinline preload="auto"></video></div></div>
+
+<div id="content">
+  <div class="wrap">
+    <div class="eyebrow"><span>Your Ascendant</span></div>
+    <div style="text-align:center;color:var(--gold);font-size:10px;margin-top:6px">✦</div>
+    <h1 id="signTitle">CANCER RISING</h1>
+    <div class="subtitle"><span class="orn">❧</span><span id="subTitle">Your Inner Compass</span><span class="orn" style="transform:scaleX(-1) translateY(1px)">❧</span></div>
+    <div class="head-rule"></div>
+
+    <section class="reading-section">
+      <h2>Sidereal Perspective</h2>
+      <div id="secSidereal" class="reading-copy"></div>
+    </section>
+    <div class="divider"></div>
+
+    <section class="reading-section">
+      <h2>The Essence of You</h2>
+      <div id="secEssence" class="reading-copy"></div>
+    </section>
+    <div class="divider"></div>
+
+    <section class="reading-section">
+      <h2>Your Dharmic Path</h2>
+      <div id="secDharma" class="reading-copy"></div>
+    </section>
+  </div>
+</div>
+
+<nav id="nav">
+  <a href="vedic-reading.html?v=20" id="navHome"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9h13v-9"/></svg>Home</a>
+  <a href="#" class="active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17M6 6l12 12M18 6 6 18"/></svg>My Chart</a>
+  <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2.2 5-4.8 2 2.2-5z"/></svg>Explore</a>
+  <a href="#"><svg viewBox="0 0 24 24"><path d="M7 4h10v16l-5-4-5 4z"/></svg>Saved</a>
+  <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
+</nav>
+
+<div id="dash"><div class="page">
+
+  <!-- SKY HEADER: his art. Swap .sky-media for the animation later; the two buttons stay. -->
+  <header id="skyHeader">
+    <img class="sky-media" src="sky-header.jpg?v=1" alt="">
+    <button class="hdr-btn" id="btnMenu" type="button" aria-label="Menu">
+      <svg viewBox="0 0 256 256"><g fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round"><circle cx="128" cy="128" r="104"/><path d="M84 95h88M84 128h88M84 161h88"/></g></svg>
+    </button>
+    <button class="hdr-btn" id="btnBookmark" type="button" aria-label="Saved">
+      <svg viewBox="0 0 256 256"><g fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="128" r="104"/><path d="M96 73h64v114l-32-23-32 23z"/></g></svg>
+    </button>
+  </header>
+
+  <!-- YOUR VEDIC READING -->
+  <section class="card" id="readingCard">
+    <span class="dv-divider-mask"></span>
+    <svg class="dv-divider" viewBox="0 0 800 40"><g fill="none" stroke="#C9A56B" stroke-width="2"><path d="M0 20h365M435 20h365"/><path d="M400 3l17 17-17 17-17-17z"/><path d="M400 11l9 9-9 9-9-9z"/></g></svg>
+
+    <div class="rc-head">
+      <h1 class="rc-title">Your Vedic Reading</h1>
+      <span class="pill"><i></i>Active</span>
+    </div>
+    <img class="rc-art" src="02-reading-horizon.png?v=1" alt="">
+    <p class="rc-desc">A personalized reading of your chart, life themes, and inner world.</p>
+    <button class="rc-btn" id="btnOpenReading" type="button">
+      Open Reading
+      <svg viewBox="0 0 64 64"><path d="M14 24l18 18 18-18" fill="none" stroke="#1A1611" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </section>
+
+  <!-- ASCENDANT -->
+  <section class="card tab" id="tabAscendant">
+    <button class="tab-head" type="button" aria-expanded="false" aria-controls="bodyAscendant">
+      <span class="tab-icon" data-field="ascendant-icon">
+        <svg viewBox="0 0 256 256"><g fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="128" r="104"/><path d="M90 69c42 27 42 91 0 118M166 69c-42 27-42 91 0 118M79 128h98"/></g></svg>
+      </span>
+      <span class="tab-text">
+        <span class="tab-title" data-field="ascendant-title">Pisces Ascendant</span>
+        <span class="tab-sub">Understanding Your Inner Compass</span>
+      </span>
+      <svg class="tab-chev" viewBox="0 0 64 64"><path d="M14 24l18 18 18-18" fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="tab-body" id="bodyAscendant"><div><div class="tab-content" data-slot="ascendant"></div></div></div>
+  </section>
+
+  <!-- CURRENT LIFE CYCLE -->
+  <section class="card tab" id="tabLifeCycle">
+    <button class="tab-head" type="button" aria-expanded="false" aria-controls="bodyLifeCycle">
+      <span class="tab-icon">
+        <svg viewBox="0 0 256 256"><g fill="none" stroke="#C9A56B" stroke-width="4" stroke-linecap="round"><circle cx="128" cy="128" r="104"/><ellipse cx="128" cy="128" rx="67" ry="27" transform="rotate(-25 128 128)"/><ellipse cx="128" cy="128" rx="67" ry="27" transform="rotate(25 128 128)"/><circle cx="128" cy="128" r="16" fill="#C9A56B" stroke="none"/><circle cx="185" cy="94" r="7" fill="#C9A56B" stroke="none"/></g></svg>
+      </span>
+      <span class="tab-text">
+        <span class="tab-title">Your Current Life Cycle</span>
+      </span>
+      <svg class="tab-chev" viewBox="0 0 64 64"><path d="M14 24l18 18 18-18" fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="tab-body" id="bodyLifeCycle"><div><div class="tab-content" data-slot="life-cycle"></div></div></div>
+  </section>
+
+  <!-- BIRTH CHART -->
+  <section class="card tab" id="tabBirthChart">
+    <button class="tab-head" type="button" aria-expanded="false" aria-controls="bodyBirthChart">
+      <span class="tab-icon">
+        <svg viewBox="0 0 256 256"><g fill="none" stroke="#C9A56B" stroke-width="4" stroke-linejoin="round"><circle cx="128" cy="128" r="104"/><rect x="68" y="68" width="120" height="120"/><path d="M68 68l60 60 60-60M68 188l60-60 60 60M68 128l60-60 60 60M68 128l60 60 60-60"/><circle cx="128" cy="128" r="10"/></g></svg>
+      </span>
+      <span class="tab-text">
+        <span class="tab-title">Your Birth Chart</span>
+      </span>
+      <svg class="tab-chev" viewBox="0 0 64 64"><path d="M14 24l18 18 18-18" fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="tab-body" id="bodyBirthChart"><div><div class="tab-content" data-slot="birth-chart"></div></div></div>
+  </section>
+
+</div></div>
+
+<div id="stamp">VEDIC READING · V2.2 · sky pinned</div>
+
+<script>
+/* =====================================================================
+   SIDEREAL ASCENDANT / INNER COMPASS — one reusable template.
+   Sign resolution order:
+     1. ?asc=<sign> URL parameter
+     2. window.EMERGE_ASCENDANT
+     3. localStorage 'emergeAscendant'
+     4. fallback (cancer)
+   Entry (v3.7): the Vedic Reading page's OPEN READING tap opens this page.
+     ascendant.html?asc=leo          → Vedic Reading page turns (transition-vedic.mp4),
+                                        the sign is born in the flash, reading rises
+     ascendant.html?asc=leo&direct=1 → sequence only, no turn
+     ascendant.html?asc=leo&settled=1 → QA: finished page instantly
+   The old sidereal-dashboard turn (transition.mp4) is retired.
+   On settle the page dispatches EMERGE_ASCENDANT_SETTLED on window and
+   posts {type:'EMERGE_ASCENDANT_SETTLED', sign} to the parent frame.
+   Sound: no audio here; wire EMERGE_SOUND cues at the marked hooks.
+   ===================================================================== */
+
+const SHARED = {
+  sidereal: [
+    "In Sidereal Vedic astrology, the Ascendant\u2014or Lagna\u2014is the starting point of your entire birth chart. It establishes the twelve houses and determines which planet becomes the ruler of your chart.",
+    "Rather than simply describing how you appear or express your personality, the Lagna reveals the orientation of your life: the path through which your experiences unfold, the qualities life continually asks you to develop, and the direction through which your Dharma takes form.",
+    "Your Lagna is the ground from which the rest of your chart is read."
+  ]
+};
+
+const SIGNS = {
+  aries: {
+    title: "ARIES RISING", loop: false, ruler: "Mars",
+    essence: [
+      "With Aries Rising, Mars becomes the ruler of your chart.",
+      "Your inner world is quick, hot, and direct. You feel the urge to act before you feel almost anything else, when something matters, you move. Waiting is the hardest thing life asks of you. There is a fire at your center that wants a challenge, a direction, something worth pushing against, and when it has none it turns restless, impatient, sometimes angry.",
+      "What guides you is instinct. Not planning, not permission, a gut signal that says now, go, begin. Your compass points toward the next threshold, and your life keeps asking one thing of you: choose your battles. Move with purpose, not just heat."
+    ],
+    dharma: [
+      "Your Dharma is to learn what is worth your fight.",
+      "With Mars ruling your chart, energy is your engine, and it needs direction more than it needs fuel. Life will keep putting you at the front, first to act, first to decide, first through the door, and testing whether you can lead without running over people, including yourself.",
+      "The lesson of Aries Lagna is simple: your fire is a gift. Aim it. Courage with direction builds things. Courage without it just burns."
+    ]
+  },
+  taurus: {
+    title: "TAURUS RISING", loop: false, ruler: "Venus",
+    essence: [
+      "With Taurus Rising, Venus becomes the ruler of your chart.",
+      "Your inner world is calm, steady, and rooted in what is real. You trust what you can touch, taste, build, and keep. Beauty matters to you, comfort matters, loyalty matters, and once something or someone is yours, you hold on. That steadiness is your strength, and also your trap, because you can keep holding long after it's time to let go.",
+      "What guides you is a quiet sense of worth. Not trends, not noise, a feel for what will still matter in ten years. Your compass points toward the solid and the lasting, and your life keeps asking one thing of you: know the difference between what grounds you and what just keeps you standing still."
+    ],
+    dharma: [
+      "Your Dharma is to build what deserves to last.",
+      "With Venus ruling your chart, you are here to create value, in your home, your work, your relationships, your own peace. Life moves slowly for you on purpose. It gives you time to build things properly, and it tests whether you can release what you've outgrown.",
+      "The lesson of Taurus Lagna is simple: security doesn't come from holding on. It comes from being someone things can grow around. Steady, patient, real."
+    ]
+  },
+  gemini: {
+    title: "GEMINI RISING", loop: false, ruler: "Mercury",
+    essence: [
+      "With Gemini Rising, Mercury becomes the ruler of your chart.",
+      "Your inner world is fast, bright, and full of voices. Questions, ideas, connections, your mind never really closes. You learn by talking, you think by moving, and you can see both sides of almost anything, which is a gift that sometimes leaves you unable to pick one. Boredom is your real enemy, scattered is your real risk.",
+      "What guides you is curiosity. Not certainty, the pull of what you don't know yet. Your compass points toward the next question, and your life keeps asking one thing of you: go deep, not just wide. Finish some of what you start."
+    ],
+    dharma: [
+      "Your Dharma is to turn what you learn into something people can use.",
+      "With Mercury ruling your chart, words and understanding are your tools. Life will keep placing you between, between people, between ideas, between sides that can't hear each other, and asking you to carry the message truly.",
+      "The lesson of Gemini Lagna is simple: a quick mind entertains. A focused one changes things. Choose what deserves your attention, and give it all of it."
+    ]
+  },
+  cancer: {
+    title: "CANCER RISING", loop: false, ruler: "Moon",
+    essence: [
+      "With Cancer Rising, the Moon becomes the ruler of your chart.",
+      "Your inner world moves like water, in tides. Feelings come in waves, memories stay alive in you, and you sense what people need before they say it. Home is not just a place for you, it's a need, somewhere, someone, something that feels safe. When life gets loud you pull inward, into your shell, and sometimes you stay there too long.",
+      "What guides you is feeling. Not analysis, a deep read of what is safe, what is true, who needs care. Your compass points toward protection, of your people, your history, your inner life, and your life keeps asking one thing of you: come out of the shell. Care without hiding."
+    ],
+    dharma: [
+      "Your Dharma is to make safety, for others and for yourself.",
+      "With the Moon ruling your chart, your emotions are not a weakness to manage, they are how you know things. Life will keep handing you someone or something to hold, a family, a home, a person in pain, and asking you to hold steady without drowning in it.",
+      "The lesson of Cancer Lagna is simple: the care you give others has to include you. A settled heart shelters everyone near it. Build yours first."
+    ]
+  },
+  leo: {
+    title: "LEO RISING", loop: false, ruler: "Sun",
+    essence: [
+      "With Leo Rising, the Sun becomes the ruler of your chart.",
+      "Your inner world has a center, and you feel it. A warmth, a pride, a sense that your life is supposed to mean something. You want to matter, not just to be seen, to stand for something that's genuinely yours. When that center is strong you light up a room without trying. When it's shaky, you reach for applause, and applause never quite fills it.",
+      "What guides you is heart. Not strategy, conviction, the feeling of being fully behind what you do. Your compass points toward what you can stand behind, and your life keeps asking one thing of you: lead from the heart, not for the audience."
+    ],
+    dharma: [
+      "Your Dharma is to find out what your light is for.",
+      "With the Sun ruling your chart, identity is your work, knowing who you are, standing behind it, and carrying it with dignity. Life will keep putting you where people look to you, to lead, to create, to decide, and testing whether you need their approval or your own.",
+      "The lesson of Leo Lagna is simple: real confidence doesn't come from being admired. It comes from knowing yourself and using what you've got for something bigger than being noticed."
+    ]
+  },
+  virgo: {
+    title: "VIRGO RISING", loop: false, ruler: "Mercury",
+    essence: [
+      "With Virgo Rising, Mercury becomes the ruler of your chart.",
+      "Your inner world is precise, watchful, and quietly devoted. You notice everything, what's off, what's missing, what could be better, and you can't fully rest until it's right. That same eye turns on you hardest of all. You worry, you refine, you hold yourself to a standard nobody set but you.",
+      "What guides you is the urge to make things right. Not attention, not credit, the quiet satisfaction of something done properly, something healed, something working. Your compass points toward what needs fixing, and your life keeps asking one thing of you: be as kind to yourself as you are useful to everyone else."
+    ],
+    dharma: [
+      "Your Dharma is to serve where your skill actually helps.",
+      "With Mercury ruling your chart, your mind is a fine instrument, made for craft, detail, and care. Life will keep handing you what's broken, messy, or unwell and asking you to set it right, without burning yourself out on what was never yours to fix.",
+      "The lesson of Virgo Lagna is simple: perfect isn't the goal, useful is. Done with love, small faithful work is one of the most powerful things a person can offer."
+    ]
+  },
+  libra: {
+    title: "LIBRA RISING", loop: true, ruler: "Venus",
+    essence: [
+      "With Libra Rising, Venus becomes the ruler of your chart.",
+      "Your inner world is tuned to other people. You feel imbalance the way others feel temperature, tension in a room, unfairness in a decision, the moment a relationship tips. You want peace, beauty, and things to be right between people, and you'll often trade away your own side to get it. That's the cost you know too well.",
+      "What guides you is balance. Not winning, a sense of what's fair, what's harmonious, what both sides need. Your compass points toward the meeting place, and your life keeps asking one thing of you: stay in the middle without losing yourself there."
+    ],
+    dharma: [
+      "Your Dharma is to make real peace, not just quiet.",
+      "With Venus ruling your chart, relationship is where your life happens, partnership, cooperation, the constant meeting of you and another. Life will keep placing you between people and asking you to be fair, even when fair costs you something.",
+      "The lesson of Libra Lagna is simple: peace that erases you isn't peace. Find your own center first, then the balance you create everywhere else actually holds."
+    ]
+  },
+  scorpio: {
+    title: "SCORPIO RISING", loop: false, ruler: "Mars",
+    essence: [
+      "With Scorpio Rising, Mars becomes the ruler of your chart.",
+      "Your inner world is deep, private, and intense. You feel things all the way down, and you show almost none of it. You read people beneath their words, you sense what's hidden, and you don't trust easily, because you know how much is at stake when you do. Half measures aren't in you. It's everything or nothing.",
+      "What guides you is truth, the real kind, under the surface. Your compass points into the deep end, and your life keeps asking one thing of you: let go. Of control, of old wounds, of what has already died. What you release is what sets you free."
+    ],
+    dharma: [
+      "Your Dharma is to transform, not just survive.",
+      "With Mars ruling your chart, your strength runs inward, courage for the things most people avoid, endings, crisis, the truth about yourself. Life will keep bringing you to points where something has to be released so something truer can live.",
+      "The lesson of Scorpio Lagna is simple: whatever you face honestly loses its power over you. Every time you rise from an ending, you come back stronger and cleaner than before."
+    ]
+  },
+  sagittarius: {
+    title: "SAGITTARIUS RISING", loop: false, ruler: "Jupiter",
+    essence: [
+      "With Sagittarius Rising, Jupiter becomes the ruler of your chart.",
+      "Your inner world is wide open and pointed at the horizon. You need meaning the way others need comfort, a reason, a direction, a bigger picture. You believe, in life, in better, in more, and that faith keeps you moving through things that would stop other people. Sitting still too long, in a place, a job, an idea, makes something in you start to pace.",
+      "What guides you is truth as you've lived it. Not borrowed answers, what you've tested and found real. Your compass points toward meaning, and your life keeps asking one thing of you: don't just chase the horizon. Bring something back."
+    ],
+    dharma: [
+      "Your Dharma is to live what you believe, out loud and in practice.",
+      "With Jupiter ruling your chart, you grow by seeking, and eventually by guiding. Life will keep raising the questions, what's true, what's right, what's it all for, and watching whether your answers show up in how you actually live.",
+      "The lesson of Sagittarius Lagna is simple: wisdom isn't what you've read or where you've been. It's what you do with it. A life that matches its beliefs teaches more than words ever will."
+    ]
+  },
+  capricorn: {
+    title: "CAPRICORN RISING", loop: false, ruler: "Saturn",
+    essence: [
+      "With Capricorn Rising, Saturn becomes the ruler of your chart.",
+      "Your inner world is serious, sturdy, and older than your years. You've likely carried responsibility since early on, and part of you is always measuring, the cost, the long game, what it will take. You don't need things to be easy, you need them to be worth it. The risk is that you get so good at carrying weight you forget you're allowed to put it down.",
+      "What guides you is duty, to your word, your work, the people counting on you. Your compass points up the mountain, and your life keeps asking one thing of you: climb without turning to stone. Let it cost effort, not your softness."
+    ],
+    dharma: [
+      "Your Dharma is to build things that outlast you.",
+      "With Saturn ruling your chart, time is your teacher and your tool. Life will keep giving you the long road, real responsibility, slow rewards, tests of patience, and shaping you into someone others can lean on.",
+      "The lesson of Capricorn Lagna is simple: what you build slowly and honestly is yours forever. Time isn't working against you. It's the whole point of your strength."
+    ]
+  },
+  aquarius: {
+    title: "AQUARIUS RISING", loop: true, ruler: "Saturn",
+    essence: [
+      "With Aquarius Rising, Saturn becomes the ruler of your chart.",
+      "Your inner world is cool, clear, and apart. You watch. Part of you stands slightly outside your own life, noticing patterns other people miss. You have felt different for as long as you can remember, and over time that difference has become your clarity: you see how things could work better, and you can't unsee it.",
+      "What guides you is truth, not approval. Your compass points ahead of your own time, and your life keeps asking one thing of you: stay connected. Be different without being alone."
+    ],
+    dharma: [
+      "Your Dharma is to build the better way you can see, not just imagine it.",
+      "With Saturn ruling your chart, your ideas are meant to be worked for. Life gives you the long road, slow progress, resistance, years between the vision and the result, and tests whether you can stay committed anyway.",
+      "The lesson of Aquarius Lagna is simple: your distance is not coldness, it is perspective. Add patience and warmth, and what sets you apart becomes exactly what makes you useful to everyone else."
+    ]
+  },
+  pisces: {
+    title: "PISCES RISING", loop: true, ruler: "Jupiter",
+    essence: [
+      "With Pisces Rising, Jupiter becomes the ruler of your chart.",
+      "Your inner world is soft, deep, and porous. Everything enters, other people's feelings, the mood of a room, things you can't explain but simply know. Your imagination is not a pastime, it's where you live. Dreams, images, music, and meaning move through you constantly, and underneath it all runs a quiet faith that life is more than what you can see.",
+      "What guides you is intuition. Not logic, not ambition, a felt sense of what is true and what is right. Your compass points toward the deep and the meaningful, and your life keeps asking one thing of you: stay open without getting lost."
+    ],
+    dharma: [
+      "Your Dharma is to bring what you imagine into real life.",
+      "With Jupiter ruling your chart, you are guided by faith and a strong inner sense of right and wrong. Life will keep placing you where someone needs compassion, and asking you to give it without losing yourself.",
+      "The lesson of Pisces Lagna is simple: your sensitivity is a gift, not a flaw. Ground it, and everything that moves through you, imagination, intuition, care, becomes something real that others can feel."
+    ]
+  }
+};
+
+/* ---------- resolve the calculated Ascendant ---------- */
+const qs = new URLSearchParams(location.search);
+function resolveSign(){
+  const cands = [qs.get('asc'), window.EMERGE_ASCENDANT, localStorage.getItem('emergeAscendant')];
+  for (const c of cands){
+    if (c && SIGNS[String(c).toLowerCase().trim()]) return String(c).toLowerCase().trim();
+  }
+  return null;
+}
+const resolved = resolveSign();
+const sign = resolved || 'pisces';   // no stored chart: the reference sign
+const S = SIGNS[sign];
+
+/* ---------- populate template ---------- */
+document.getElementById('signTitle').textContent = S.title;
+function fillSection(id, paragraphs){
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  paragraphs.forEach(t => { const p = document.createElement('p'); p.textContent = t; el.appendChild(p); });
+}
+fillSection('secSidereal', SHARED.sidereal);
+fillSection('secEssence', S.essence);
+fillSection('secDharma', S.dharma);
+
+/* ---------- elements ---------- */
+const transit = document.getElementById('transit');
+const tVid    = document.getElementById('transitVid');
+const veil    = document.getElementById('veil');
+const hero    = document.getElementById('hero');
+const sVid    = document.getElementById('signVid');
+const content = document.getElementById('content');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const directMode = qs.get('direct') === '1';
+const hasParamAsc = !!qs.get('asc');
+const settledMode = qs.get('settled') === '1';   // QA shortcut: final page instantly
+const fromPage = qs.get('from');                 // picks the page-turn clip per origin page
+const backTo = qs.get('back'); if (backTo) document.getElementById('navHome').href = backTo;   // Home destination override
+const turn = fromPage || 'vedic';                // which page is turning; the Vedic Reading page by default
+tVid.src = 'transition-' + turn + '.mp4';
+tVid.poster = 'transition-' + turn + '.jpg';    // page still shows the instant the turn is requested
+
+sVid.src = sign + '.mp4'; sVid.load();          // sign clip downloads while the dashboard is up
+
+/* ---------- flow ---------- */
+function start(){
+  sVid.src = sign + '.mp4';
+  if (S.loop) sVid.loop = true;
+  sVid.load();
+
+  if (settledMode){
+    hero.classList.add('playing');
+    const jump = once(() => { settled = false; settle(); });
+    sVid.addEventListener('loadedmetadata', jump);
+    if (sVid.readyState >= 1) jump();
+    setTimeout(jump, 2500);
+    sVid.play().catch(()=>{});
+    return;
+  }
+
+  if (directMode){
+    blackBeatThenPlay(300);
+  } else {
+    playTransition();                               // EMERGE_SOUND hook: page turn
+  }
+}
+
+function playTransition(){
+  transit.classList.add('on');
+  const fallback = once(() => { transit.classList.remove('on'); blackBeatThenPlay(300); });
+  tVid.addEventListener('error', fallback);
+
+  // 2s turn -> freeze ON the center light -> hold -> birth as the 3rd second turns
+  const onTU = () => {
+    const d = (tVid.duration && isFinite(tVid.duration)) ? tVid.duration : 2;
+    if (tVid.currentTime >= d * 0.76){
+      tVid.removeEventListener('timeupdate', onTU);
+      tVid.pause();                                  // frame locks on the flash
+      playSign(true);                                // and the sign is born NOW, already moving
+      transit.classList.add('fading');
+      setTimeout(() => { transit.classList.remove('on'); transit.classList.remove('fading'); }, 500);
+    }
+  };
+  tVid.addEventListener('timeupdate', onTU);
+  tVid.play().catch(fallback);
+  setTimeout(() => { if (!hero.classList.contains('playing')) fallback(); }, 9000);
+}
+
+function blackBeatThenPlay(ms){
+  veil.classList.add('on');
+  setTimeout(() => {
+    playSign();
+    setTimeout(() => veil.classList.remove('on'), 150);
+  }, ms);
+}
+
+function playSign(bloom){
+  if (bloom){
+    hero.classList.add('bloom');
+    void sVid.offsetWidth;                           // commit scale .06 before growing
+    requestAnimationFrame(() => {
+      hero.classList.add('playing');
+      hero.classList.add('grown');                   // now .06 -> 1 actually animates
+    });
+  } else {
+    hero.classList.add('playing');
+  }
+  const arm = once(scheduleSettle);
+  sVid.addEventListener('loadedmetadata', arm);
+  if (sVid.readyState >= 1) arm();
+  sVid.addEventListener('error', () => settle());    // missing/broken clip: settle over black
+  sVid.play().catch(() => settle());                 // playback blocked: settle immediately
+  setTimeout(() => { if (!settled) settle(); }, 9000);  // emergency watchdog
+}
+
+let settled = false;
+function scheduleSettle(){
+  const dur = (sVid.duration && isFinite(sVid.duration)) ? sVid.duration : 5;
+  if (S.loop){
+    // looping clips keep looping under the risen page; settle after one pass
+    setTimeout(settle, Math.max(1000, dur * 1000));
+  } else {
+    sVid.addEventListener('ended', settle, { once:true }); // backup if timeupdate lags
+    // the page begins rising while the final pose is still completing — seamless
+    sVid.addEventListener('timeupdate', function te(){
+      if (sVid.currentTime >= dur - 1.0){
+        sVid.removeEventListener('timeupdate', te);
+        settle();
+      }
+    });
+    setTimeout(() => { if (!settled) settle(); }, dur * 1000 + 1500);
+  }
+}
+
+function settle(){
+  if (settled) return;
+  settled = true;
+
+  const vw = document.documentElement.clientWidth;
+  const ar = (sVid.videoWidth && sVid.videoHeight) ? sVid.videoWidth / sVid.videoHeight : 1.25;
+  const settledH = Math.round(vw / ar);
+  document.documentElement.style.setProperty('--settled-h', settledH + 'px');
+
+  const finish = once(() => {
+    document.body.classList.add('done');             // static flow, scroll unlocked
+    document.body.classList.remove('locked');
+    hero.classList.remove('settling');
+    content.classList.remove('rising');
+    hero.style.height = ''; content.style.transform = '';
+    window.dispatchEvent(new CustomEvent('EMERGE_ASCENDANT_SETTLED', { detail:{ sign } }));
+    if (window.parent !== window)
+      window.parent.postMessage({ type:'EMERGE_ASCENDANT_SETTLED', sign }, '*');
+  });
+
+  if (reduced){ finish(); return; }
+
+  // no pause: the rise flows straight out of the animation's final moment
+  {
+    // then one slow glide: the animation moves up as the page rises beneath it
+    content.style.transform = 'translateY(' + window.innerHeight + 'px)';
+    content.classList.add('rising');
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      hero.classList.add('settling');
+      hero.style.height = settledH + 'px';
+      content.style.transform = 'translateY(' + settledH + 'px)';
+      // EMERGE_SOUND hook: page-rise cue
+    }));
+    content.addEventListener('transitionend', finish, { once:true });
+    setTimeout(finish, 3000);                        // safety
+  }
+}
+
+function once(fn){ let ran=false; return () => { if(!ran){ ran=true; fn(); } }; }
+
+/* =====================================================================
+   DASHBOARD (Your Vedic Reading) — same document as the sequence.
+   ===================================================================== */
+(function(){
+/* ---------- Sound: Uncle John's field, the one bed for the whole sequence ----------
+     Starts on the Open Reading tap (the gesture that unlocks audio), drifts in over 2s,
+     loops under the turn, the bloom and the reading, and fades when Home closes it. */
+  var FIELD='UNCLE_JOHN_FIELD_LOOP.wav?v=1', FIELD_LEVEL=1.0;
+  var BURST='11b_birth_data_complete_half.wav?v=1', BURST_LEVEL=1.0;   // the harmony at half loudness (-10.5 dB), at the Open Reading tap, over the turn and the flash
+  var burstBuf=null, burstLoad=fetch(BURST).then(function(r){ return r.arrayBuffer(); });
+  var actx=null, fieldBuf=null, fieldSrc=null, fieldGain=null, fieldWanted=false;
+  var fieldLoad=fetch(FIELD).then(function(r){ return r.arrayBuffer(); });
+  function ctx(){
+    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state!=='running') actx.resume();
+    return actx;
+  }
+  function fieldStart(){
+    fieldWanted=true; var c=ctx();
+    var go=function(){
+      if(!fieldWanted||fieldSrc) return;
+      fieldSrc=c.createBufferSource(); fieldSrc.buffer=fieldBuf; fieldSrc.loop=true;
+      fieldGain=c.createGain(); fieldGain.gain.setValueAtTime(0,c.currentTime);
+      fieldGain.gain.linearRampToValueAtTime(FIELD_LEVEL,c.currentTime+2.0);
+      fieldSrc.connect(fieldGain).connect(c.destination); fieldSrc.start();
+    };
+    if(fieldBuf) go();
+    else fieldLoad.then(function(ab){ return c.decodeAudioData(ab); }).then(function(b){ fieldBuf=b; go(); }).catch(function(){});
+  }
+  function burstPlay(){
+    var c=ctx();
+    var go=function(){ var src=c.createBufferSource(), g=c.createGain(); src.buffer=burstBuf;
+      g.gain.value=BURST_LEVEL; src.connect(g).connect(c.destination); src.start(); };
+    if(burstBuf) go();
+    else burstLoad.then(function(ab){ return c.decodeAudioData(ab); }).then(function(b){ burstBuf=b; go(); }).catch(function(){});
+  }
+  function fieldStop(secs){
+    fieldWanted=false; if(!fieldSrc) return;
+    var c=actx, s=fieldSrc, g=fieldGain; fieldSrc=null; fieldGain=null;
+    g.gain.cancelScheduledValues(c.currentTime); g.gain.setValueAtTime(g.gain.value,c.currentTime);
+    g.gain.linearRampToValueAtTime(0,c.currentTime+secs);
+    try{ s.stop(c.currentTime+secs+0.05); }catch(e){}
+  }
+
+  
+  /* ---------- dashboard content ---------- */
+  var ascTitle=document.querySelector('[data-field="ascendant-title"]');
+  ascTitle.textContent=sign.charAt(0).toUpperCase()+sign.slice(1)+' Ascendant';
+
+  document.querySelectorAll('#dash .tab-head[aria-controls]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var tab=btn.closest('.tab'); var open=tab.classList.toggle('open');
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      window.dispatchEvent(new CustomEvent('COZ_VEDIC_TAB',{detail:{id:tab.id,open:open}}));
+    });
+  });
+  document.getElementById('btnMenu').addEventListener('click',function(){ window.dispatchEvent(new CustomEvent('COZ_MENU')); });
+  document.getElementById('btnBookmark').addEventListener('click',function(){ window.dispatchEvent(new CustomEvent('COZ_BOOKMARK')); });
+
+  /* ---------- OPEN READING: the sound starts on this tap, the dashboard turns,
+     the rising sign is born in the flash, the Inner Compass reading rises. ---------- */
+  var openBtn=document.getElementById('btnOpenReading');
+  openBtn.addEventListener('click',function(){
+    window.dispatchEvent(new CustomEvent('COZ_OPEN_READING',{detail:{sign:sign}}));
+    burstPlay(); fieldStart();
+    start();                                   // transition is already on screen under the dashboard
+    dashDismiss(false);
+  },{once:true});
+
+  /* ---------- Home: fade the sound, return to the dashboard ---------- */
+  document.getElementById('navHome').addEventListener('click',function(e){
+    e.preventDefault(); fieldStop(0.6);
+    var href=this.getAttribute('href'); setTimeout(function(){ location.href=href; },650);
+  });
+})();
+function dashDismiss(instant){
+  var d=document.getElementById('dash'); if(!d) return;
+  if(instant){ d.remove(); return; }
+  d.classList.add('gone'); setTimeout(function(){ d.remove(); },350);
+}
+
+if (settledMode || directMode) { dashDismiss(true); start(); }   // QA shortcuts skip the dashboard
+</script>
+</body>
+</html>
