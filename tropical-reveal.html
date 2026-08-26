@@ -194,7 +194,7 @@
   /* prompt: "Your chart is revealed." + REVEAL MY CHART */
   #revealPrompt {
     position:fixed; left:0; right:0; z-index:22;
-    bottom:calc(env(safe-area-inset-bottom,0px) + 38px);   /* v18.65: raised off the browser toolbar, matches SIDEREAL v19.72 */
+    bottom:calc(env(safe-area-inset-bottom,0px) + 96px);   /* v18.67: raised well clear of the Safari toolbar, matches SIDEREAL v19.73 */
     display:flex; flex-direction:column; align-items:center; gap:14px;
     opacity:0; pointer-events:none;
     transition:opacity 1.1s ease;
@@ -576,48 +576,6 @@
    so sound is alive from this file's very first frame (same-origin) */
 try { if (window.parent !== window && window.parent.EMERGE_SOUND) window.EMERGE_SOUND = window.parent.EMERGE_SOUND; } catch(_){}
 </script>
-<script>
-/* v18.64 DIAGNOSTIC ONLY — TEMPORARY, REMOVE ONCE THE CAUSE IS KNOWN.
-   The result-page build is wrapped in a try/catch that only reaches the
-   console, which is unreadable on iPhone, so any failure there is silent and
-   looks like the page was skipped. This prints the first error, and the flow
-   stage it happened in, onto the screen in red. It changes no behaviour. */
-(function(){
-  var box = null;
-  function say(msg){
-    try {
-      if (!box){
-        box = document.createElement('div');
-        box.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;'
-          + 'background:rgba(60,0,0,0.94);color:#ffb0b0;font:12px/1.45 -apple-system,monospace;'
-          + 'padding:10px 12px;max-height:45vh;overflow:auto;white-space:pre-wrap;'
-          + '-webkit-user-select:text;user-select:text;';
-        (document.body || document.documentElement).appendChild(box);
-      }
-      box.textContent += msg + '\n';
-    } catch(_){}
-  }
-  window.__TRSAY = say;
-  window.addEventListener('error', function(e){
-    say('ERROR: ' + (e.message || '?') + '\n  at ' + (e.filename || '?') + ':' + (e.lineno || '?') + ':' + (e.colno || '?'));
-  });
-  window.addEventListener('unhandledrejection', function(e){
-    say('PROMISE: ' + ((e.reason && (e.reason.message || e.reason)) || '?'));
-  });
-  var oldLog = console.log;
-  console.log = function(){
-    try {
-      var s = Array.prototype.slice.call(arguments).map(function(a){
-        if (a instanceof Error) return a.name + ': ' + a.message + ' | ' + (a.stack || '').split('\n')[1];
-        if (typeof a === 'object') { try { return JSON.stringify(a).slice(0, 220); } catch(_){ return '[obj]'; } }
-        return String(a);
-      }).join(' ');
-      if (/EMERGE FLOW|error|Error/.test(s)) say(s);
-    } catch(_){}
-    return oldLog.apply(console, arguments);
-  };
-})();
-</script>
 <script src="emerge-sound.js?v=27"></script>
 </head>
 <body>
@@ -792,7 +750,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.65 DIAGNOSTIC · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.67 no abbrev · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -1552,9 +1510,8 @@ for (var bi = 0; bi < BODIES.length; bi++){
   var lbl = el('text', { x:0, y:px*0.5 + 30, 'text-anchor':'middle',
     'font-family':'Georgia, serif', 'font-size':'22', fill:'#f0e8d6' }, node);
   lbl.textContent = bb.label;
-  var ab = el('text', { x:0, y:px*0.5 + 52, 'text-anchor':'middle',
-    'font-family':'Georgia, serif', 'font-size':'17', fill:'#d9b45b' }, node);
-  ab.textContent = '(' + bb.ab + ')';
+  /* v18.67: the (Su)/(Ne)/(NN) abbreviation line is gone — the planet name already
+     names it, and the second line was colliding with the house numbers */
   bodyEls.push({ node:node, leader:leader, pointer:pointer, x:pp.x, y:pp.y });
 }
 
