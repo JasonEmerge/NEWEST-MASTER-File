@@ -901,7 +901,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.69 asc title center · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.70 mobile dashboard · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3345,7 +3345,10 @@ function openCompleteChartResult(){
    exactly like Tropical: the current screen sinks away and pricing.jpg
    rises in as the finale. No navigation — nothing can 404, and inside the
    living-page frame the sound continues untouched. */
-var DASH_SRC = 'pricing.jpg';
+/* v19.70: the phone gets Jason's mobile dashboard art, desktop keeps the
+   desktop art. Same overlay, same transition — only the file changes.
+   ?v= on both so Safari cannot serve the old pricing.jpg from cache. */
+var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg?v=2';
 var dashOverlay = null, dashStarted = false;
 function buildDashOverlay(){
   if (dashOverlay) return dashOverlay;

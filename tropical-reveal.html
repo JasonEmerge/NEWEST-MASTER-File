@@ -750,7 +750,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.61 asc no inner box · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.62 mobile dashboard · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2938,7 +2938,10 @@ function openCompleteChartResult(){
    screen sinks away and the CozAlyze dashboard rises in as the last
    part of the animation. Listens on the existing unlock event so both
    buttons (summary CTA + result page) trigger it unchanged. */
-var DASH_SRC = 'pricing.jpg';
+/* v18.62: the phone gets Jason's mobile dashboard art, desktop keeps the
+   desktop art. Same overlay, same transition — only the file changes.
+   ?v= on both so Safari cannot serve the old pricing.jpg from cache. */
+var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg?v=2';
 var dashOverlay = null, dashStarted = false;
 function buildDashOverlay(){
   if (dashOverlay) return dashOverlay;
