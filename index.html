@@ -303,7 +303,7 @@
 /* ---------- v13 restored onboarding (donor: Scene 2 v100) ---------- */
   #bdaybar { position:fixed; left:50%; transform:translate(-50%, 24px); width:min(93vw,326px); bottom:25vh; z-index:14;   /* v19.91: matched to the widened time bar */
     display:flex; align-items:center; justify-content:flex-start; gap:10px;
-    padding:9px 14px; border-radius:12px; cursor:pointer; overflow:visible;
+    padding:9px 14px; border-radius:12px; cursor:pointer; overflow:visible; box-sizing:border-box;
     background:linear-gradient(180deg, rgba(52,42,18,.65), rgba(30,24,10,.72));
     border:1.5px solid rgba(214,169,134,.65); backdrop-filter:blur(8px);
     box-shadow:0 10px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(232,199,166,.18);
@@ -324,11 +324,17 @@
     letter-spacing:.08em; text-transform:uppercase; z-index:0; }
   .gm-ghost .gm-typed { visibility:hidden; }
   .gm-ghost .gm-rest { color:#9C7A5F; }
-  .gm-wrap { position:relative; flex:1; display:flex; align-items:center; }
+  .gm-wrap { position:relative; flex:1; min-width:0; display:flex; align-items:center; }
+  /* v19.92: THE AM/PM FIX. .gm-wrap was flex:1 with the default min-width:auto, so it
+     refused to shrink below the input's intrinsic width and pushed #ampm out past the
+     bar's right border. Widening the bar moved the overflow along with it, which is why
+     that did nothing. The time field now gets a bounded track and #ampm is parked at the
+     far right with margin-left:auto, so they can never touch. */
+  #timebar .gm-wrap { flex:0 0 140px; width:140px; }
   #bdaybar.done { opacity:0 !important; transform:translate(-50%,-30px) scale(.92); pointer-events:none !important; }
   #timebar { position:fixed; left:50%; transform:translate(-50%, 24px); width:min(93vw,326px); bottom:25vh; z-index:14;   /* v19.91: widened so AM/PM clears the time field */
     display:flex; align-items:center; justify-content:flex-start; gap:10px;
-    padding:9px 14px; border-radius:12px; cursor:pointer; overflow:visible;
+    padding:9px 14px; border-radius:12px; cursor:pointer; overflow:visible; box-sizing:border-box;
     background:linear-gradient(180deg, rgba(52,42,18,.65), rgba(30,24,10,.72));
     border:1.5px solid rgba(214,169,134,.65); backdrop-filter:blur(8px);
     box-shadow:0 10px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(232,199,166,.18);
@@ -340,7 +346,7 @@
     color:#E8C7A6; font-size:17px; font-weight:600; letter-spacing:.08em;   /* v19.74: was 15px */
     text-align:center; text-transform:uppercase; min-width:0; }
   #timebar #tm-typed::placeholder { color:#9C7A5F; letter-spacing:.22em; }
-  #ampm { display:flex; gap:7px; flex:0 0 auto; margin-left:14px; }   /* v19.91: pushed right, clear of the time field */
+  #ampm { display:flex; gap:7px; flex:0 0 auto; margin-left:auto; padding-left:14px; }   /* v19.92: pinned to the far right, never overlapping the field */
   #ampm span { font-size:12px; letter-spacing:.08em; color:#C99378; padding:5px 8px;   /* v19.74: was 10px */
     border:1px solid rgba(214,169,134,.4); border-radius:8px; cursor:pointer; transition:.15s; }
   #ampm span.sel { color:#2E1B14; background:linear-gradient(110deg,#A86F55 0%,#D6A986 28%,#E8C7A6 48%,#C99378 68%,#765044 100%);
@@ -700,7 +706,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.91 · ampm spacing</div>
+<div id="ver">SCENE 1 · v19.92 · ampm fixed</div>
 
 <script>
 /* v19.75: the two-perspectives page owns its own zoom.
