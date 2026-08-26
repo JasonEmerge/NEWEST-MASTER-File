@@ -195,7 +195,7 @@
   /* prompt: "Your chart is revealed." + REVEAL MY CHART */
   #revealPrompt {
     position:fixed; left:0; right:0; z-index:22;
-    bottom:calc(env(safe-area-inset-bottom,0px) + 6px);   /* v19.4: prompt dropped lower, matches TROPICAL v18.12 */
+    bottom:calc(env(safe-area-inset-bottom,0px) + 38px);   /* v19.72: raised off the browser toolbar */
     display:flex; flex-direction:column; align-items:center; gap:14px;
     opacity:0; pointer-events:none;
     transition:opacity 1.1s ease;
@@ -901,7 +901,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.71 reading type · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.72 prompt raised · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
