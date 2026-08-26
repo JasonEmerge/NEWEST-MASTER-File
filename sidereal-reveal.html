@@ -552,8 +552,8 @@
   .sd-asc > .sd-body { font-size:clamp(15.5px, 4.4vw, 21px); line-height:1.72;
     letter-spacing:0.02em; }   /* v19.64: full-width rising text at the mock's scale */
   .sd-body { font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    color:#EBE5D0; font-size:clamp(12.5px, 3.4vw, 19px); line-height:1.52;
-    letter-spacing:0.03em; margin:0; text-align:left; }
+    color:#EBE5D0; font-size:clamp(15.5px, 4.3vw, 21px); line-height:1.62;
+    letter-spacing:0.02em; margin:0; text-align:left; }   /* v19.71: reading paragraphs raised to the ascendant paragraph scale, tracking pulled in */
 
   /* reading frame: icon + heading + paragraph rows */
   .sd-read { display:flex; flex-direction:column; gap:clamp(18px, 4.8vw, 32px); }
@@ -901,7 +901,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.70 mobile dashboard · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.71 reading type · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 

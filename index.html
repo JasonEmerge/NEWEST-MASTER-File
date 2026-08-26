@@ -700,7 +700,7 @@
   </div>
 </div>
 
-<div id="ver">SCENE 1 · v19.89 · breath both beds</div>
+<div id="ver">SCENE 1 · v19.90 · uncle john out</div>
 
 <script>
 /* v19.75: the two-perspectives page owns its own zoom.
@@ -1371,30 +1371,31 @@ const FULL_EARTH_CENTER_Y       = 0.50;
 const birthState = { point:0, energy:0, surface:0, atmosphere:0, light:0 };
 let earthBirthStart = 0, settleStart = 0;
 
-/* v19.89 — THE BREATH, corrected. v19.88 only rode down 'ambient' (Uncle John),
-   but TWO continuous beds are running through the Earth: 'ambient' and 'voidatm'
-   (the journey bed, started at the curtain tap and louder than Uncle John, peak
-   -11.9 vs -14.1). Dropping one of the two removed about 2 dB of the sum, which
-   is why it read as no change at all. Both beds now ride down together, so what
-   remains over the growing Earth is the 06 growth cue alone — the layer that
-   ends on its own — and after it ends there is real silence.
-   Nothing else is touched: no cue levels, no stop points, no ordering. */
-var AMB_BEDS = ['ambient', 'voidatm'];
-window.__ambFadeState = window.__ambFadeState || 'full';
-/* swell() is a silent no-op until a loop is actually decoded and running, and
-   UNCLE_JOHN_FIELD_LOOP is a 43s file that can still be arriving over cellular,
-   so the ramp is re-issued across the first few seconds with the remaining time
-   decremented. Re-issuing is harmless: every call continues the same ramp from
-   wherever the gain currently sits toward the same target and end time. */
-function ambFade(level, secs){
-  [0, 600, 1400, 2600, 4200].forEach(function(delay){
-    setTimeout(function(){
-      var left = Math.max(0.5, secs - delay / 1000);
-      AMB_BEDS.forEach(function(bed){
-        try { EMERGE_SOUND.swell(bed, level, left); } catch(_){}
-      });
-    }, delay);
+/* v19.90 — UNCLE JOHN IS OUT OF THE OPENING.
+   The cue is the Tap to Unlock beat, not the Earth. From the moment that beat
+   begins, the UNCLE_JOHN_FIELD_LOOP bed rides out over 2.5s and is genuinely
+   STOPPED, not merely turned down, so nothing can bring it back: no duck, no
+   swell, no stray gain ramp. It stays gone through Tap to Unlock, the whole
+   birth of the Earth, the birthplace search and the flight, and clicks back on
+   under the first digit of the birth TIME, arriving on the engine's own 4.5s
+   bed fade-in.
+   Scope note: this is Uncle John ONLY. The journey bed (voidatm, 01c) is
+   untouched and still runs from the curtain tap until birth-data-complete,
+   exactly as it always has. */
+window.__uncleJohn = window.__uncleJohn || 'on';
+function uncleJohnOut(){
+  if (window.__uncleJohn === 'off') return;
+  window.__uncleJohn = 'off';
+  /* re-issued because stopLoop is a no-op while the 43s wav is still decoding —
+     if the bed starts late it is caught and stopped on one of these passes */
+  [0, 900, 2000, 3500, 5500].forEach(function(d){
+    setTimeout(function(){ try { EMERGE_SOUND.stopLoop('ambient', d ? 0.6 : 2.5); } catch(_){} }, d);
   });
+}
+function uncleJohnIn(){
+  if (window.__uncleJohn === 'on') return;
+  window.__uncleJohn = 'on';
+  try { EMERGE_SOUND.loop('ambient'); } catch(_){}   /* engine gives beds a 4.5s fade-in */
 }
 
 function startEarthBirth(){
@@ -1404,10 +1405,7 @@ function startEarthBirth(){
   try { world.atmosphereAltitude(0.005); } catch(_){}
   earthBirthStart = performance.now();
   try { EMERGE_SOUND.play('growth'); } catch(_){}   /* dot chime removed — pulse then Earth */
-  /* the beds start dropping on the first dot of light and are silent by the
-     time the world is large — the growth cue finishes alone into the breath */
-  window.__ambFadeState = 'fading';
-  ambFade(0.0, 9.2);
+  uncleJohnOut();   /* v19.90: safety net — already out at Tap to Unlock, never on here */
   window.__earthBirth = earthBirthStart + 1100;   // energy motes ride the energy stage
   requestAnimationFrame(birthFrame);
 }
@@ -1542,6 +1540,8 @@ document.getElementById('curtain').addEventListener('click', () => {
       const iv = document.getElementById('invite');
       iv.classList.add('ready');
       setTimeout(() => iv.classList.add('focus'), 5200);  // v19.41: logo + line 1 vanish, line 2 takes center
+      /* v19.90: THE CUE. Tap to Unlock is where Uncle John leaves. */
+      setTimeout(uncleJohnOut, 5200);
       setTimeout(armEmergeTap, 8400);       // only after "Tap to Unlock" is visible
     }, 3000);
   }, { once:true });
@@ -1978,12 +1978,8 @@ window.__setEntryStep = function(step) {
   inp.addEventListener('input', () => {
     let dig = inp.value.replace(/\D/g, '').slice(0, 4);   // HHMM
     try { if (dig.length) EMERGE_SOUND.play('pulse'); } catch(_){}
-    /* v19.89: the breath ends here — the beds rise back in under the first digit
-       of the birth TIME, not the date */
-    if (dig.length && window.__ambFadeState !== 'full') {
-      window.__ambFadeState = 'full';
-      try { ambFade(1.0, 6.0); } catch(_){}
-    }
+    /* v19.90: Uncle John clicks back on under the first digit of the birth TIME */
+    if (dig.length) uncleJohnIn();
     let out = dig.slice(0,2);
     if (dig.length >= 3) out += ' : ' + dig.slice(2,4);
     inp.value = out;
