@@ -95,6 +95,7 @@
     border-top:1px solid rgba(201,161,94,.18);display:flex;opacity:0;pointer-events:none;
     transition:opacity .8s ease}
   body.done #nav{opacity:1;pointer-events:auto}
+  body.burst-only #hero,body.burst-only #content{display:none}      /* Open Reading ends on the burst; the full-reading visual is not designed yet */
   #nav a{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:4px;text-decoration:none;color:#8b8272;font-size:10.5px;letter-spacing:.06em;
     font-family:'EB Garamond',serif}
@@ -319,7 +320,7 @@ body.seq-open{overflow:hidden}
 
   <!-- ASCENDANT -->
   <section class="card tab" id="tabAscendant">
-    <button class="tab-head" type="button" aria-expanded="false" aria-controls="bodyAscendant">
+    <button class="tab-head" type="button" id="ascEntry">
       <span class="tab-icon" data-field="ascendant-icon">
         <svg viewBox="0 0 256 256"><g fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="128" r="104"/><path d="M90 69c42 27 42 91 0 118M166 69c-42 27-42 91 0 118M79 128h98"/></g></svg>
       </span>
@@ -329,7 +330,6 @@ body.seq-open{overflow:hidden}
       </span>
       <svg class="tab-chev" viewBox="0 0 64 64"><path d="M14 24l18 18 18-18" fill="none" stroke="#C9A56B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
-    <div class="tab-body" id="bodyAscendant"><div><div class="tab-content" data-slot="ascendant"></div></div></div>
   </section>
 
   <!-- CURRENT LIFE CYCLE -->
@@ -362,7 +362,7 @@ body.seq-open{overflow:hidden}
 
 </div></div>
 
-<div id="stamp">VEDIC READING · V2.2 · sky pinned</div>
+<div id="stamp">VEDIC READING · V2.3 · two doors</div>
 
 <script>
 /* =====================================================================
@@ -638,6 +638,24 @@ function playTransition(){
   setTimeout(() => { if (!hero.classList.contains('playing')) fallback(); }, 9000);
 }
 
+/* OPEN READING (v2.3): the page turns and bursts, then ends. No sign, no reading. */
+function playTurnOnly(){
+  transit.classList.add('on');
+  const end = once(() => {
+    transit.classList.add('fading');
+    setTimeout(() => {
+      transit.classList.remove('on'); transit.classList.remove('fading');
+      document.body.classList.add('burst-only');
+      document.body.classList.add('done');         // shows the nav so Home can bring them back
+      window.dispatchEvent(new CustomEvent('COZ_READING_BURST_COMPLETE'));
+    }, 700);
+  });
+  tVid.addEventListener('ended', end);
+  tVid.addEventListener('error', end);
+  tVid.play().catch(end);
+  setTimeout(end, 6000);                            // safety
+}
+
 function blackBeatThenPlay(ms){
   veil.classList.add('on');
   setTimeout(() => {
@@ -785,13 +803,25 @@ function once(fn){ let ran=false; return () => { if(!ran){ ran=true; fn(); } }; 
 
   /* ---------- OPEN READING: the sound starts on this tap, the dashboard turns,
      the rising sign is born in the flash, the Inner Compass reading rises. ---------- */
+  var entered=false;
   var openBtn=document.getElementById('btnOpenReading');
   openBtn.addEventListener('click',function(){
+    if(entered) return; entered=true;
     window.dispatchEvent(new CustomEvent('COZ_OPEN_READING',{detail:{sign:sign}}));
     burstPlay(); fieldStart();
-    start();                                   // transition is already on screen under the dashboard
+    playTurnOnly();                            // turn + burst, then it ends (full-reading visual to come)
     dashDismiss(false);
-  },{once:true});
+  });
+
+  /* ---------- [SIGN] ASCENDANT: the person's rising sign emerges from black,
+     the Inner Compass reading rises beneath it and the sign pins to the top. ---------- */
+  document.getElementById('ascEntry').addEventListener('click',function(){
+    if(entered) return; entered=true;
+    window.dispatchEvent(new CustomEvent('COZ_OPEN_ASCENDANT',{detail:{sign:sign}}));
+    fieldStart();
+    dashDismiss(false);
+    blackBeatThenPlay(300);                    // no turn: the sign simply emerges
+  });
 
   /* ---------- Home: fade the sound, return to the dashboard ---------- */
   document.getElementById('navHome').addEventListener('click',function(e){
