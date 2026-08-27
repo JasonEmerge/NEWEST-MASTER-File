@@ -567,6 +567,14 @@
   #unlockDash img { display:block; width:100%; height:auto; opacity:0; transform:translateY(26px);
     transition:opacity 1.6s ease, transform 2.1s cubic-bezier(0.22,0.61,0.36,1); }
   #unlockDash.is-visible img { opacity:1; transform:translateY(0); }
+  /* v18.71: the same Vedic Chart $49 door sidereal has. Both systems show the identical
+     dashboard art, so the button has to be live on both sides. Geometry copied verbatim
+     from SIDEREAL v19.74, measured against dash-mobile.jpg and pricing.jpg. */
+  #unlockDash .dash-art { position:relative; }
+  #unlockDash .dash-hot { position:absolute; background:transparent; border:0; padding:0; margin:0; cursor:pointer;
+    -webkit-tap-highlight-color:transparent; }
+  #unlockDash .dash-hot.vedic-mobile { left:80%; top:51.2%; width:17%; height:3.6%; }
+  #unlockDash .dash-hot.vedic-desktop { left:39%; top:58.4%; width:25%; height:3.5%; }
   body.unlock-leaving #chartResultPage, body.unlock-leaving #summaryStage {   /* v18.69: was #resultPage, an id that does not exist */
     opacity:0 !important; transform:scale(0.985);
     transition:opacity 1.1s ease, transform 1.1s ease; }
@@ -756,7 +764,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.70 sky loop · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.71 vedic door · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2967,10 +2975,40 @@ function buildDashOverlay(){
   if (dashOverlay) return dashOverlay;
   dashOverlay = document.createElement('div');
   dashOverlay.id = 'unlockDash';
+  var wrap = document.createElement('div');
+  wrap.className = 'dash-art';
   var im = document.createElement('img');
   im.src = DASH_SRC;
   im.alt = 'CozAlyze — Discover yourself through multiple perspectives';
-  dashOverlay.appendChild(im);
+  wrap.appendChild(im);
+  /* v18.71: Vedic Chart $49 -> (payment, not built yet) -> the Vedic Reading page.
+     CAREFUL: the reading that follows is a VEDIC one, so it must be born as the
+     person's SIDEREAL rising sign. This file computes tropical longitudes only and
+     applies no ayanamsa, so ascSign here is the tropical ascendant, which is usually
+     a whole sign away from the sidereal one. Passing it would open the wrong sign's
+     animation and the wrong Inner Compass reading. The Lahiri cubic below is copied
+     verbatim from SIDEREAL v19.62 so both doors resolve to the identical sign. */
+  var hot = document.createElement('button');
+  hot.type = 'button';
+  hot.className = 'dash-hot ' + ((window.innerWidth < 900) ? 'vedic-mobile' : 'vedic-desktop');
+  hot.setAttribute('aria-label', 'Vedic Chart $49');
+  hot.addEventListener('click', function(){
+    var asc = SIGNS[ascSign].toLowerCase();          /* tropical fallback only */
+    try {
+      var jd   = BIRTH.utc.getTime()/86400000 + 2440587.5;
+      var t19  = (jd - 2415020.0)/36525.0;
+      var ayan = 22.4881406 + 1.2025810*t19 + 0.2622463*t19*t19 - 0.1101570*t19*t19*t19;
+      var sid  = ((ASC - ayan) % 360 + 360) % 360;
+      asc = SIGNS[Math.floor(sid/30)].toLowerCase();
+      console.log('[EMERGE FLOW] vedic door: tropical asc', SIGNS[ascSign],
+                  '-> sidereal asc', SIGNS[Math.floor(sid/30)], '(ayan ' + ayan.toFixed(4) + ')');
+    } catch(_){}
+    try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
+    var href = 'vedic-reading.html?asc=' + asc + '&v=22';
+    try { (window.top || window).location.href = href; } catch(_) { location.href = href; }
+  });
+  wrap.appendChild(hot);
+  dashOverlay.appendChild(wrap);
   document.body.appendChild(dashOverlay);
   return dashOverlay;
 }
