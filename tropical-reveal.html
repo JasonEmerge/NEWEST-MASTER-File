@@ -388,6 +388,12 @@
   .complete-reading-cta:focus-visible { outline:2px solid rgba(230,200,135,0.85); outline-offset:4px; }
   .complete-reading-cta span { display:inline-block; margin-left:6px; transition:transform 0.4s ease; }
   .complete-reading-cta:hover span { transform:translateX(4px); }
+  /* v18.69: opacity:0 still takes taps. While the card rises through the light
+     (body.cardUp, 5.3s-8.1s of the cinematic) this old CTA sat invisible at the
+     card's centre and any tap on it fired the unlock event, so the price page
+     rose over the reading before the reading had ever been seen. Not hit-testable
+     until it is actually shown. */
+  .complete-reading-cta:not(.in) { visibility:hidden; pointer-events:none; }
 
   /* staged text entrance */
   .chart-summary-card .t { opacity:0; transform:translateY(13px); transition:opacity 0.85s ease, transform 0.85s ease; }
@@ -561,7 +567,7 @@
   #unlockDash img { display:block; width:100%; height:auto; opacity:0; transform:translateY(26px);
     transition:opacity 1.6s ease, transform 2.1s cubic-bezier(0.22,0.61,0.36,1); }
   #unlockDash.is-visible img { opacity:1; transform:translateY(0); }
-  body.unlock-leaving #resultPage, body.unlock-leaving #summaryStage {
+  body.unlock-leaving #chartResultPage, body.unlock-leaving #summaryStage {   /* v18.69: was #resultPage, an id that does not exist */
     opacity:0 !important; transform:scale(0.985);
     transition:opacity 1.1s ease, transform 1.1s ease; }
   @media (prefers-reduced-motion: reduce){
@@ -622,7 +628,7 @@ try { if (window.parent !== window && window.parent.EMERGE_SOUND) window.EMERGE_
 <main id="chartResultPage" hidden aria-hidden="true">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
   <div class="tr-page">
-    <video id="trHero" src="day-to-night.mp4" muted playsinline preload="none"></video>
+    <video id="trHero" src="day-to-night.mp4?v=2" muted loop playsinline preload="none"></video>
     <div id="trDetails" class="tr-details"></div>
     <section class="tr-frame tr-table">
       <div id="trPlanetsL" class="tr-tcol"></div>
@@ -750,7 +756,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.68 hero fix · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.70 sky loop · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -2846,9 +2852,18 @@ function trHeroWire(){
   var v = document.getElementById('trHero');
   if (!v || v.__wired) return;
   v.__wired = true;
-  v.addEventListener('ended', function(){ trHeroDone = true; });   /* hold the night pose */
+  /* v18.70: the sky never stops. day-to-night.mp4 is a palindrome that ends on its own
+     opening frame, so native looping runs day to night and back again forever with no
+     visible seam. The old hold-the-night-pose behaviour and its tap-to-replay are gone,
+     they only existed because the clip used to stop. A tap now just restarts from dawn
+     if someone wants to see the beginning again. */
+  v.loop = true;
   v.addEventListener('pointerdown', function(){
-    if (trHeroDone){ trHeroDone = false; v.currentTime = 0; v.play().catch(function(){}); }
+    try { v.currentTime = 0; if (v.paused) v.play().catch(function(){}); } catch(_){}
+  });
+  /* iOS suspends media when the tab is backgrounded and does not always resume it */
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden && v.paused) { try { v.play().catch(function(){}); } catch(_){} }
   });
 }
 window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){
@@ -2961,6 +2976,14 @@ function buildDashOverlay(){
 }
 function startUnlockTransition(){
   if (dashStarted) return;
+  /* v18.69: ORDER OF THE FLOW IS LAW — reveal the chart first. The dashboard is
+     only reachable from the reading page once it is on screen; any unlock event
+     that arrives earlier (a tap on the rising card during the cinematic) is
+     dropped, not queued. */
+  if (!resultOpened || resultPage.hidden || !resultPage.classList.contains('is-visible')){
+    console.log('[EMERGE FLOW] guard: unlock requested before the reading page was visible — ignored');
+    return;
+  }
   dashStarted = true;
   try { EMERGE_SOUND.play('impact'); EMERGE_SOUND.haptic(10); } catch(_){}
   var ov = buildDashOverlay();
@@ -3073,6 +3096,7 @@ revealBtn.addEventListener('touchstart', function(){
 }, { passive:true });
 
 ctaEl.addEventListener('click', function(){
+  if (!ctaEl.classList.contains('in')) return;   /* v18.69: never from the invisible button */
   window.dispatchEvent(new CustomEvent('EMERGE_UNLOCK_READING_REQUESTED'));
   console.log('[EMERGE FLOW] 7. free summary -> unlock complete reading requested');
 });
