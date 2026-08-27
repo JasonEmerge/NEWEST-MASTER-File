@@ -362,7 +362,7 @@ body.seq-open{overflow:hidden}
 
 </div></div>
 
-<div id="stamp">VEDIC READING · V2.3 · two doors</div>
+<div id="stamp">VEDIC READING · V2.5 · swell + unbroken field</div>
 
 <script>
 /* =====================================================================
@@ -611,7 +611,7 @@ function start(){
   }
 
   if (directMode){
-    blackBeatThenPlay(300);
+    blackBeatThenPlay(300, true);   // V2.5: QA direct path keeps the swell too
   } else {
     playTransition();                               // EMERGE_SOUND hook: page turn
   }
@@ -619,7 +619,7 @@ function start(){
 
 function playTransition(){
   transit.classList.add('on');
-  const fallback = once(() => { transit.classList.remove('on'); blackBeatThenPlay(300); });
+  const fallback = once(() => { transit.classList.remove('on'); blackBeatThenPlay(300, true); });   // V2.5: swell on the fallback path too
   tVid.addEventListener('error', fallback);
 
   // 2s turn -> freeze ON the center light -> hold -> birth as the 3rd second turns
@@ -656,10 +656,10 @@ function playTurnOnly(){
   setTimeout(end, 6000);                            // safety
 }
 
-function blackBeatThenPlay(ms){
+function blackBeatThenPlay(ms, bloom){
   veil.classList.add('on');
   setTimeout(() => {
-    playSign();
+    playSign(bloom);
     setTimeout(() => veil.classList.remove('on'), 150);
   }, ms);
 }
@@ -747,20 +747,32 @@ function once(fn){ let ran=false; return () => { if(!ran){ ran=true; fn(); } }; 
    ===================================================================== */
 (function(){
 /* ---------- Sound: Uncle John's field, the one bed for the whole sequence ----------
-     Starts on the Open Reading tap (the gesture that unlocks audio), drifts in over 2s,
-     loops under the turn, the bloom and the reading, and fades when Home closes it. */
+     V2.5 — EMBEDDED MODE. When this page is opened inside the app's living frame, the
+     parent already has UNCLE_JOHN_FIELD_LOOP running and has had it running since the
+     opening. Starting a second copy here would double it, and stopping it at Home would
+     cut the app's bed. So when a parent engine is present we simply leave it alone: the
+     field is already playing, unbroken, from before this page even loaded. That is what
+     removes the silence at the seam.
+     Standalone (opened directly by URL) behaves exactly as V2.3 did. */
+  var PARENT_SND = null;
+  try { if (window.parent !== window && window.parent.EMERGE_SOUND) PARENT_SND = window.parent.EMERGE_SOUND; } catch(_){}
+  var EMBEDDED = !!PARENT_SND;
+
   var FIELD='UNCLE_JOHN_FIELD_LOOP.wav?v=1', FIELD_LEVEL=1.0;
   var BURST='11b_birth_data_complete_half.wav?v=1', BURST_LEVEL=1.0;   // the harmony at half loudness (-10.5 dB), at the Open Reading tap, over the turn and the flash
   var burstBuf=null, burstLoad=fetch(BURST).then(function(r){ return r.arrayBuffer(); });
   var actx=null, fieldBuf=null, fieldSrc=null, fieldGain=null, fieldWanted=false;
-  var fieldLoad=fetch(FIELD).then(function(r){ return r.arrayBuffer(); });
+  var fieldLoad=null;
   function ctx(){
     if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
     if(actx.state!=='running') actx.resume();
     return actx;
   }
   function fieldStart(){
+    /* embedded: the parent's bed is already playing — make sure it is, then leave it */
+    if(EMBEDDED){ try{ PARENT_SND.loop('ambient'); }catch(_){} return; }
     fieldWanted=true; var c=ctx();
+    if(!fieldLoad) fieldLoad=fetch(FIELD).then(function(r){ return r.arrayBuffer(); });
     var go=function(){
       if(!fieldWanted||fieldSrc) return;
       fieldSrc=c.createBufferSource(); fieldSrc.buffer=fieldBuf; fieldSrc.loop=true;
@@ -772,6 +784,8 @@ function once(fn){ let ran=false; return () => { if(!ran){ ran=true; fn(); } }; 
     else fieldLoad.then(function(ab){ return c.decodeAudioData(ab); }).then(function(b){ fieldBuf=b; go(); }).catch(function(){});
   }
   function burstPlay(){
+    /* embedded: fire the app's own harmony cue through the parent engine */
+    if(EMBEDDED){ try{ PARENT_SND.play('harmony'); return; }catch(_){} }
     var c=ctx();
     var go=function(){ var src=c.createBufferSource(), g=c.createGain(); src.buffer=burstBuf;
       g.gain.value=BURST_LEVEL; src.connect(g).connect(c.destination); src.start(); };
@@ -779,6 +793,7 @@ function once(fn){ let ran=false; return () => { if(!ran){ ran=true; fn(); } }; 
     else burstLoad.then(function(ab){ return c.decodeAudioData(ab); }).then(function(b){ burstBuf=b; go(); }).catch(function(){});
   }
   function fieldStop(secs){
+    if(EMBEDDED) return;            /* never cut the app's bed from inside the frame */
     fieldWanted=false; if(!fieldSrc) return;
     var c=actx, s=fieldSrc, g=fieldGain; fieldSrc=null; fieldGain=null;
     g.gain.cancelScheduledValues(c.currentTime); g.gain.setValueAtTime(g.gain.value,c.currentTime);
@@ -820,7 +835,7 @@ function once(fn){ let ran=false; return () => { if(!ran){ ran=true; fn(); } }; 
     window.dispatchEvent(new CustomEvent('COZ_OPEN_ASCENDANT',{detail:{sign:sign}}));
     fieldStart();
     dashDismiss(false);
-    blackBeatThenPlay(300);                    // no turn: the sign simply emerges
+    blackBeatThenPlay(300, true);              // V2.5: black beat, then the even 3s swell from small to full
   });
 
   /* ---------- Home: fade the sound, return to the dashboard ---------- */

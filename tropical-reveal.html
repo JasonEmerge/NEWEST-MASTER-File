@@ -764,7 +764,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.71 vedic door · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.72 sound seam · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3004,8 +3004,19 @@ function buildDashOverlay(){
                   '-> sidereal asc', SIGNS[Math.floor(sid/30)], '(ayan ' + ayan.toFixed(4) + ')');
     } catch(_){}
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=22';
-    try { (window.top || window).location.href = href; } catch(_) { location.href = href; }
+    var href = 'vedic-reading.html?asc=' + asc + '&v=25';
+    /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
+       whole audio engine with it, which is what produced the dead silence at this
+       point. Instead ask the parent to swap the living frame in place: index.html
+       survives, Uncle John never stops, and the Vedic page adopts the same engine. */
+    var handed = false;
+    try {
+      if (window.parent !== window) {
+        window.parent.postMessage({ coz: 'GOTO_VEDIC', href: href }, '*');
+        handed = true;
+      }
+    } catch(_){}
+    if (!handed) { try { (window.top || window).location.href = href; } catch(_) { location.href = href; } }
   });
   wrap.appendChild(hot);
   dashOverlay.appendChild(wrap);
