@@ -986,7 +986,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.77 whats included · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.78 three doors · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3441,7 +3441,7 @@ var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg
 function vedicCheckout(){
     var asc = SIGNS[ascSign].toLowerCase();
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=25';
+    var href = 'vedic-reading.html?asc=' + asc + '&v=26';
     /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
        whole audio engine with it, which is what produced the dead silence at this
        point. Instead ask the parent to swap the living frame in place: index.html
@@ -3489,16 +3489,40 @@ var COZ_INFO = {
     checkout: function(){ compareCheckout(); }
   }
 };
-/* Tropical $49 and Compare $75 have no checkout in this file yet (payment is not
-   built; the pricing art carries no tap target for these two buttons). Each fires
-   a single hook so the payment layer can attach later. Nothing is faked. */
+/* MASTER INTEGRATION (Sep 1): all three products now have a destination page in this
+   repo (the one-document builds: vedic-reading.html R2.4, tropical-reading.html T1.3,
+   compare-reading.html C1.3). Every checkout goes through the same living-page seam
+   the Vedic door already used: ask index.html to swap the frame in place so the sound
+   engine survives; fall back to a top-window navigation only when there is no parent. */
+function cozHandoff(kind, href){
+  var handed = false;
+  try {
+    if (window.parent !== window) {
+      window.parent.postMessage({ coz: 'GOTO_' + kind, href: href }, '*');
+      handed = true;
+    }
+  } catch(_){}
+  if (!handed) { try { (window.top || window).location.href = href; } catch(_) { location.href = href; } }
+}
+function cozAscendants(){
+  /* returns { sidereal, tropical } sign names in lowercase, from THIS file's calculation */
+  return { sidereal: SIGNS[ascSign].toLowerCase(),
+           tropical: SIGNS[Math.floor(norm360(ascTrop)/30)].toLowerCase() };
+}
 function tropicalCheckout(){
-  console.log('[EMERGE FLOW] checkout requested: tropical $49 (payment not built)');
+  var a = cozAscendants();
+  try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
+  console.log('[EMERGE FLOW] tropical door: tropical asc', a.tropical);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
+  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=1');
 }
 function compareCheckout(){
-  console.log('[EMERGE FLOW] checkout requested: compare $75 (payment not built)');
+  var a = cozAscendants();
+  try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
+  console.log('[EMERGE FLOW] compare door: tropical asc', a.tropical, '| sidereal asc', a.sidereal);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
+  /* compare-reading.html paints its Ascendants glyph from the TROPICAL sign (its own contract) */
+  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=1');
 }
 var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
 function cozInfoBuild(){
