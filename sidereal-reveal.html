@@ -668,6 +668,85 @@
     -webkit-tap-highlight-color:transparent; }
   #unlockDash .dash-hot.vedic-mobile { left:80%; top:51.2%; width:17%; height:3.6%; }
   #unlockDash .dash-hot.vedic-desktop { left:39%; top:58.4%; width:25%; height:3.5%; }
+
+  /* ===== WHAT'S INCLUDED: info link + shared modal (spec supplied Sep 1) =====
+     One modal component, three product configs. Links are positioned over the
+     pricing art (pricing.jpg desktop / dash-mobile.jpg mobile), measured against
+     the art in %, so they scale with the image. Nothing else on the page changes. */
+  #unlockDash .dash-info { position:absolute; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:0; margin:0; padding:0; cursor:pointer; box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent; -webkit-appearance:none; appearance:none;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; font-size:14px; font-weight:400;
+    letter-spacing:0.02em; line-height:1; color:#D3A16F; white-space:nowrap;
+    text-decoration:underline; text-underline-offset:4px; text-decoration-thickness:1px; }
+  #unlockDash .dash-info svg { width:11px; height:11px; margin-left:5px; flex:0 0 auto; }
+  #unlockDash .dash-info:hover, #unlockDash .dash-info:focus-visible { color:#F0C69C; filter:brightness(1.08); outline:none; }
+  /* desktop art: centered on the button below it, sitting in the gap above it */
+  #unlockDash .dash-info.tropical-desktop { left:13.25%; top:56.97%; width:22.35%; height:2.0%; }
+  #unlockDash .dash-info.vedic-desktop    { left:40.40%; top:56.63%; width:22.50%; height:2.0%; }
+  #unlockDash .dash-info.compare-desktop  { left:67.15%; top:57.08%; width:23.80%; height:2.0%; }
+  /* mobile art: the only clear row is between the card subtitle and its description,
+     so the link sits there, right-aligned to its $ pill; hit area padded to 44px */
+  #unlockDash .dash-info.tropical-mobile, #unlockDash .dash-info.vedic-mobile, #unlockDash .dash-info.compare-mobile {
+    justify-content:flex-end; min-height:44px; padding-right:0; transform:translateY(-50%); }
+  #unlockDash .dash-info.tropical-mobile { right:6.5%; top:34.35%; }
+  #unlockDash .dash-info.vedic-mobile    { right:5.7%; top:49.18%; }
+  #unlockDash .dash-info.compare-mobile  { right:6.2%; top:63.86%; }
+
+  #cozInfoOverlay { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
+    padding:16px; box-sizing:border-box; background:rgba(1,7,16,0.78);
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    opacity:0; transition:opacity 200ms ease; }
+  #cozInfoOverlay.is-open { opacity:1; }
+  #cozInfoOverlay[hidden] { display:none; }
+  #cozInfoModal { position:relative; box-sizing:border-box; width:min(560px, calc(100vw - 32px));
+    max-height:calc(100dvh - 32px); padding:36px 40px 30px; border-radius:14px; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:linear-gradient(180deg, rgba(7,20,35,0.99) 0%, rgba(3,13,25,0.99) 100%);
+    border:1px solid #C99563;
+    box-shadow:0 24px 70px rgba(0,0,0,0.65), 0 0 24px rgba(201,149,99,0.08);
+    color:#F3E1CF; text-align:center;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    opacity:0; transform:translateY(10px) scale(0.985); transition:opacity 200ms ease, transform 200ms ease; }
+  #cozInfoOverlay.is-open #cozInfoModal { opacity:1; transform:translateY(0) scale(1); }
+  #cozInfoClose { position:absolute; top:14px; right:14px; width:44px; height:44px; display:flex; align-items:center;
+    justify-content:center; background:transparent; border:0; padding:0; margin:0; cursor:pointer; color:#F1DFCC;
+    -webkit-tap-highlight-color:transparent; }
+  #cozInfoClose svg { width:23px; height:23px; }
+  #cozInfoClose:hover, #cozInfoClose:focus-visible { color:#F0C69C; outline:none; }
+  #cozInfoEyebrow { font-size:12px; font-weight:500; letter-spacing:0.14em; line-height:1.2; text-transform:uppercase; color:#D3A16F; margin:0; }
+  #cozInfoTitle { font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(32px, 4vw, 42px); font-weight:500;
+    line-height:1.08; color:#F3E1CF; margin:14px 0 0; }
+  #cozInfoIntro { font-size:16px; line-height:1.55; color:rgba(243,225,207,0.9); max-width:440px; margin:18px auto 24px; }
+  #cozInfoList { list-style:none; margin:0; padding:0; text-align:left; }
+  #cozInfoList li { display:flex; align-items:center; min-height:34px; font-size:16px; line-height:1.4; color:#F3E1CF; }
+  #cozInfoList li + li { margin-top:14px; }
+  #cozInfoList svg { width:18px; height:18px; flex:0 0 18px; margin-right:14px; color:#D3A16F; }
+  #cozInfoRule { height:1px; margin:24px 0 20px; background:linear-gradient(90deg, transparent, rgba(211,161,111,0.65), transparent); }
+  #cozInfoDesc { font-size:15px; line-height:1.55; color:rgba(243,225,207,0.86); margin:0; }
+  #cozInfoBuy { display:block; width:100%; min-height:52px; margin-top:24px; border:1px solid rgba(255,223,195,0.8);
+    border-radius:9px; font-size:18px; font-weight:500; cursor:pointer; box-sizing:border-box;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    background:linear-gradient(180deg, #F5CBA9 0%, #E8A87D 100%); color:#17100D; -webkit-tap-highlight-color:transparent; }
+  #cozInfoBuy:hover, #cozInfoBuy:focus-visible { filter:brightness(1.04); outline:none; }
+  #cozInfoBuy:focus-visible { box-shadow:0 0 0 2px rgba(240,198,156,0.7); }
+  #cozInfoCloseText { display:inline-flex; align-items:center; justify-content:center; min-height:44px; margin-top:10px;
+    background:transparent; border:0; padding:0 8px; cursor:pointer; font-size:14px; color:#F1DFCC;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    text-decoration:underline; text-underline-offset:4px; -webkit-tap-highlight-color:transparent; }
+  #cozInfoCloseText:hover, #cozInfoCloseText:focus-visible { color:#F0C69C; outline:none; }
+  @media (max-width:640px){
+    #cozInfoModal { width:calc(100vw - 24px); max-height:calc(100dvh - 24px); padding:30px 22px 24px; border-radius:12px; }
+    #cozInfoTitle { font-size:30px; }
+    #cozInfoIntro { font-size:15px; }
+    #cozInfoList li { font-size:15px; }
+    #cozInfoDesc { font-size:14px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    #cozInfoModal { transform:none !important; transition:opacity 200ms ease; }
+  }
+  #unlockDash.info-locked { overflow:hidden; }
+  /* ===== END WHAT'S INCLUDED ===== */
   body.unlock-leaving #resultPage, body.unlock-leaving #summaryStage {
     opacity:0 !important; transform:scale(0.985);
     transition:opacity 1.1s ease, transform 1.1s ease; }
@@ -907,7 +986,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.76 sound seam · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.77 whats included · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3357,6 +3436,151 @@ function openCompleteChartResult(){
    desktop art. Same overlay, same transition — only the file changes.
    ?v= on both so Safari cannot serve the old pricing.jpg from cache. */
 var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg?v=2';
+/* WHAT'S INCLUDED (Sep 1): the Vedic $49 handler is now a named function so the
+   art hotspot and the modal's Continue to Checkout button share ONE route. Body unchanged. */
+function vedicCheckout(){
+    var asc = SIGNS[ascSign].toLowerCase();
+    try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
+    var href = 'vedic-reading.html?asc=' + asc + '&v=25';
+    /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
+       whole audio engine with it, which is what produced the dead silence at this
+       point. Instead ask the parent to swap the living frame in place: index.html
+       survives, Uncle John never stops, and the Vedic page adopts the same engine. */
+    var handed = false;
+    try {
+      if (window.parent !== window) {
+        window.parent.postMessage({ coz: 'GOTO_VEDIC', href: href }, '*');
+        handed = true;
+      }
+    } catch(_){}
+    if (!handed) { try { (window.top || window).location.href = href; } catch(_) { location.href = href; } }
+}
+
+/* ===== WHAT'S INCLUDED MODAL (spec supplied Sep 1) =====
+   One dialog element, rebuilt from COZ_INFO[product] each time it opens.
+   role=dialog, aria-modal, labelled by the title, focus moved in and trapped,
+   Escape / X / Close / overlay tap all close, focus returns to the link that
+   opened it, the pricing overlay behind it is aria-hidden and scroll-locked.
+   The modal's purchase button calls the product's checkout function and
+   nothing else; it never creates a second checkout route. */
+var COZ_INFO = {
+  vedic: {
+    title: 'Your Vedic Reading',
+    intro: 'A personalized Vedic interpretation created from your exact birth date, time and location.',
+    items: ['Six-part personalized reading', 'Your Ascendant \u2014 Lagna', 'Your current Vimshottari Dasha life cycle', 'Your Vedic birth chart'],
+    desc: 'Explore your inner blueprint, current planetary chapter, potential opportunities and possible challenges.',
+    button: 'Continue to Checkout \u2022 $49',
+    checkout: function(){ vedicCheckout(); }
+  },
+  tropical: {
+    title: 'Your Tropical Reading',
+    intro: 'A personalized Western astrology interpretation created from your exact birth date, time and location.',
+    items: ['Six-part personalized reading', 'Your Rising Sign', 'Your current planetary influences', 'Your Tropical birth chart'],
+    desc: 'Explore your outer expression, relationships, creative drives, ambitions, potential opportunities and possible challenges.',
+    button: 'Continue to Checkout \u2022 $49',
+    checkout: function(){ tropicalCheckout(); }
+  },
+  compare: {
+    title: 'Your Comparison Reading',
+    intro: 'A personalized comparison of your Tropical and Vedic charts, created from your exact birth date, time and location.',
+    items: ['Your six-part Combined Reading', 'Your Tropical Rising Sign and Vedic Ascendant', 'Your Current Timing', 'Both personalized birth charts'],
+    desc: 'See where the two systems align, where they reveal different expressions and what those distinctions may suggest about you.',
+    button: 'Unlock Both Charts \u2022 $75',
+    checkout: function(){ compareCheckout(); }
+  }
+};
+/* Tropical $49 and Compare $75 have no checkout in this file yet (payment is not
+   built; the pricing art carries no tap target for these two buttons). Each fires
+   a single hook so the payment layer can attach later. Nothing is faked. */
+function tropicalCheckout(){
+  console.log('[EMERGE FLOW] checkout requested: tropical $49 (payment not built)');
+  window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
+}
+function compareCheckout(){
+  console.log('[EMERGE FLOW] checkout requested: compare $75 (payment not built)');
+  window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
+}
+var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
+function cozInfoBuild(){
+  if (cozInfoOverlayEl) return cozInfoOverlayEl;
+  var ov = document.createElement('div');
+  ov.id = 'cozInfoOverlay';
+  ov.hidden = true;
+  ov.innerHTML =
+    '<div id="cozInfoModal" role="dialog" aria-modal="true" aria-labelledby="cozInfoTitle" tabindex="-1">' +
+      '<button type="button" id="cozInfoClose" aria-label="Close information">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5l14 14M19 5 5 19" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
+      '</button>' +
+      '<p id="cozInfoEyebrow">What\u2019s included</p>' +
+      '<h2 id="cozInfoTitle"></h2>' +
+      '<p id="cozInfoIntro"></p>' +
+      '<ul id="cozInfoList"></ul>' +
+      '<div id="cozInfoRule" aria-hidden="true"></div>' +
+      '<p id="cozInfoDesc"></p>' +
+      '<button type="button" id="cozInfoBuy"></button>' +
+      '<div><button type="button" id="cozInfoCloseText">Close</button></div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(ev){ if (ev.target === ov) cozInfoClose(); });
+  ov.querySelector('#cozInfoClose').addEventListener('click', cozInfoClose);
+  ov.querySelector('#cozInfoCloseText').addEventListener('click', cozInfoClose);
+  ov.querySelector('#cozInfoBuy').addEventListener('click', function(){
+    var cfg = cozInfoOpenFor && COZ_INFO[cozInfoOpenFor];
+    cozInfoClose();
+    if (cfg) cfg.checkout();
+  });
+  ov.addEventListener('keydown', function(ev){
+    if (ev.key === 'Escape' || ev.key === 'Esc'){ ev.preventDefault(); cozInfoClose(); return; }
+    if (ev.key !== 'Tab') return;
+    var f = Array.prototype.slice.call(ov.querySelectorAll('button:not([disabled])'));
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (ev.shiftKey && (document.activeElement === first || document.activeElement === ov.firstElementChild)){ ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  });
+  cozInfoOverlayEl = ov;
+  return ov;
+}
+function cozInfoOpen(product, returnTo){
+  var cfg = COZ_INFO[product]; if (!cfg) return;
+  var ov = cozInfoBuild();
+  if (cozInfoCloseTimer){ clearTimeout(cozInfoCloseTimer); cozInfoCloseTimer = null; }
+  cozInfoOpenFor = product;
+  cozInfoReturnTo = returnTo || document.activeElement;
+  ov.querySelector('#cozInfoTitle').textContent = cfg.title;
+  ov.querySelector('#cozInfoIntro').textContent = cfg.intro;
+  var ul = ov.querySelector('#cozInfoList'); ul.innerHTML = '';
+  cfg.items.forEach(function(t){
+    var li = document.createElement('li');
+    li.innerHTML = '<svg viewBox="0 0 18 18" aria-hidden="true" focusable="false"><path d="M3 9.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    li.appendChild(document.createTextNode(t));
+    ul.appendChild(li);
+  });
+  ov.querySelector('#cozInfoDesc').textContent = cfg.desc;
+  ov.querySelector('#cozInfoBuy').textContent = cfg.button;
+  var dash = document.getElementById('unlockDash');
+  if (dash){ dash.classList.add('info-locked'); dash.setAttribute('aria-hidden', 'true'); }
+  document.body.style.overflow = 'hidden';
+  ov.hidden = false;
+  requestAnimationFrame(function(){
+    ov.classList.add('is-open');
+    ov.querySelector('#cozInfoModal').focus();
+  });
+  console.log('[EMERGE FLOW] what\u2019s included opened:', product);
+}
+function cozInfoClose(){
+  var ov = cozInfoOverlayEl; if (!ov || ov.hidden) return;
+  ov.classList.remove('is-open');
+  var dash = document.getElementById('unlockDash');
+  if (dash){ dash.classList.remove('info-locked'); dash.removeAttribute('aria-hidden'); }
+  document.body.style.overflow = '';
+  var rt = cozInfoReturnTo; cozInfoReturnTo = null; cozInfoOpenFor = null;
+  cozInfoCloseTimer = setTimeout(function(){
+    ov.hidden = true; cozInfoCloseTimer = null;
+    try { if (rt && rt.focus) rt.focus(); } catch(_){}
+  }, REDUCED ? 0 : 200);
+}
+/* ===== END WHAT'S INCLUDED MODAL ===== */
 var dashOverlay = null, dashStarted = false;
 function buildDashOverlay(){
   if (dashOverlay) return dashOverlay;
@@ -3375,24 +3599,27 @@ function buildDashOverlay(){
   hot.type = 'button';
   hot.className = 'dash-hot ' + ((window.innerWidth < 900) ? 'vedic-mobile' : 'vedic-desktop');
   hot.setAttribute('aria-label', 'Vedic Chart $49');
-  hot.addEventListener('click', function(){
-    var asc = SIGNS[ascSign].toLowerCase();
-    try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=25';
-    /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
-       whole audio engine with it, which is what produced the dead silence at this
-       point. Instead ask the parent to swap the living frame in place: index.html
-       survives, Uncle John never stops, and the Vedic page adopts the same engine. */
-    var handed = false;
-    try {
-      if (window.parent !== window) {
-        window.parent.postMessage({ coz: 'GOTO_VEDIC', href: href }, '*');
-        handed = true;
-      }
-    } catch(_){}
-    if (!handed) { try { (window.top || window).location.href = href; } catch(_) { location.href = href; } }
-  });
+  hot.addEventListener('click', vedicCheckout);
   wrap.appendChild(hot);
+
+  /* WHAT'S INCLUDED (Sep 1): "See what's included" link over each of the three
+     price buttons in the art. Each opens the shared info modal for its product.
+     The link never triggers checkout; checkout happens only from the modal button. */
+  var isMobileArt = (window.innerWidth < 900);
+  ['tropical','vedic','compare'].forEach(function(product){
+    var info = document.createElement('button');
+    info.type = 'button';
+    info.className = 'dash-info ' + product + (isMobileArt ? '-mobile' : '-desktop');
+    info.setAttribute('aria-haspopup', 'dialog');
+    info.setAttribute('aria-label', 'See what\u2019s included in ' + COZ_INFO[product].title);
+    info.innerHTML = 'See what\u2019s included' +
+      '<svg viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2 4.2 6 8.2l4-4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    info.addEventListener('click', function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      cozInfoOpen(product, info);
+    });
+    wrap.appendChild(info);
+  });
   dashOverlay.appendChild(wrap);
   document.body.appendChild(dashOverlay);
   return dashOverlay;
