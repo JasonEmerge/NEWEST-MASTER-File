@@ -2555,8 +2555,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1976'
-      : 'tropical-reveal.html?v=1872';
+      ? 'sidereal-reveal.html?v=1978'
+      : 'tropical-reveal.html?v=1874';
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
@@ -2569,17 +2569,24 @@ document.querySelectorAll('.syscard').forEach(card => {
 
     /* v19.96: the Vedic door hands off THROUGH here rather than navigating the top
        window away. Swapping this frame's src keeps index.html, and therefore the whole
-       sound engine, alive — Uncle John plays unbroken across the seam. The bed is
-       re-asserted in case a cue left it down, and the two heaviest clips are warmed so
-       the sequence starts on time instead of stuttering. */
+       sound engine, alive — Uncle John plays unbroken across the seam.
+       v19.97 (Sep 1): the same seam now serves all three products. The reveal posts
+       GOTO_VEDIC / GOTO_TROPICAL / GOTO_COMPARE with the destination href; the bed is
+       re-asserted and that product's dashboard art and reveal clip are warmed so the
+       page opens on time. The three reading pages carry no audio of their own. */
+    var COZ_WARM = {
+      GOTO_VEDIC:    ['vedic-dash.jpg', 'vedic-reading-reveal.mp4', 'vedic-moon-bg.png', 'vedic-logo.png'],
+      GOTO_TROPICAL: ['tropical-dash.jpg', 'tropical-reading-reveal-repaired.mp4', 'vedic-moon-bg.png', 'vedic-logo.png'],
+      GOTO_COMPARE:  ['compare-dash.jpg', 'compare-reading-reveal.mp4', 'compare-moon-bg.png', 'vedic-logo.png']
+    };
     window.addEventListener('message', function(ev){
       var d = ev && ev.data;
-      if (!d || d.coz !== 'GOTO_VEDIC' || !d.href) return;
-      console.log('[EMERGE FLOW] 11. living page — vedic reading in place:', d.href);
+      if (!d || !COZ_WARM[d.coz] || !d.href) return;
+      console.log('[EMERGE FLOW] 11. living page — reading in place:', d.coz, d.href);
       try { EMERGE_SOUND.loop('ambient'); } catch(_){}
       try { EMERGE_SOUND.swell('ambient', 1.0, 1.2); } catch(_){}
       try {
-        ['transition-vedic.mp4', 'transition-vedic.jpg'].forEach(function(u){
+        COZ_WARM[d.coz].forEach(function(u){
           var l = document.createElement('link');
           l.rel = 'prefetch'; l.href = u; document.head.appendChild(l);
         });
