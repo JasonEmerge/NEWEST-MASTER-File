@@ -575,6 +575,12 @@
     -webkit-tap-highlight-color:transparent; }
   #unlockDash .dash-hot.vedic-mobile { left:80%; top:51.2%; width:17%; height:3.6%; }
   #unlockDash .dash-hot.vedic-desktop { left:39%; top:58.4%; width:25%; height:3.5%; }
+  /* three doors (Sep 1): the Tropical $49 and Unlock Both $75 buttons in the art now
+     also carry tap targets, measured the same way against pricing.jpg / dash-mobile.jpg */
+  #unlockDash .dash-hot.tropical-mobile  { left:80%; top:36.8%; width:15%; height:4%; }
+  #unlockDash .dash-hot.tropical-desktop { left:12%; top:58.8%; width:25%; height:3.5%; }
+  #unlockDash .dash-hot.compare-mobile   { left:80%; top:65.8%; width:15%; height:4%; }
+  #unlockDash .dash-hot.compare-desktop  { left:66%; top:58.9%; width:26%; height:3.5%; }
 
   /* ===== WHAT'S INCLUDED: info link + shared modal (spec supplied Sep 1) =====
      One modal component, three product configs. Links are positioned over the
@@ -843,7 +849,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.74 three doors · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.75 three doors · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3257,6 +3263,15 @@ function buildDashOverlay(){
   hot.setAttribute('aria-label', 'Vedic Chart $49');
   hot.addEventListener('click', vedicCheckout);
   wrap.appendChild(hot);
+  /* three doors (Sep 1): the other two price buttons in the art go straight to checkout too */
+  [['tropical','Tropical Chart $49', tropicalCheckout], ['compare','Unlock Both Charts $75', compareCheckout]].forEach(function(d){
+    var h = document.createElement('button');
+    h.type = 'button';
+    h.className = 'dash-hot ' + d[0] + ((window.innerWidth < 900) ? '-mobile' : '-desktop');
+    h.setAttribute('aria-label', d[1]);
+    h.addEventListener('click', d[2]);
+    wrap.appendChild(h);
+  });
 
   /* WHAT'S INCLUDED (Sep 1): "See what's included" link over each of the three
      price buttons in the art. Each opens the shared info modal for its product.
