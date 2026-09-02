@@ -777,6 +777,15 @@
   .rp-sum-ic svg { width:24px; height:24px; display:block; }
   .rp-sum-row h3 { margin:2px 0 7px; }
 
+
+  /* skip-ahead (Sep 1 ruling): subtle gold text, never a button. Appears only on
+     a device that has already been through the experience once. */
+  .coz-skip { position:fixed; top:calc(env(safe-area-inset-top) + 16px); right:18px; z-index:9999;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; font-size:11px; letter-spacing:0.16em;
+    text-transform:uppercase; color:rgba(201,161,94,0.55); background:transparent; border:0; padding:10px 6px;
+    opacity:0; pointer-events:none; transition:opacity 0.9s ease; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .coz-skip.on { opacity:1; pointer-events:auto; }
+  .coz-skip:active { color:rgba(233,215,174,0.9); }
 </style>
 <script>/* living page: when displayed inside the index, adopt its already-running engine
    so sound is alive from this file's very first frame (same-origin) */
@@ -993,7 +1002,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.81 arrow + zoom lock · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.82 skip · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3792,6 +3801,39 @@ ctaEl.addEventListener('click', function(){
   ['gesturestart','gesturechange','gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
   document.addEventListener('touchmove', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
 })();
+
+/* ============================================================
+   SKIP (Sep 1 ruling): the chart drawing can be skipped from the second time on.
+   ?skip=1 (Go to my chart from the opening) lands on the result page at once;
+   otherwise, on a device that has seen this reveal, a subtle Skip appears once
+   the tap-to-reveal gate is up. Same result page, same sound handoff.
+   ============================================================ */
+(function(){
+  var KEY = 'cozSeenReveal_sidereal';
+  var seen = false; try { seen = localStorage.getItem(KEY) === '1'; } catch(_){}
+  var auto = false; try { auto = new URLSearchParams(location.search).get('skip') === '1'; } catch(_){}
+  var el = document.createElement('button'); el.type = 'button'; el.className = 'coz-skip'; el.textContent = 'Skip'; el.setAttribute('aria-label', 'Skip to your chart');
+  document.body.appendChild(el);
+  window.addEventListener('EMERGE_FREE_SUMMARY_COMPLETE', function(){ try { localStorage.setItem(KEY, '1'); } catch(_){} });
+  function skipToChart(){
+    if (resultOpened) return;
+    el.classList.remove('on');
+    revealGateArmed = false;
+    var g = document.getElementById('soundGate'); if (g){ try { g.remove(); } catch(_){} }
+    window.__numPulsed = 12;
+    t0 = performance.now() - 600000;                 /* every timeline beat is in the past */
+    window.EMERGE_HOLD_AMBIENT = false;
+    try { EMERGE_SOUND.stopLoop('voidatm', 1.0); EMERGE_SOUND.loop('ambient', 1.4); } catch(_){}
+    if (!resultBuilt){ try { buildResultPage(); resultBuilt = true; } catch(e){ console.log('[EMERGE FLOW] result page build error:', e); } }
+    try { promptEl.classList.remove('show'); } catch(_){}
+    finishRevealTransition(REDUCED ? 0 : 400);
+    console.log('[EMERGE FLOW] skip -> result page');
+  }
+  el.addEventListener('click', skipToChart);
+  if (auto) setTimeout(skipToChart, 500);
+  else if (seen) setTimeout(function(){ if (!resultOpened) el.classList.add('on'); }, 5800);
+})();
+
 </script>
 </body>
 </html>
