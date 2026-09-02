@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPLETE VEDIC READING · R3.2 · sun dead centre
+   COZALYZE · COMPLETE VEDIC READING · R3.3 · vedic hierarchy
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -176,6 +176,16 @@ body {
 }
 .vedic-body p { margin: 0 0 1.35em; }
 .vedic-body p:last-child { margin-bottom: 0; }
+.vedic-subhead {
+  font-family: var(--display-font);
+  font-size: clamp(1.6rem, 6.4vw, 1.9rem);
+  font-weight: 500;
+  line-height: 1.12;
+  color: var(--vedic-gold);
+  text-align: left;
+  margin: 1.6em 0 0.7em;
+}
+.vedic-body .vedic-subhead:first-child { margin-top: 0; }
 
 /* ---------- bottom navigation ---------- */
 .vedic-nav { margin-top: 34px; }
@@ -549,19 +559,19 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
 </nav>
 
-<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R3.2 · sun dead centre</div>
+<div class="vedic-stamp" aria-hidden="true">VEDIC READING · R3.3 · vedic hierarchy</div>
 
 <script>
 /* ============================================================
    SECTION DATA (spec, verbatim)
    ============================================================ */
 const vedicReadingSections = [
-  { id: "at-your-core",            number: 1, title: "At Your Core",              nextLabel: "Love, Desire & Creativity" },
-  { id: "love-desire-creativity",  number: 2, title: "Love, Desire & Creativity", nextLabel: "Work, Money & Expression" },
-  { id: "work-money-expression",   number: 3, title: "Work, Money & Expression",  nextLabel: "Wisdom, Purpose & Legacy" },
-  { id: "wisdom-purpose-legacy",   number: 4, title: "Wisdom, Purpose & Legacy",  nextLabel: "Challenges & Resilience" },
-  { id: "challenges-resilience",   number: 5, title: "Challenges & Resilience",   nextLabel: "Your Essential Takeaway" },
-  { id: "essential-takeaway",      number: 6, title: "Your Essential Takeaway",   nextLabel: null }
+  { id: "essential-nature",        number: 1, title: "Your Essential Nature & Guiding Planet",      nextLabel: "Your Mind, Intuition & Spiritual Patterning" },
+  { id: "mind-intuition",          number: 2, title: "Your Mind, Intuition & Spiritual Patterning", nextLabel: "Relationships, Desire & Karmic Exchange" },
+  { id: "relationships-karmic",    number: 3, title: "Relationships, Desire & Karmic Exchange",     nextLabel: "Dharma, Work & Life Direction" },
+  { id: "dharma-direction",        number: 4, title: "Dharma, Work & Life Direction",               nextLabel: "Rahu & Ketu — Growth, Release & Balance" },
+  { id: "rahu-ketu",               number: 5, title: "Rahu & Ketu — Growth, Release & Balance",     nextLabel: "Your Essential Takeaway" },
+  { id: "essential-takeaway",      number: 6, title: "Your Essential Takeaway",                     nextLabel: null }
 ];
 const SECTION_TOTAL = String(vedicReadingSections.length).padStart(2, "0");
 
@@ -570,47 +580,56 @@ const SECTION_TOTAL = String(vedicReadingSections.length).padStart(2, "0");
    The engine supplies window.COZ_VEDIC_READING before this script runs
    (or stores it in localStorage "cozVedicReading") as
      { "<section id>": ["paragraph", "paragraph", ...], ... }
+   A paragraph beginning "## " renders as a subheading (used by the
+   Rahu & Ketu axis section).
    Nothing below is shown to the reader except the paragraphs.
-   The FIXTURE is synthetic placeholder prose for design verification
-   only. It is not the screenshot sample and it is not a real reading.
+   The FIXTURE is the approved benchmark example reading (Pisces
+   Ascendant reference chart). It is SAMPLE content for the full
+   experience until the server generator exists. It is never a
+   customer's reading and must never be served as one.
    ============================================================ */
 const COZ_VEDIC_READING_FIXTURE = {
-  "at-your-core": [
-    "At the centre of your chart there may be a steadiness that others notice before you do. Several factors point the same way, suggesting a temperament that prefers to understand a situation before responding to it. You may take in more than you say, and the pause between feeling and speaking can be where your clearest thinking happens.",
-    "Your emotional life may run on a longer rhythm than the people around you expect. There can be a tendency to hold impressions for a while, to turn them over privately, and to arrive at a settled view only after the moment has passed. This may look like reserve from the outside, while from the inside it can feel like care.",
-    "Identity, for you, may be less about how you appear and more about whether what you do matches what you believe. When those two align there is often a quiet confidence available to you. When they drift apart, restlessness can follow, and that restlessness may be a useful signal rather than a fault.",
-    "The central motivation the chart keeps returning to is a wish to make something that lasts. This can express itself through work, through relationships, or through the way you keep your own counsel. How strongly it shows may depend on the broader chart and on the circumstances you find yourself in."
+  "essential-nature": [
+    "Your Vedic chart begins with Pisces rising, suggesting that you may approach life through sensitivity, intuition, imagination and an instinctive awareness of what lies beneath the surface. You can be highly receptive to people and environments, sometimes absorbing more than you immediately realize. Compassion may come naturally, but maintaining clear emotional boundaries can be an important part of protecting that sensitivity.",
+    "In Jyotish, Jupiter is your ascendant lord\u2014the planet with the greatest responsibility for guiding the direction of your chart. Jupiter is placed in Gemini in your fourth house, connecting your development with learning, communication, emotional foundations and the search for an inner sense of belonging.",
+    "Because Jupiter occupies Gemini, your wisdom may not come through accepting one fixed system. It may develop through questioning, comparing perspectives and finding the connections between seemingly different ideas. You may be most aligned when you can translate complex knowledge into language that helps other people understand themselves.",
+    "Jupiter also connects with your emotional world, vocational direction and spiritual life. This gives its influence unusual reach throughout your chart: meaning, understanding and the search for a larger perspective are not side interests for you. They may be part of the internal compass guiding many of your major choices."
   ],
-  "love-desire-creativity": [
-    "In closeness you may look for depth before ease. Two placements in particular suggest that you can be slow to open and loyal once you have, and that you may value being understood more than being admired. Partners who mistake your patience for indifference can miss what is actually going on.",
-    "Desire in your chart may carry an intensity that is not always visible on the surface. There can be a pull toward experiences that feel meaningful rather than merely pleasant, and a corresponding impatience with anything that feels performed. This may make you selective, and selectivity here can serve you well.",
-    "There is a potential for relationships to become a place of learning as much as comfort. Some patterns suggest that the people you draw close may mirror parts of yourself you are still working out, which can be demanding at times and clarifying over the longer run.",
-    "Creativity may be one of the more natural outlets for all of this. Whether it takes the form of making, arranging, or simply noticing, the chart indicates a greater likelihood that you feel most yourself when something is being brought into form. How this manifests may depend on what the rest of your life leaves room for."
+  "mind-intuition": [
+    "Your Moon is placed in Libra in the eighth house and in Vishakha nakshatra. You may appear composed or socially balanced while processing life at a much deeper level internally. The eighth house can bring sensitivity to hidden motives, emotional undercurrents, psychological complexity and periods of profound personal reinvention.",
+    "Vishakha adds concentration and a desire to reach the truth of something. Once a question becomes meaningful to you, you may have difficulty remaining on the surface. You may feel compelled to investigate it until you understand the underlying pattern.",
+    "Because Vishakha is governed by Jupiter\u2014and Jupiter also directly influences your Moon\u2014your emotional life is strongly connected with the search for meaning. Spiritual philosophy, astrology, counseling, symbolism or other systems of self-understanding may help you organize feelings that would otherwise be difficult to explain.",
+    "Your intuition can be powerful, but intuition and certainty are not the same thing. Part of your development may involve learning when an impression contains genuine insight and when it has become entangled with hope, fear or projection. Your sensitivity becomes more dependable when it is supported by reflection, evidence and healthy boundaries."
   ],
-  "work-money-expression": [
-    "Your working style may lean toward thoroughness over speed. A cluster of factors suggests that you can be trusted with things that need to be done properly, and that you may find repetitive or superficial work draining in a way that surprises people who see only your reliability.",
-    "Contribution, for you, may matter more than title. There can be a tendency to measure your effort by whether it made a real difference, and to feel flat when it did not, regardless of how it was received. Roles that let you see the effect of your work may suit you better than roles that reward visibility alone.",
-    "With resources there may be a mixed picture. One current suggests caution and a preference for security, while another suggests generosity that can run ahead of the plan. Neither is a problem in itself, and the chart indicates that steadiness tends to come when the two are consciously balanced rather than left to compete.",
-    "Communication may be an area of gradual growth. You may express yourself more fully in writing or one to one than in a crowd, and there may be times when what you meant and what was heard do not quite match. Over time this can become a strength, since care with words often reads as sincerity.",
-    "Personal expression, taken as a whole, may rely on trust. When you feel secure in a setting there can be far more of you available to it. Building that security deliberately, rather than waiting for it, may be one of the more practical things this part of the chart suggests."
+  "relationships-karmic": [
+    "Relationships may serve as major catalysts in your life. Rahu\u2019s placement in your seventh house can intensify the desire for meaningful connection while also making partnership a complicated area of growth. At times, another person may seem to possess the clarity, stability or definition you are searching for within yourself.",
+    "You may be drawn toward intelligent, capable or highly particular people. Relationships can teach you about discernment, communication, equality and the importance of clear agreements. The challenge is distinguishing genuine compatibility from the magnetic pull of unfinished emotional patterns.",
+    "Venus in Gemini suggests that mental connection is essential. Conversation, curiosity and the ability to exchange ideas may be just as important as physical attraction. Because Venus occupies your fourth house, private emotional safety also matters. A relationship may look exciting from the outside, but it is unlikely to satisfy you for long if you cannot feel understood and at home within it.",
+    "The seventh-house ruler is placed in your sixth house, suggesting that relationships may require conscious maintenance. Communication, everyday responsibilities and unresolved imbalances cannot simply be left to work themselves out. Love may deepen when both people are willing to address the practical realities beneath the emotional connection."
   ],
-  "wisdom-purpose-legacy": [
-    "Beliefs in your chart may be something you arrive at rather than inherit. Several factors point toward a mind that tests ideas against experience and keeps what holds. This can make you slow to adopt a view and slower still to abandon one, which may frustrate others while it protects you.",
-    "Learning may happen best for you when it has a purpose attached. Abstract study for its own sake can lose you, while the same material tied to a real question may hold your attention for years. There is potential here for depth in a few areas rather than breadth across many.",
-    "Meaning may come from being useful in a way that is specific to you. The chart suggests that guiding, repairing, or clarifying things for others could feel more like purpose than achievement does. When your work touches this, effort may not feel like effort.",
-    "Legacy, if the word applies, may be quieter than the word suggests. The pattern indicates a potential to be remembered less for a single thing than for a consistency that people came to rely on. Whether that consistency becomes visible to others may depend on how willing you are to let it be seen."
+  "dharma-direction": [
+    "Your life direction is again governed by Jupiter because Jupiter rules both your ascendant and your tenth house of vocation. Its placement in the fourth house suggests that your work may need to emerge from something personally meaningful rather than from ambition alone.",
+    "Teaching, advising, interpreting, communicating or creating spaces in which people feel understood may all reflect this pattern. Gemini adds the ability to work with multiple perspectives. You may function especially well as a translator\u2014someone who can take complicated information, recognize its essential meaning and make it understandable to others.",
+    "Mars, the ruler of your ninth house of dharma, is placed in your third house. This suggests that purpose is unlikely to reveal itself while you wait passively for certainty. It may develop through self-directed effort, communication, practiced skill and the courage to put your ideas into the world.",
+    "Your Sun and Mercury in the sixth house add a strong service and craftsmanship component. You may be capable of refining a skill through repetition and sustained work. The potential difficulty is becoming so occupied with responsibilities, problem-solving or serving other people that the larger meaning of the work gets buried.",
+    "Your dharma may therefore involve more than choosing the correct profession. It may be the continuing process of turning knowledge, sensitivity and lived experience into something structured and useful."
   ],
-  "challenges-resilience": [
-    "The chart suggests that pressure, for you, may arrive as accumulation rather than crisis. Small obligations can build until they feel heavier than any one of them deserves, and there may be a tendency to carry them alone past the point where asking would have helped.",
-    "One recurring tension may sit between what you expect of yourself and what circumstances allow. There can be periods when progress feels slower than your standard, and the risk in those periods is not failure but self-criticism. Recognising the pattern may take some of its force away.",
-    "Support in your chart tends to come through structure. Routines, trusted people, and clear commitments may steady you more than encouragement does. When things are difficult, the factors that help may be the ones that reduce ambiguity rather than the ones that raise morale.",
-    "Resilience here may look like persistence rather than bounce. You may not recover quickly, but you may recover completely, and the chart indicates a greater likelihood that difficult periods leave you with something usable. How this manifests may depend on the broader chart and your circumstances."
+  "rahu-ketu": [
+    "## Rahu \u2014 Where Life Pulls You Forward",
+    "Rahu is placed in Virgo in your seventh house. Your developmental direction may involve collaboration, discernment and learning how to create relationships that function in practical reality\u2014not only emotionally or spiritually.",
+    "Virgo asks for precision, boundaries and accountability. Rahu here may push you to define expectations, evaluate compatibility carefully and turn intuition into something that can be examined and applied. Its shadow can appear as overanalysis, perfectionism or searching for another person to provide certainty.",
+    "## Ketu \u2014 What You Already Carry",
+    "Ketu is placed in Pisces almost exactly on your ascendant. This is one of the most personally significant features of your chart. It may indicate an established familiarity with introspection, intuition, spiritual searching and identities that exist outside conventional expectations.",
+    "Ketu can also create detachment from a fixed sense of self. You may periodically outgrow an identity without immediately knowing what should replace it. At other times, you may withdraw, disappear into your internal world or surrender too much of yourself to circumstances and relationships.",
+    "The movement of this axis is not asking you to abandon Pisces. Your sensitivity, compassion and intuition remain essential. The invitation is to carry those qualities toward Rahu in Virgo: into clearer language, stronger boundaries, practical service and more accountable relationships."
   ],
   "essential-takeaway": [
-    "Taken together, the strongest theme in your chart may be the relationship between depth and patience. The same factors that make you slow to open, slow to decide, and slow to give up appear in nearly every area, and they may be one trait seen from different angles rather than several traits at once.",
-    "Where the reading seemed to contradict itself, in resources, in expression, in how you handle pressure, the contradiction may resolve into a single question of trust. When you feel secure, more of you becomes available. When you do not, you tend to hold back and carry more than you need to.",
-    "Your natural strengths may include reliability, discernment, and a capacity to make things that last. Your likely growth areas may include asking earlier, speaking sooner, and letting your consistency be seen. None of these are fixed outcomes, and the chart describes tendencies rather than guarantees.",
-    "If there is a central message, it may be this: the steadiness you offer others is also available to you. Building the conditions that let you trust a situation, rather than waiting for them to appear, may be the most practical use of what this chart suggests."
+    "Your chart does not ask you to choose between intuition and practicality. It asks you to create a bridge between them.",
+    "Pisces gives you sensitivity, imagination and spiritual receptivity. Jupiter guides you through learning, meaning and the ability to connect multiple perspectives. Ketu keeps you close to the invisible and internal dimensions of life, while Rahu pulls you toward discernment, collaboration and practical application.",
+    "Your direction may become clearer when you give structure to what you intuitively understand\u2014when compassion develops boundaries, insight acquires language and personal experience becomes something useful to others.",
+    "When you feel uncertain, one question may help bring the chart back into balance:",
+    "Does this honor what I sense internally, while also functioning clearly and responsibly in the real world?",
+    "That intersection between intuition and application may be one of the central organizing principles of your path."
   ]
 };
 
@@ -675,7 +694,9 @@ function renderSection(section) {
     <h1 class="${titleClass}">${esc(section.title)}</h1>
     <div class="vedic-divider" aria-hidden="true">${STAR_SVG}</div>
     <section class="vedic-body">
-      ${paragraphs.map(p => `<p>${esc(p)}</p>`).join("")}
+      ${paragraphs.map(p => p.startsWith("## ")
+        ? `<h3 class="vedic-subhead">${esc(p.slice(3))}</h3>`
+        : `<p>${esc(p)}</p>`).join("")}
     </section>
     <nav class="vedic-nav" aria-label="Reading navigation">
       <div class="vedic-nav-rule" aria-hidden="true">${STAR_SVG}</div>
@@ -846,7 +867,7 @@ function finishReveal(immediate) {
   revealDone = true;
   revealTimers.forEach(clearTimeout); revealTimers = [];
   const land = () => {
-    location.hash = "#/at-your-core";          // its own history entry; renders via hashchange
+    location.hash = "#/essential-nature";          // its own history entry; renders via hashchange
     revealEl.classList.remove("is-on", "is-closing", "asc-off");
     try { revealVideo.pause(); } catch (e) {}
     lockScroll(false);
