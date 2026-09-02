@@ -722,16 +722,16 @@
     -webkit-tap-highlight-color:transparent; }
   #cozInfoClose svg { width:23px; height:23px; }
   #cozInfoClose:hover, #cozInfoClose:focus-visible { color:#F0C69C; outline:none; }
-  #cozInfoEyebrow { font-size:12px; font-weight:500; letter-spacing:0.14em; line-height:1.2; text-transform:uppercase; color:#D3A16F; margin:0; }
+  #cozInfoEyebrow { font-size:13px; font-weight:500; letter-spacing:0.14em; line-height:1.2; text-transform:uppercase; color:#D3A16F; margin:0; }
   #cozInfoTitle { font-family:"Cormorant Garamond", Georgia, serif; font-size:clamp(32px, 4vw, 42px); font-weight:500;
     line-height:1.08; color:#F3E1CF; margin:14px 0 0; }
-  #cozInfoIntro { font-size:16px; line-height:1.55; color:rgba(243,225,207,0.9); max-width:440px; margin:18px auto 24px; }
+  #cozInfoIntro { font-size:18px; line-height:1.55; color:rgba(243,225,207,0.9); max-width:440px; margin:18px auto 24px; }
   #cozInfoList { list-style:none; margin:0; padding:0; text-align:left; }
-  #cozInfoList li { display:flex; align-items:center; min-height:34px; font-size:16px; line-height:1.4; color:#F3E1CF; }
+  #cozInfoList li { display:flex; align-items:center; min-height:36px; font-size:18px; line-height:1.4; color:#F3E1CF; }
   #cozInfoList li + li { margin-top:14px; }
   #cozInfoList svg { width:18px; height:18px; flex:0 0 18px; margin-right:14px; color:#D3A16F; }
   #cozInfoRule { height:1px; margin:24px 0 20px; background:linear-gradient(90deg, transparent, rgba(211,161,111,0.65), transparent); }
-  #cozInfoDesc { font-size:15px; line-height:1.55; color:rgba(243,225,207,0.86); margin:0; }
+  #cozInfoDesc { font-size:17px; line-height:1.55; color:rgba(243,225,207,0.86); margin:0; }
   #cozInfoBuy { display:block; width:100%; min-height:52px; margin-top:24px; border:1px solid rgba(255,223,195,0.8);
     border-radius:9px; font-size:18px; font-weight:500; cursor:pointer; box-sizing:border-box;
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
@@ -746,9 +746,9 @@
   @media (max-width:640px){
     #cozInfoModal { width:calc(100vw - 24px); max-height:calc(100dvh - 24px); padding:30px 22px 24px; border-radius:12px; }
     #cozInfoTitle { font-size:30px; }
-    #cozInfoIntro { font-size:15px; }
-    #cozInfoList li { font-size:15px; }
-    #cozInfoDesc { font-size:14px; }
+    #cozInfoIntro { font-size:17px; }
+    #cozInfoList li { font-size:17px; }
+    #cozInfoDesc { font-size:16px; }
   }
   @media (prefers-reduced-motion: reduce){
     #cozInfoModal { transform:none !important; transition:opacity 200ms ease; }
@@ -1003,7 +1003,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.86 zoom · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.87 modal type · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3458,7 +3458,7 @@ var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg
 function vedicCheckout(){
     var asc = SIGNS[ascSign].toLowerCase();
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=32';
+    var href = 'vedic-reading.html?asc=' + asc + '&v=33';
     /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
        whole audio engine with it, which is what produced the dead silence at this
        point. Instead ask the parent to swap the living frame in place: index.html
@@ -3531,7 +3531,7 @@ function tropicalCheckout(){
   try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
   console.log('[EMERGE FLOW] tropical door: tropical asc', a.tropical);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
-  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=7');
+  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=8');
 }
 function compareCheckout(){
   var a = cozAscendants();
@@ -3539,7 +3539,7 @@ function compareCheckout(){
   console.log('[EMERGE FLOW] compare door: tropical asc', a.tropical, '| sidereal asc', a.sidereal);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
   /* compare-reading.html paints its Ascendants glyph from the TROPICAL sign (its own contract) */
-  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=7');
+  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=8');
 }
 var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
 function cozInfoBuild(){
