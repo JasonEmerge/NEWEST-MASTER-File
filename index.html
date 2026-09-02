@@ -2577,8 +2577,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = (sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1984'
-      : 'tropical-reveal.html?v=1880') + (window.__cozSkipReveal ? '&skip=1' : '');
+      ? 'sidereal-reveal.html?v=1985'
+      : 'tropical-reveal.html?v=1881') + (window.__cozSkipReveal ? '&skip=1' : '');
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
@@ -2670,8 +2670,14 @@ document.querySelectorAll('.syscard').forEach(card => {
     window.__birthPlace = { city:L.name, country:L.country, lat:L.latitude, lon:L.longitude, tz:L.timezone, formatted:(L.name + (L.country ? ', ' + L.country : '')) };
     window.__birthDate = saved.birthDate; window.__birthTime = saved.birthTime;
     window.__cozSkipReveal = true;
-    var card = document.querySelector('.syscard[data-v="' + saved.system + '"]');
-    if (card) card.click();                          /* same door, same living-page seam, reveal opens at the result */
+    /* Sep 1 ruling: land on Choose Your Perspective, not on last time's door. The person
+       picks Tropical or Vedic again; the reveal then opens straight at the result page.
+       (A saved-chart page will take this over once it exists.) */
+    ['finale','timebar','datebar'].forEach(function(id){ var el = document.getElementById(id); if (el){ el.style.display = 'none'; } });
+    var gv = document.getElementById('globeViz'); if (gv){ gv.style.display = 'none'; gv.setAttribute('aria-hidden', 'true'); }
+    document.body.classList.add('paths-open');
+    document.getElementById('systembar').classList.add('show');
+    try { EMERGE_SOUND.stopLoop('voidatm', 2.5); EMERGE_SOUND.loop('choice'); } catch(_){}
   });
 })();
 

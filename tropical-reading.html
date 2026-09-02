@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPLETE TROPICAL READING · T1.8 · through the sun
+   COZALYZE · COMPLETE TROPICAL READING · T1.9 · one motion
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -463,9 +463,9 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 
 /* through the sun (Sep 1 ruling): after the burst the camera keeps going, the sun
    fills the screen with light and the reading emerges out of it */
-.reveal.is-through .stage { transition: transform 2600ms cubic-bezier(0.55, 0, 1, 0.45);
+.reveal.is-through .stage { transition: transform 3200ms cubic-bezier(0.42, 0, 0.9, 0.35);
   transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(calc(var(--dash-zoom, 1) * 5.5)); }
-.reveal.is-through .reveal-curtain { background: radial-gradient(circle at 50% 50%, #fff6df 0%, #f1d9a6 45%, #e4b978 100%); transition: opacity 1600ms ease-in; }
+.reveal.is-through .reveal-curtain { background: radial-gradient(circle at 50% 50%, #fff6df 0%, #f1d9a6 45%, #e4b978 100%); transition: opacity 1400ms ease-in; }
 #cozLight { position: fixed; inset: 0; z-index: 90; pointer-events: none; opacity: 0;
   background: radial-gradient(circle at 50% 42%, #fff6df 0%, #f1d9a6 45%, #e4b978 100%); transition: opacity 1800ms ease-out; }
 #cozLight.on { opacity: 1; transition: none; }
@@ -545,7 +545,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
 </nav>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T1.8 · through the sun</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T1.9 · one motion</div>
 
 <script>
 /* ============================================================
@@ -943,6 +943,12 @@ revealVideo.addEventListener("playing", () => {
   revealStarted = true;
   // the live ascendant overlay stays while the buttons are still on screen, then lets go before the burst
   revealTimers.push(setTimeout(() => revealEl.classList.add("asc-off"), 1450));
+  /* Sep 1 ruling: ONE motion. The drive into the sun begins while the burst is still
+     blooming, the light takes the screen while the stage is still growing, the page
+     lands under the light and the light clears. No hold anywhere. */
+  revealTimers.push(setTimeout(() => revealEl.classList.add("is-through"), 1500));
+  revealTimers.push(setTimeout(() => revealEl.classList.add("is-closing"), 3100));
+  revealTimers.push(setTimeout(() => finishReveal("through"), 4500));
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
   revealTimers.push(setTimeout(() => finishReveal(false), 5200));   /* stall guard only */   /* the clip ends first; this only catches a stall */
 });
@@ -959,19 +965,19 @@ function finishReveal(immediate) {
     revealActive = false;
     syncReadyState();
   };
-  if (immediate) { land(); return; }
+  if (immediate === true) { land(); return; }
   /* Sep 1 ruling: through the sun. Hold on the burst, then the camera drives into it, the light
      fills the screen, the page lands underneath and the light clears to reveal the reading. */
-  setTimeout(() => {
-    revealEl.classList.add("is-through");
-    setTimeout(() => revealEl.classList.add("is-closing"), 1100);
-    setTimeout(() => {
-      try { window.__cozLightIn(); } catch (e) {}
-      land();
-      revealEl.classList.remove("is-through");
-      setTimeout(() => { try { window.__cozLightOut(); } catch (e) {} }, 350);
-    }, 2700);
-  }, 500);
+  if (immediate === "through"){
+    try { window.__cozLightIn(); } catch (e) {}
+    land();
+    revealEl.classList.remove("is-through");
+    setTimeout(() => { try { window.__cozLightOut(); } catch (e) {} }, 350);
+    return;
+  }
+  /* stall or error before the drive began: plain curtain */
+  revealEl.classList.add("is-closing");
+  setTimeout(land, 900);
 }
 
 function cancelReveal() {
@@ -987,7 +993,7 @@ function cancelReveal() {
 
 document.getElementById("hotReading").addEventListener("click", startReveal);
 document.getElementById("revealBack").addEventListener("click", cancelReveal);
-revealVideo.addEventListener("ended", () => finishReveal(false));
+revealVideo.addEventListener("ended", () => { if (!revealEl.classList.contains("is-through")) finishReveal(false); });
 revealVideo.addEventListener("error", () => finishReveal(false));
 
 /* Section links are plain hash links: every section is its own history entry,
