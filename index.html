@@ -2555,8 +2555,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1980'
-      : 'tropical-reveal.html?v=1876';
+      ? 'sidereal-reveal.html?v=1981'
+      : 'tropical-reveal.html?v=1877';
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
@@ -2598,6 +2598,15 @@ document.querySelectorAll('.syscard').forEach(card => {
 });
 
 } // end guard
+
+/* zoom lock (Sep 1): iOS lets a two-finger pinch zoom the whole page even with
+   user-scalable=no, and that zoom survives a reload, which is what threw the globe
+   off on the second run. Native page zoom is refused here; the dashboards keep
+   their own two-finger art zoom. */
+(function(){
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
+  document.addEventListener('touchmove', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
+})();
 </script>
 </body>
 </html>

@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPARE · COMBINED READING · C1.4 · pinch + sound
+   COZALYZE · COMPARE · COMBINED READING · C1.5 · zoom lock
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -426,7 +426,7 @@ body.scroll-locked { overflow: hidden; touch-action: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.4 · pinch + sound</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.5 · zoom lock</div>
 
 <script>
 /* ============================================================
@@ -809,6 +809,15 @@ document.getElementById("hotReading").addEventListener("click", function(){
   } catch(_){}
 });
 
+
+/* zoom lock (Sep 1): iOS lets a two-finger pinch zoom the whole page even with
+   user-scalable=no, and that zoom survives a reload, which is what threw the globe
+   off on the second run. Native page zoom is refused here; the dashboards keep
+   their own two-finger art zoom. */
+(function(){
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
+  document.addEventListener('touchmove', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
+})();
 </script>
 </body>
 </html>

@@ -494,7 +494,8 @@
   /* the Sun sits alone on top, then four to a side with the rose-gold arrow */
   .sd-sun { display:flex; align-items:baseline; justify-content:center;
     gap:clamp(8px, 2.4vw, 22px); margin-bottom:clamp(12px, 3vw, 22px); }
-  .sd-table { display:grid; grid-template-columns:1fr auto 1fr;
+  /* v19.81: minmax(0,1fr) so a long row can never push the arrow into the other column */
+  .sd-table { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
     gap:clamp(3px, 1.2vw, 16px); align-items:center; }
   /* one grid per column, rows are display:contents, so every row shares ONE set
      of max-content tracks sized to the longest name and sign — nothing can run
@@ -506,7 +507,7 @@
     align-items:baseline; min-width:0; }
   .sd-tcol, .sd-sun {
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    font-size:clamp(7.5px, calc(2.45vw - 2px), 13.5px);   /* v19.63: rows a touch larger */
+    font-size:clamp(7.5px, calc(2.45vw - 2px), 12.5px);   /* v19.81: cap matches TROPICAL so the arrow clears "12th House" on the phone */
     letter-spacing:0.08em; color:#EBE5D0; white-space:nowrap; }
   .sd-prow { display:contents; }
   .sd-pgly { color:#C2A481; font-family:Georgia, serif; font-size:1.85em;   /* v19.63: larger glyphs */
@@ -992,7 +993,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.80 three doors · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.81 arrow + zoom lock · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3447,7 +3448,7 @@ var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg
 function vedicCheckout(){
     var asc = SIGNS[ascSign].toLowerCase();
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=27';
+    var href = 'vedic-reading.html?asc=' + asc + '&v=28';
     /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
        whole audio engine with it, which is what produced the dead silence at this
        point. Instead ask the parent to swap the living frame in place: index.html
@@ -3520,7 +3521,7 @@ function tropicalCheckout(){
   try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
   console.log('[EMERGE FLOW] tropical door: tropical asc', a.tropical);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
-  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=2');
+  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=3');
 }
 function compareCheckout(){
   var a = cozAscendants();
@@ -3528,7 +3529,7 @@ function compareCheckout(){
   console.log('[EMERGE FLOW] compare door: tropical asc', a.tropical, '| sidereal asc', a.sidereal);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
   /* compare-reading.html paints its Ascendants glyph from the TROPICAL sign (its own contract) */
-  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=2');
+  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=3');
 }
 var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
 function cozInfoBuild(){
@@ -3781,6 +3782,15 @@ ctaEl.addEventListener('click', function(){
 /* ================== END NEW: 3D CHART SUMMARY REVEAL ================== */
 
 
+})();
+
+/* zoom lock (Sep 1): iOS lets a two-finger pinch zoom the whole page even with
+   user-scalable=no, and that zoom survives a reload, which is what threw the globe
+   off on the second run. Native page zoom is refused here; the dashboards keep
+   their own two-finger art zoom. */
+(function(){
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
+  document.addEventListener('touchmove', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
 })();
 </script>
 </body>

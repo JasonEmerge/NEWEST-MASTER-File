@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPLETE TROPICAL READING · T1.4 · ascendant door
+   COZALYZE · COMPLETE TROPICAL READING · T1.5 · sky third
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -516,7 +516,7 @@ body.asq-done #asqNav { opacity:1; pointer-events:auto; }
   <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
 </nav>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T1.4 · ascendant door</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T1.5 · sky third</div>
 
 <script>
 /* ============================================================
@@ -1191,7 +1191,9 @@ const SIGNS = {
     if (settled) return; settled = true;
     const vw = document.documentElement.clientWidth;
     const ar = (sVid.videoWidth && sVid.videoHeight) ? sVid.videoWidth / sVid.videoHeight : 1.25;
-    const settledH = Math.round(vw / ar);
+    /* Sep 1 ruling: after the full-screen emergence the sign settles into the top third of the
+       screen (never taller), so the reading beneath it is easy to read; the clip keeps playing */
+    const settledH = Math.min(Math.round(vw / ar), Math.round(window.innerHeight * 0.36));
     document.documentElement.style.setProperty("--settled-h", settledH + "px");
     const finish = once(() => {
       document.body.classList.add("asq-done"); document.body.classList.remove("asq-locked");
@@ -1248,6 +1250,15 @@ document.getElementById("hotReading").addEventListener("click", function(){
   } catch(_){}
 });
 
+
+/* zoom lock (Sep 1): iOS lets a two-finger pinch zoom the whole page even with
+   user-scalable=no, and that zoom survives a reload, which is what threw the globe
+   off on the second run. Native page zoom is refused here; the dashboards keep
+   their own two-finger art zoom. */
+(function(){
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
+  document.addEventListener('touchmove', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
+})();
 </script>
 </body>
 </html>
