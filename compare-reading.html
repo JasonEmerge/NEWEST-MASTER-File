@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPARE · COMBINED READING · C1.5 · zoom lock
+   COZALYZE · COMPARE · COMBINED READING · C1.6 · pan + slower turn
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -375,6 +375,14 @@ body.scroll-locked { overflow: hidden; touch-action: none; }
    always be reached. Native browser zoom stays off. ---------- */
 .dash { touch-action: none; }
 .dash.pinching .stage { transition: none; }
+
+/* one-finger pan (Sep 1): when the dashboard is zoomed in, dragging moves the art up
+   and down within its edges so the bottom nav pill can be pulled into view */
+.stage { transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(var(--dash-zoom, 1)); }
+.dash.panning .stage { transition: none; }
+@keyframes cozPageIn { from { opacity: 0; } to { opacity: 1; } }
+body[data-view="reading"] .vedic-reading-page { animation: cozPageIn 1400ms ease-out both; }
+.reveal-curtain { transition: opacity 1400ms ease-in-out; }
 </style>
 </head>
 <body data-view="dashboard">
@@ -426,7 +434,7 @@ body.scroll-locked { overflow: hidden; touch-action: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.5 · zoom lock</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.6 · pan + slower turn</div>
 
 <script>
 /* ============================================================
@@ -736,7 +744,7 @@ revealVideo.addEventListener("playing", () => {
   // the live ascendant overlay stays while the buttons are still on screen, then lets go before the burst
   revealTimers.push(setTimeout(() => revealEl.classList.add("asc-off"), 1900));
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
-  revealTimers.push(setTimeout(() => finishReveal(false), 3600));
+  revealTimers.push(setTimeout(() => finishReveal(false), 5200));   /* the clip ends first; this only catches a stall */
 });
 
 function finishReveal(immediate) {
@@ -752,8 +760,11 @@ function finishReveal(immediate) {
     syncReadyState();
   };
   if (immediate) { land(); return; }
-  revealEl.classList.add("is-closing");         // everything disappears into navy
-  setTimeout(land, 500);
+  /* Sep 1 ruling: the burst breathes. Hold on its last frame, then a slow navy curtain, then the page fades in. */
+  setTimeout(() => {
+    revealEl.classList.add("is-closing");
+    setTimeout(land, 1500);
+  }, 900);
 }
 
 function cancelReveal() {
@@ -818,6 +829,33 @@ document.getElementById("hotReading").addEventListener("click", function(){
   ['gesturestart','gesturechange','gestureend'].forEach(function(t){ document.addEventListener(t, function(e){ e.preventDefault(); }, { passive:false }); });
   document.addEventListener('touchmove', function(e){ if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive:false });
 })();
+
+/* ---------- one-finger pan on the zoomed dashboard (Sep 1) ---------- */
+(function(){
+  const dash = document.getElementById("dash"), stage = document.getElementById("dashStage"), root = document.documentElement;
+  let panning = false, startY = 0, startPan = 0, moved = false;
+  const zoom = () => parseFloat(getComputedStyle(root).getPropertyValue("--dash-zoom")) || 1;
+  const pan = () => parseFloat(getComputedStyle(root).getPropertyValue("--dash-pan")) || 0;
+  const limit = () => Math.max(0, (stage.offsetHeight * zoom() - window.innerHeight) / 2);
+  dash.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1 || zoom() <= 1.001) return;
+    panning = true; moved = false; startY = e.touches[0].clientY; startPan = pan();
+  }, { passive:true });
+  dash.addEventListener("touchmove", e => {
+    if (!panning || e.touches.length !== 1) return;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dy) > 6) moved = true;
+    if (!moved) return;
+    e.preventDefault(); dash.classList.add("panning");
+    const L = limit(); const y = Math.max(-L, Math.min(L, startPan + dy));
+    root.style.setProperty("--dash-pan", y.toFixed(1) + "px");
+  }, { passive:false });
+  const end = () => { panning = false; dash.classList.remove("panning"); };
+  dash.addEventListener("touchend", end); dash.addEventListener("touchcancel", end);
+  /* a real drag must not count as a tap on the hotspot underneath */
+  dash.addEventListener("click", e => { if (moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+})();
+
 </script>
 </body>
 </html>

@@ -574,6 +574,8 @@
 <script src="emerge-sound.js?v=27"></script>
 </head>
 <body>
+<button type="button" class="coz-skip" id="cozSkipIntro" aria-label="Skip the introduction">Skip intro</button>
+<button type="button" class="coz-skip" id="cozGoChart" aria-label="Go straight to your chart">Go to my chart</button>
 <div id="stars"></div>
 <canvas id="skydome"></canvas>
 <div id="skyglow"></div>
@@ -2575,8 +2577,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = (sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1982'
-      : 'tropical-reveal.html?v=1878') + (window.__cozSkipReveal ? '&skip=1' : '');
+      ? 'sidereal-reveal.html?v=1983'
+      : 'tropical-reveal.html?v=1879') + (window.__cozSkipReveal ? '&skip=1' : '');
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
@@ -2674,7 +2676,5 @@ document.querySelectorAll('.syscard').forEach(card => {
 })();
 
 </script>
-<button type="button" class="coz-skip" id="cozSkipIntro" aria-label="Skip the introduction">Skip intro</button>
-<button type="button" class="coz-skip" id="cozGoChart" aria-label="Go straight to your chart">Go to my chart</button>
 </body>
 </html>

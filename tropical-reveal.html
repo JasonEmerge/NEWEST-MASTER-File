@@ -858,7 +858,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.78 skip · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.79 skip · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3078,7 +3078,7 @@ function vedicCheckout(){
                   '-> sidereal asc', SIGNS[Math.floor(sid/30)], '(ayan ' + ayan.toFixed(4) + ')');
     } catch(_){}
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=28';
+    var href = 'vedic-reading.html?asc=' + asc + '&v=29';
     /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
        whole audio engine with it, which is what produced the dead silence at this
        point. Instead ask the parent to swap the living frame in place: index.html
@@ -3157,7 +3157,7 @@ function tropicalCheckout(){
   try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
   console.log('[EMERGE FLOW] tropical door: tropical asc', a.tropical);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
-  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=3');
+  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=4');
 }
 function compareCheckout(){
   var a = cozAscendants();
@@ -3165,7 +3165,7 @@ function compareCheckout(){
   console.log('[EMERGE FLOW] compare door: tropical asc', a.tropical, '| sidereal asc', a.sidereal);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
   /* compare-reading.html paints its Ascendants glyph from the TROPICAL sign (its own contract) */
-  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=3');
+  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=4');
 }
 var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
 function cozInfoBuild(){
