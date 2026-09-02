@@ -753,6 +753,9 @@
   @media (prefers-reduced-motion: reduce){
     #cozInfoModal { transform:none !important; transition:opacity 200ms ease; }
   }
+  #cozInfoFine { margin:10px auto 0; max-width:340px; font-size:11px; line-height:1.45;
+    letter-spacing:.02em; color:#F1DFCC; opacity:.62; text-align:center;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; }
   #unlockDash.info-locked { overflow:hidden; }
   /* ===== END WHAT'S INCLUDED ===== */
   body.unlock-leaving #resultPage, body.unlock-leaving #summaryStage {
@@ -1003,7 +1006,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.87 modal type · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.88 ai disclosure · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3487,6 +3490,7 @@ var COZ_INFO = {
     items: ['Six-part personalized reading', 'Your Ascendant \u2014 Lagna', 'Your current Vimshottari Dasha life cycle', 'Your Vedic birth chart'],
     desc: 'Explore your inner blueprint, current planetary chapter, potential opportunities and possible challenges.',
     button: 'Continue to Checkout \u2022 $49',
+    fine: 'AI-generated personalized astrology reading. For entertainment purposes only.',
     checkout: function(){ vedicCheckout(); }
   },
   tropical: {
@@ -3495,6 +3499,7 @@ var COZ_INFO = {
     items: ['Six-part personalized reading', 'Your Rising Sign', 'Your current planetary influences', 'Your Tropical birth chart'],
     desc: 'Explore your outer expression, relationships, creative drives, ambitions, potential opportunities and possible challenges.',
     button: 'Continue to Checkout \u2022 $49',
+    fine: 'AI-generated personalized astrology reading. For entertainment purposes only.',
     checkout: function(){ tropicalCheckout(); }
   },
   compare: {
@@ -3503,6 +3508,7 @@ var COZ_INFO = {
     items: ['Your six-part Combined Reading', 'Your Tropical Rising Sign and Vedic Ascendant', 'Your Current Timing', 'Both personalized birth charts'],
     desc: 'See where the two systems align, where they reveal different expressions and what those distinctions may suggest about you.',
     button: 'Unlock Both Charts \u2022 $75',
+    fine: 'AI-generated Tropical and Vedic comparison reading. For entertainment purposes only.',
     checkout: function(){ compareCheckout(); }
   }
 };
@@ -3559,6 +3565,7 @@ function cozInfoBuild(){
       '<div id="cozInfoRule" aria-hidden="true"></div>' +
       '<p id="cozInfoDesc"></p>' +
       '<button type="button" id="cozInfoBuy"></button>' +
+      '<p id="cozInfoFine"></p>' +
       '<div><button type="button" id="cozInfoCloseText">Close</button></div>' +
     '</div>';
   document.body.appendChild(ov);
@@ -3599,6 +3606,7 @@ function cozInfoOpen(product, returnTo){
   });
   ov.querySelector('#cozInfoDesc').textContent = cfg.desc;
   ov.querySelector('#cozInfoBuy').textContent = cfg.button;
+  ov.querySelector('#cozInfoFine').textContent = cfg.fine || '';
   var dash = document.getElementById('unlockDash');
   if (dash){ dash.classList.add('info-locked'); dash.setAttribute('aria-hidden', 'true'); }
   document.body.style.overflow = 'hidden';
