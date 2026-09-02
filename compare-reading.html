@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPARE · COMBINED READING · C1.8 · one motion
+   COZALYZE · COMPARE · COMBINED READING · C1.9 · sun centred
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -386,7 +386,8 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
 
 /* through the sun (Sep 1 ruling): after the burst the camera keeps going, the sun
    fills the screen with light and the reading emerges out of it */
-.reveal.is-through .stage { transition: transform 3200ms cubic-bezier(0.42, 0, 0.9, 0.35);
+/* the sun sits at 40.7% of the clip height (measured on the last frame): the drive scales about it */
+.reveal.is-through .stage { transform-origin: 50% 40.7%; transition: transform 3200ms cubic-bezier(0.42, 0, 0.9, 0.35), transform-origin 0s;
   transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(calc(var(--dash-zoom, 1) * 5.5)); }
 .reveal.is-through .reveal-curtain { background: radial-gradient(circle at 50% 50%, #fff6df 0%, #f1d9a6 45%, #e4b978 100%); transition: opacity 1400ms ease-in; }
 #cozLight { position: fixed; inset: 0; z-index: 90; pointer-events: none; opacity: 0;
@@ -446,7 +447,7 @@ body[data-view="reading"] .vedic-reading-page { animation: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.8 · one motion</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.9 · sun centred</div>
 
 <script>
 /* ============================================================

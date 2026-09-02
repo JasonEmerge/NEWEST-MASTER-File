@@ -496,7 +496,8 @@
     gap:clamp(8px, 2.4vw, 22px); margin-bottom:clamp(12px, 3vw, 22px); }
   /* v19.81: minmax(0,1fr) so a long row can never push the arrow into the other column */
   .sd-table { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
-    gap:clamp(3px, 1.2vw, 16px); align-items:center; }
+    gap:clamp(8px, 2.2vw, 20px); align-items:center; }
+  .sd-tcol { overflow:hidden; }   /* v19.86: a row can shrink its tracks but never cross the arrow */
   /* one grid per column, rows are display:contents, so every row shares ONE set
      of max-content tracks sized to the longest name and sign — nothing can run
      into its neighbour. space-between spreads the leftover full width. */
@@ -507,8 +508,8 @@
     align-items:baseline; min-width:0; }
   .sd-tcol, .sd-sun {
     font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
-    font-size:clamp(7.5px, calc(2.45vw - 2px), 12.5px);   /* v19.81: cap matches TROPICAL so the arrow clears "12th House" on the phone */
-    letter-spacing:0.08em; color:#EBE5D0; white-space:nowrap; }
+    font-size:clamp(7.5px, calc(2.45vw - 2px), 11.5px);   /* v19.86: one more point down, tighter tracking, so the longest row clears the arrow */
+    letter-spacing:0.04em; color:#EBE5D0; white-space:nowrap; }
   .sd-prow { display:contents; }
   .sd-pgly { color:#C2A481; font-family:Georgia, serif; font-size:1.85em;   /* v19.63: larger glyphs */
     line-height:0.9; align-self:center; }
@@ -1002,7 +1003,7 @@ var BIRTH = __ok ? {
 console.log('[EMERGE FLOW] 5. sidereal-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 document.getElementById('stamp').textContent =
-  'SIDEREAL v19.85 skip · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'SIDEREAL v19.86 zoom · LAHIRI · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3457,7 +3458,7 @@ var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg
 function vedicCheckout(){
     var asc = SIGNS[ascSign].toLowerCase();
     try { localStorage.setItem('emergeAscendant', asc); } catch(_){}
-    var href = 'vedic-reading.html?asc=' + asc + '&v=31';
+    var href = 'vedic-reading.html?asc=' + asc + '&v=32';
     /* THE SOUND SEAM. Navigating the top window here tears down index.html and the
        whole audio engine with it, which is what produced the dead silence at this
        point. Instead ask the parent to swap the living frame in place: index.html
@@ -3530,7 +3531,7 @@ function tropicalCheckout(){
   try { localStorage.setItem('emergeAscendantTropical', a.tropical); localStorage.setItem('emergeAscendant', a.sidereal); } catch(_){}
   console.log('[EMERGE FLOW] tropical door: tropical asc', a.tropical);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'tropical', price: 49 } }));
-  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=6');
+  cozHandoff('TROPICAL', 'tropical-reading.html?asc=' + a.tropical + '&v=7');
 }
 function compareCheckout(){
   var a = cozAscendants();
@@ -3538,7 +3539,7 @@ function compareCheckout(){
   console.log('[EMERGE FLOW] compare door: tropical asc', a.tropical, '| sidereal asc', a.sidereal);
   window.dispatchEvent(new CustomEvent('EMERGE_CHECKOUT_REQUESTED', { detail: { product: 'compare', price: 75 } }));
   /* compare-reading.html paints its Ascendants glyph from the TROPICAL sign (its own contract) */
-  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=6');
+  cozHandoff('COMPARE', 'compare-reading.html?asc=' + a.tropical + '&v=7');
 }
 var cozInfoOverlayEl = null, cozInfoReturnTo = null, cozInfoOpenFor = null, cozInfoCloseTimer = null;
 function cozInfoBuild(){
@@ -3833,6 +3834,91 @@ ctaEl.addEventListener('click', function(){
   if (auto) setTimeout(skipToChart, 500);
   else if (seen) setTimeout(function(){ if (!resultOpened) el.classList.add('on'); }, 5800);
 })();
+
+
+/* ============================================================
+   PRICING PAGE ZOOM (Sep 1 ruling): two fingers scale the pricing art 1x-3x
+   about the pinch point, one finger pans while zoomed, pinch back to 1x for
+   normal scrolling. The tap targets live inside the art, so they scale with it.
+   ============================================================ */
+(function(){
+  var z = 1, tx = 0, ty = 0, pinch = null, pan = null;
+  function wrapEl(){ var d = document.getElementById('unlockDash'); return d && d.querySelector('.dash-art'); }
+  function dist(a, b){ return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
+  function mid(a, b){ return { x:(a.clientX + b.clientX)/2, y:(a.clientY + b.clientY)/2 }; }
+  function apply(){
+    var d = document.getElementById('unlockDash'), w = wrapEl(); if (!d || !w) return;
+    if (z <= 1.001){ z = 1; tx = 0; ty = 0; w.style.transform = ''; w.style.transformOrigin = ''; d.style.overflowY = 'auto'; }
+    else { w.style.transformOrigin = '0 0'; w.style.transform = 'translate(' + tx.toFixed(1) + 'px,' + ty.toFixed(1) + 'px) scale(' + z.toFixed(4) + ')'; d.style.overflowY = 'hidden'; }
+  }
+  function clamp(){
+    var d = document.getElementById('unlockDash'), w = wrapEl(); if (!d || !w) return;
+    var vw = d.clientWidth, vh = d.clientHeight, cw = w.offsetWidth * z, ch = w.offsetHeight * z;
+    tx = Math.min(0, Math.max(vw - cw, tx));
+    ty = Math.min(0, Math.max(vh - ch, ty));
+  }
+  function wire(){
+    var d = document.getElementById('unlockDash'); if (!d || d.__pzWired) return; d.__pzWired = true;
+    d.addEventListener('touchstart', function(e){
+      var w = wrapEl(); if (!w) return;
+      if (e.touches.length === 2){
+        if (z === 1){ ty = -d.scrollTop; tx = 0; }
+        var m = mid(e.touches[0], e.touches[1]);
+        pinch = { d:dist(e.touches[0], e.touches[1]) || 1, z:z, tx:tx, ty:ty, m:m }; pan = null;
+        e.preventDefault();
+      } else if (e.touches.length === 1 && z > 1){
+        pan = { x:e.touches[0].clientX, y:e.touches[0].clientY, tx:tx, ty:ty, moved:false };
+      }
+    }, { passive:false });
+    d.addEventListener('touchmove', function(e){
+      if (pinch && e.touches.length === 2){
+        var k = dist(e.touches[0], e.touches[1]) / pinch.d;
+        var nz = Math.max(1, Math.min(3, pinch.z * k));
+        var cx = (pinch.m.x - pinch.tx) / pinch.z, cy = (pinch.m.y - pinch.ty) / pinch.z;
+        var m = mid(e.touches[0], e.touches[1]);
+        z = nz; tx = m.x - cx * nz; ty = m.y - cy * nz;
+        if (z <= 1.001){ z = 1; }
+        clamp(); apply(); e.preventDefault();
+      } else if (pan && e.touches.length === 1 && z > 1){
+        tx = pan.tx + (e.touches[0].clientX - pan.x); ty = pan.ty + (e.touches[0].clientY - pan.y);
+        if (Math.abs(e.touches[0].clientX - pan.x) + Math.abs(e.touches[0].clientY - pan.y) > 8) pan.moved = true;
+        clamp(); apply(); e.preventDefault();
+      }
+    }, { passive:false });
+    function end(e){ if (e.touches.length < 2) pinch = null; if (e.touches.length === 0){ if (pan && pan.moved) d.__pzSwallow = true; pan = null; } clamp(); apply(); }
+    d.addEventListener('touchend', end); d.addEventListener('touchcancel', end);
+    /* a pan must not fire the button underneath when the finger lifts */
+    d.addEventListener('click', function(e){ if (d.__pzSwallow){ d.__pzSwallow = false; e.stopPropagation(); e.preventDefault(); } }, true);
+  }
+  window.addEventListener('EMERGE_UNLOCK_READING_REQUESTED', function(){ setTimeout(wire, 50); });
+  var mo = new MutationObserver(function(){ if (document.getElementById('unlockDash')) { wire(); mo.disconnect(); } });
+  mo.observe(document.body, { childList:true });
+})();
+
+/* ============================================================
+   RESULT PAGE ZOOM, reflow version (Sep 1): replaces the transform zoom, which
+   could slide the page into black. Two fingers scale the text 1x-2.2x with CSS
+   zoom, so it reflows to the screen width and the page keeps scrolling normally.
+   ============================================================ */
+function sdZoomWire(){
+  var page = document.getElementById('chartResultPage');
+  if (!page || page.__zoomWired) return;
+  page.__zoomWired = true;
+  var inner = page.querySelector('.sd-page');
+  var z = 1, pinch = null;
+  function dist(a, b){ return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); }
+  page.addEventListener('touchstart', function(e){
+    if (e.touches.length === 2){ pinch = { d:dist(e.touches[0], e.touches[1]) || 1, z:z }; e.preventDefault(); }
+  }, { passive:false });
+  page.addEventListener('touchmove', function(e){
+    if (!pinch || e.touches.length !== 2 || !inner) return;
+    z = Math.max(1, Math.min(2.2, pinch.z * dist(e.touches[0], e.touches[1]) / pinch.d));
+    inner.style.zoom = z.toFixed(3);
+    e.preventDefault();
+  }, { passive:false });
+  function end(e){ if (e.touches.length < 2) pinch = null; }
+  page.addEventListener('touchend', end); page.addEventListener('touchcancel', end);
+}
 
 </script>
 </body>

@@ -2577,8 +2577,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = (sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1985'
-      : 'tropical-reveal.html?v=1881') + (window.__cozSkipReveal ? '&skip=1' : '');
+      ? 'sidereal-reveal.html?v=1986'
+      : 'tropical-reveal.html?v=1882') + (window.__cozSkipReveal ? '&skip=1' : '');
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';
@@ -2663,6 +2663,8 @@ document.querySelectorAll('.syscard').forEach(card => {
   skipEl.addEventListener('click', function(){
     if (window.__cozSkipIntro && window.__cozSkipIntro()) skipEl.classList.remove('on');
   });
+  /* the text leaves as soon as a door is tapped, so it never sits over the reveal */
+  document.querySelectorAll('.syscard').forEach(function(c){ c.addEventListener('click', function(){ goEl.classList.remove('on'); skipEl.classList.remove('on'); }); });
   goEl.addEventListener('click', function(){
     if (!saved) return;
     goEl.classList.remove('on');
