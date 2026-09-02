@@ -1420,7 +1420,7 @@ function startEarthBirth(){
   world.pointOfView({ lat: FRAME.lat, lng: FRAME.lng, altitude: BIRTH_CAMERA.startAlt }, 0);
   document.getElementById('globeViz').style.opacity = '1';
   try { world.atmosphereAltitude(0.005); } catch(_){}
-  earthBirthStart = performance.now();
+  earthBirthStart = performance.now() - (window.__cozFast ? EARTH_BIRTH_DURATION : 0);   /* skip intro: born in one frame */
   try { EMERGE_SOUND.play('growth'); } catch(_){}   /* dot chime removed — pulse then Earth */
   uncleJohnOut();   /* v19.90: safety net — already out at Tap to Unlock, never on here */
   window.__earthBirth = earthBirthStart + 1100;   // energy motes ride the energy stage
@@ -1586,12 +1586,12 @@ window.addEventListener('pointercancel', () => {
 
 window.__cozSkipIntro = function(){
   /* skip intro (second visit): the Earth is born in one frame and settles at once */
+  if (phase === 'birth'){ window.__cozFast = true; earthBirthStart = performance.now() - EARTH_BIRTH_DURATION; return true; }   /* already being born: finish it now */
   if (phase !== 'explore' && phase !== 'invited') return false;
   window.__cozFast = true;
   phase = 'invited';
   try { document.getElementById('invite').classList.add('gone'); } catch(_){}
   beginBirth();
-  earthBirthStart = performance.now() - EARTH_BIRTH_DURATION;
   return true;
 };
 window.__cozPhase = function(){ return phase; };
@@ -2577,8 +2577,8 @@ document.querySelectorAll('.syscard').forEach(card => {
     vc.classList.add('show');                       /* dark base while the reveal loads */
 
     const next = (sys === 'sidereal'
-      ? 'sidereal-reveal.html?v=1983'
-      : 'tropical-reveal.html?v=1879') + (window.__cozSkipReveal ? '&skip=1' : '');
+      ? 'sidereal-reveal.html?v=1984'
+      : 'tropical-reveal.html?v=1880') + (window.__cozSkipReveal ? '&skip=1' : '');
     console.log('[EMERGE FLOW] 10. living page — loading reveal in place:', next);
     const fr = document.createElement('iframe');
     fr.id = 'revealFrame';

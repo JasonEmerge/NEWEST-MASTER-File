@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPLETE TROPICAL READING · T1.7 · pan + slower turn
+   COZALYZE · COMPLETE TROPICAL READING · T1.8 · through the sun
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -458,8 +458,20 @@ body.asq-done #asqNav { opacity:1; pointer-events:auto; }
 .stage { transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(var(--dash-zoom, 1)); }
 .dash.panning .stage { transition: none; }
 @keyframes cozPageIn { from { opacity: 0; } to { opacity: 1; } }
-body[data-view="reading"] .vedic-reading-page { animation: cozPageIn 1400ms ease-out both; }
+body[data-view="reading"] .vedic-reading-page { animation: none; }
 .reveal-curtain { transition: opacity 1400ms ease-in-out; }
+
+/* through the sun (Sep 1 ruling): after the burst the camera keeps going, the sun
+   fills the screen with light and the reading emerges out of it */
+.reveal.is-through .stage { transition: transform 2600ms cubic-bezier(0.55, 0, 1, 0.45);
+  transform: translate(-50%, calc(-50% + var(--dash-pan, 0px))) scale(calc(var(--dash-zoom, 1) * 5.5)); }
+.reveal.is-through .reveal-curtain { background: radial-gradient(circle at 50% 50%, #fff6df 0%, #f1d9a6 45%, #e4b978 100%); transition: opacity 1600ms ease-in; }
+#cozLight { position: fixed; inset: 0; z-index: 90; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 42%, #fff6df 0%, #f1d9a6 45%, #e4b978 100%); transition: opacity 1800ms ease-out; }
+#cozLight.on { opacity: 1; transition: none; }
+/* text zoom (Sep 1 ruling): wherever there is reading text, two fingers scale it up
+   to 2x and back; the text reflows, nothing else on the page zooms */
+#vedicContent, #asqContent .wrap { zoom: var(--coz-text-zoom, 1); }
 </style>
 </head>
 <body data-view="dashboard">
@@ -533,7 +545,7 @@ body[data-view="reading"] .vedic-reading-page { animation: cozPageIn 1400ms ease
   <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.4 3.9-5 7-5s5.8 1.6 7 5"/></svg>Account</a>
 </nav>
 
-<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T1.7 · pan + slower turn</div>
+<div class="vedic-stamp" aria-hidden="true">TROPICAL READING · T1.8 · through the sun</div>
 
 <script>
 /* ============================================================
@@ -855,7 +867,7 @@ function dashZoomIn() {
   const go = () => document.documentElement.style.setProperty("--dash-zoom", target);
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { go(); return; }
   const art = document.querySelector("#dashStage .stage-art");
-  const start = () => setTimeout(go, 650);
+  const start = () => setTimeout(go, 1900);   /* Sep 1: the frame fades in first, so the whole art is seen before the ease-in */
   if (art.complete) start(); else art.addEventListener("load", start, { once: true });
 }
 dashZoomIn();
@@ -932,7 +944,7 @@ revealVideo.addEventListener("playing", () => {
   // the live ascendant overlay stays while the buttons are still on screen, then lets go before the burst
   revealTimers.push(setTimeout(() => revealEl.classList.add("asc-off"), 1450));
   // hard cap a little past the clip's 2.5s so a stalled clip never traps anyone
-  revealTimers.push(setTimeout(() => finishReveal(false), 5200));   /* the clip ends first; this only catches a stall */
+  revealTimers.push(setTimeout(() => finishReveal(false), 5200));   /* stall guard only */   /* the clip ends first; this only catches a stall */
 });
 
 function finishReveal(immediate) {
@@ -948,11 +960,18 @@ function finishReveal(immediate) {
     syncReadyState();
   };
   if (immediate) { land(); return; }
-  /* Sep 1 ruling: the burst breathes. Hold on its last frame, then a slow navy curtain, then the page fades in. */
+  /* Sep 1 ruling: through the sun. Hold on the burst, then the camera drives into it, the light
+     fills the screen, the page lands underneath and the light clears to reveal the reading. */
   setTimeout(() => {
-    revealEl.classList.add("is-closing");
-    setTimeout(land, 1500);
-  }, 900);
+    revealEl.classList.add("is-through");
+    setTimeout(() => revealEl.classList.add("is-closing"), 1100);
+    setTimeout(() => {
+      try { window.__cozLightIn(); } catch (e) {}
+      land();
+      revealEl.classList.remove("is-through");
+      setTimeout(() => { try { window.__cozLightOut(); } catch (e) {} }, 350);
+    }, 2700);
+  }, 500);
 }
 
 function cancelReveal() {
@@ -960,7 +979,7 @@ function cancelReveal() {
   revealDone = true;
   revealTimers.forEach(clearTimeout); revealTimers = [];
   try { revealVideo.pause(); revealVideo.currentTime = 0; } catch (e) {}
-  revealEl.classList.remove("is-on", "is-closing", "asc-off");
+  revealEl.classList.remove("is-on", "is-closing", "is-through", "asc-off");
   lockScroll(false);
   revealActive = false;
   syncReadyState();
@@ -1315,6 +1334,30 @@ document.getElementById("hotReading").addEventListener("click", function(){
   dash.addEventListener("touchend", end); dash.addEventListener("touchcancel", end);
   /* a real drag must not count as a tap on the hotspot underneath */
   dash.addEventListener("click", e => { if (moved){ e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+})();
+
+
+/* ---------- through the sun + text zoom (Sep 1) ---------- */
+(function(){
+  const light = document.createElement("div"); light.id = "cozLight"; document.body.appendChild(light);
+  window.__cozLightIn  = () => { light.classList.add("on"); };
+  window.__cozLightOut = () => { requestAnimationFrame(() => requestAnimationFrame(() => light.classList.remove("on"))); };
+})();
+(function(){
+  const root = document.documentElement;
+  let active = false, startD = 0, startZ = 1;
+  const inText = () => document.body.dataset.view === "reading" || document.body.dataset.view === "ascendant";
+  const cur = () => parseFloat(getComputedStyle(root).getPropertyValue("--coz-text-zoom")) || 1;
+  const dist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  document.addEventListener("touchstart", e => { if (!inText() || e.touches.length !== 2) return; active = true; startD = dist(e) || 1; startZ = cur(); }, { passive:true });
+  document.addEventListener("touchmove", e => {
+    if (!active || e.touches.length !== 2) return;
+    e.preventDefault();
+    const z = Math.min(2, Math.max(1, startZ * (dist(e) / startD)));
+    root.style.setProperty("--coz-text-zoom", z.toFixed(3));
+  }, { passive:false });
+  const end = () => { active = false; };
+  document.addEventListener("touchend", end); document.addEventListener("touchcancel", end);
 })();
 
 </script>
