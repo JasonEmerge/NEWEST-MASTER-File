@@ -7,10 +7,10 @@
 <title>Your Combined Reading · CozAlyze</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   COZALYZE · COMPARE · COMBINED READING · C1.3 · one document
+   COZALYZE · COMPARE · COMBINED READING · C1.4 · pinch + sound
    Paid dashboard + reveal + six reading sections in ONE document
    (standing rule: no iframe, no page navigation between them).
    Design tokens and structure follow the supplied spec verbatim.
@@ -369,6 +369,12 @@ body.scroll-locked { overflow: hidden; touch-action: none; }
   color: rgba(212, 161, 120, 0.35);
   pointer-events: none;
 }
+/* ---------- dashboard pinch zoom (Sep 1): the landing eases to --dash-zoom-in, which
+   pushes the bottom nav pill below the screen; two fingers now zoom the art between
+   the whole frame (1) and the landing (--dash-zoom-in) so Home, Saved and Account can
+   always be reached. Native browser zoom stays off. ---------- */
+.dash { touch-action: none; }
+.dash.pinching .stage { transition: none; }
 </style>
 </head>
 <body data-view="dashboard">
@@ -420,7 +426,7 @@ body.scroll-locked { overflow: hidden; touch-action: none; }
   <div class="vedic-reading-content" id="vedicContent"></div>
 </main>
 
-<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.3 · one document</div>
+<div class="vedic-stamp" aria-hidden="true">COMBINED READING · C1.4 · pinch + sound</div>
 
 <script>
 /* ============================================================
@@ -772,6 +778,37 @@ revealVideo.addEventListener("error", () => finishReveal(false));
    so the phone's back gesture steps through them, and back past Page 01 lands on the dashboard. */
 window.addEventListener("hashchange", showFromHash);
 showFromHash();
+/* ---------- dashboard pinch zoom (Sep 1) ---------- */
+(function(){
+  const dash = document.getElementById("dash"), root = document.documentElement;
+  let active = false, startD = 0, startZ = 1, maxZ = 1.3;
+  const cur = () => parseFloat(getComputedStyle(root).getPropertyValue("--dash-zoom")) || 1;
+  const dist = e => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+  dash.addEventListener("touchstart", e => {
+    if (e.touches.length !== 2) return;
+    active = true; startD = dist(e) || 1; startZ = cur();
+    maxZ = parseFloat(getComputedStyle(root).getPropertyValue("--dash-zoom-in")) || 1.3;
+    dash.classList.add("pinching"); window.__dashZoomed = true;
+  }, { passive:true });
+  dash.addEventListener("touchmove", e => {
+    if (!active || e.touches.length !== 2) return;
+    e.preventDefault();
+    const z = Math.min(maxZ, Math.max(1, startZ * (dist(e) / startD)));
+    root.style.setProperty("--dash-zoom", z.toFixed(3));
+  }, { passive:false });
+  const end = () => { if (!active) return; active = false; dash.classList.remove("pinching"); };
+  dash.addEventListener("touchend", end); dash.addEventListener("touchcancel", end);
+})();
+
+/* ---------- reveal sound (Sep 1): the reading tap fires the app's harmony cue through
+   the living frame's engine and re-asserts the bed, the same way the old Vedic page did ---------- */
+document.getElementById("hotReading").addEventListener("click", function(){
+  try {
+    const snd = (window.parent !== window) ? window.parent.EMERGE_SOUND : null;
+    if (snd){ snd.loop("ambient"); snd.play("harmony"); }
+  } catch(_){}
+});
+
 </script>
 </body>
 </html>
