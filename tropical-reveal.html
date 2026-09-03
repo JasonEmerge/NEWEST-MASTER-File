@@ -571,16 +571,23 @@
      dashboard art, so the button has to be live on both sides. Geometry copied verbatim
      from SIDEREAL v19.74, measured against dash-mobile.jpg and pricing.jpg. */
   #unlockDash .dash-art { position:relative; }
+  /* Sep 3 "page two": overlays are measured against .dash-base (the price art
+     alone); on mobile the Expanding Perspectives section is a second image below
+     it; .dash-scale carries the full-picture intro zoom */
+  #unlockDash .dash-base { position:relative; }
+  #unlockDash .dash-scale { transform-origin:top center; }
+  #unlockDash .dash-expanding { display:block; width:100%; height:auto; }
   #unlockDash .dash-hot { position:absolute; background:transparent; border:0; padding:0; margin:0; cursor:pointer;
     -webkit-tap-highlight-color:transparent; }
-  #unlockDash .dash-hot.vedic-mobile { left:80%; top:51.2%; width:17%; height:3.6%; }
-  #unlockDash .dash-hot.vedic-desktop { left:39%; top:58.4%; width:25%; height:3.5%; }
+  #unlockDash .dash-hot.vedic-mobile { left:81%; top:72.73%; width:15%; height:4.76%; }
+  #unlockDash .dash-hot.vedic-desktop { left:37%; top:58.7%; width:25.6%; height:3.1%; }
   /* three doors (Sep 1): the Tropical $49 and Unlock Both $75 buttons in the art now
-     also carry tap targets, measured the same way against pricing.jpg / dash-mobile.jpg */
-  #unlockDash .dash-hot.tropical-mobile  { left:80%; top:36.8%; width:15%; height:4%; }
-  #unlockDash .dash-hot.tropical-desktop { left:12%; top:58.8%; width:25%; height:3.5%; }
-  #unlockDash .dash-hot.compare-mobile   { left:80%; top:65.8%; width:15%; height:4%; }
-  #unlockDash .dash-hot.compare-desktop  { left:66%; top:58.9%; width:26%; height:3.5%; }
+     also carry tap targets. Sep 3: all six remeasured against the NEW price-page art
+     (Desktop_Price_Page 4517x8000 / Mobile_Dashboard 3679x8000). */
+  #unlockDash .dash-hot.tropical-mobile  { left:80.5%; top:52.03%; width:15%; height:5.03%; }
+  #unlockDash .dash-hot.tropical-desktop { left:6.8%; top:58.6%; width:26.2%; height:3.2%; }
+  #unlockDash .dash-hot.compare-mobile   { left:80.5%; top:92.87%; width:15%; height:4.48%; }
+  #unlockDash .dash-hot.compare-desktop  { left:67.1%; top:58.8%; width:25.8%; height:3.2%; }
 
   /* ===== WHAT'S INCLUDED: info link + shared modal (spec supplied Sep 1) =====
      One modal component, three product configs. Links are positioned over the
@@ -595,16 +602,34 @@
   #unlockDash .dash-info svg { width:11px; height:11px; margin-left:5px; flex:0 0 auto; }
   #unlockDash .dash-info:hover, #unlockDash .dash-info:focus-visible { color:#F0C69C; filter:brightness(1.08); outline:none; }
   /* desktop art: centered on the button below it, sitting in the gap above it */
-  #unlockDash .dash-info.tropical-desktop { left:13.25%; top:56.97%; width:22.35%; height:2.0%; }
-  #unlockDash .dash-info.vedic-desktop    { left:40.40%; top:56.63%; width:22.50%; height:2.0%; }
-  #unlockDash .dash-info.compare-desktop  { left:67.15%; top:57.08%; width:23.80%; height:2.0%; }
+  #unlockDash .dash-info.tropical-desktop { left:8.85%; top:57.7%; width:22%; height:1.0%; }
+  #unlockDash .dash-info.vedic-desktop    { left:38.75%; top:57.7%; width:22%; height:1.0%; }
+  #unlockDash .dash-info.compare-desktop  { left:68.95%; top:57.7%; width:22%; height:1.0%; }
   /* mobile art: the only clear row is between the card subtitle and its description,
      so the link sits there, right-aligned to its $ pill; hit area padded to 44px */
   #unlockDash .dash-info.tropical-mobile, #unlockDash .dash-info.vedic-mobile, #unlockDash .dash-info.compare-mobile {
     justify-content:flex-end; min-height:44px; padding-right:0; transform:translateY(-50%); }
-  #unlockDash .dash-info.tropical-mobile { right:6.5%; top:34.35%; }
-  #unlockDash .dash-info.vedic-mobile    { right:5.7%; top:49.18%; }
-  #unlockDash .dash-info.compare-mobile  { right:6.2%; top:63.86%; }
+  #unlockDash .dash-info.tropical-mobile { right:6.5%; top:47.27%; }
+  #unlockDash .dash-info.vedic-mobile    { right:5.7%; top:68.39%; }
+  /* Sep 3 ruling: on mobile the compare link takes the PLACE of the baked
+     "See the Full Picture" subtitle (a .dash-cover patch conceals the baked
+     line), left-aligned where the subtitle sat */
+  #unlockDash .dash-info.compare-mobile  { left:35.4%; top:86.85%; justify-content:flex-start; min-height:44px; transform:translateY(-50%); }
+  #unlockDash .dash-cover.compare-mobile { position:absolute; left:34%; top:85.4%; width:26.5%; height:2.9%; background:#020305; }
+
+  /* ===== PRICE-PAGE FINE PRINT (Sep 3): the approved disclosure line under each
+     price, as an HTML overlay over the new price-page art, never baked in.
+     Text comes from COZ_INFO[product].fine so the art line and the modal line
+     can never drift apart. Display only: pointer-events none. */
+  #unlockDash .dash-fine { position:absolute; margin:0; padding:0; pointer-events:none;
+    text-align:center; color:#F1DFCC; opacity:.62; letter-spacing:.02em; line-height:1.35;
+    font-family:-apple-system, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  #unlockDash .dash-fine.tropical-desktop { left:7%; top:62.35%; width:26%; font-size:clamp(9px, 0.85vw, 13px); }
+  #unlockDash .dash-fine.vedic-desktop    { left:37%; top:62.35%; width:26%; font-size:clamp(9px, 0.85vw, 13px); }
+  /* compare's line clears the Save $23 pill that hangs on the card's bottom edge */
+  #unlockDash .dash-fine.compare-desktop  { left:67%; top:63.75%; width:26%; font-size:clamp(9px, 0.85vw, 13px); }
+  /* Sep 3 ruling: NO fine print on the mobile page — the modal already carries
+     the line; the desktop rules above stay until his desktop pass lands */
 
   #cozInfoOverlay { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
     padding:16px; box-sizing:border-box; background:rgba(1,7,16,0.78);
@@ -861,7 +886,7 @@ console.log('[EMERGE FLOW] 5. tropical-reveal — system in storage:',
             SAVED && SAVED.system, '| data:', __ok ? 'user birth data' : 'QA fallback');
 console.log('[EMERGE FLOW] 6. calculation branch: TROPICAL — no ayanamsa (true tropical longitudes)');
 document.getElementById('stamp').textContent =
-  'TROPICAL v18.84 ai disclosure · d1 · data:' + ((SAVED && SAVED.system) || 'none');
+  'TROPICAL v18.86 mobile page two · d1 · data:' + ((SAVED && SAVED.system) || 'none');
 
 var DEG = Math.PI/180, RAD = 180/Math.PI;
 
@@ -3066,7 +3091,12 @@ function openCompleteChartResult(){
 /* v18.62: the phone gets Jason's mobile dashboard art, desktop keeps the
    desktop art. Same overlay, same transition — only the file changes.
    ?v= on both so Safari cannot serve the old pricing.jpg from cache. */
-var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=32' : 'pricing.jpg?v=2';
+/* Sep 3: brand-new price-page art, both sizes (his Canva exports). Cache bumped
+   past every earlier version so no phone can serve the old page. */
+var DASH_SRC = (window.innerWidth < 900) ? 'dash-mobile.jpg?v=35' : 'pricing.jpg?v=4';
+/* Sep 3: the mobile page continues past the price art into his new
+   Expanding Perspectives section (six cards, two per row) as a second image */
+var DASH_EXPANDING_SRC = (window.innerWidth < 900) ? 'expanding-mobile.png?v=1' : null;
 /* WHAT'S INCLUDED (Sep 1): the Vedic $49 handler is now a named function so the
    art hotspot and the modal's Continue to Checkout button share ONE route. Body unchanged. */
 function vedicCheckout(){
@@ -3261,25 +3291,30 @@ function buildDashOverlay(){
   if (dashOverlay) return dashOverlay;
   dashOverlay = document.createElement('div');
   dashOverlay.id = 'unlockDash';
+  /* Sep 3 "page two": .dash-scale carries the full-picture intro zoom (its own
+     element so it never fights the pinch zoom, which transforms .dash-art);
+     .dash-base carries the price art + every overlay (their % geometry is
+     measured against the base art alone); on mobile the Expanding Perspectives
+     section is his separate art, appended below the base inside .dash-art. */
+  var scale = document.createElement('div');
+  scale.className = 'dash-scale';
   var wrap = document.createElement('div');
   wrap.className = 'dash-art';
+  var base = document.createElement('div');
+  base.className = 'dash-base';
   var im = document.createElement('img');
   im.src = DASH_SRC;
   im.alt = 'CozAlyze — Discover yourself through multiple perspectives';
-  wrap.appendChild(im);
-  /* v18.71: Vedic Chart $49 -> (payment, not built yet) -> the Vedic Reading page.
-     CAREFUL: the reading that follows is a VEDIC one, so it must be born as the
-     person's SIDEREAL rising sign. This file computes tropical longitudes only and
-     applies no ayanamsa, so ascSign here is the tropical ascendant, which is usually
-     a whole sign away from the sidereal one. Passing it would open the wrong sign's
-     animation and the wrong Inner Compass reading. The Lahiri cubic below is copied
-     verbatim from SIDEREAL v19.62 so both doors resolve to the identical sign. */
+  base.appendChild(im);
+  /* v19.74: Vedic Chart $49 -> (payment, not built yet) -> the Vedic Reading page.
+     The person's calculated ascendant travels in the URL and localStorage so the
+     Open Reading sequence is born as their own rising sign. */
   var hot = document.createElement('button');
   hot.type = 'button';
   hot.className = 'dash-hot ' + ((window.innerWidth < 900) ? 'vedic-mobile' : 'vedic-desktop');
   hot.setAttribute('aria-label', 'Vedic Chart $49');
   hot.addEventListener('click', vedicCheckout);
-  wrap.appendChild(hot);
+  base.appendChild(hot);
   /* three doors (Sep 1): the other two price buttons in the art go straight to checkout too */
   [['tropical','Tropical Chart $49', tropicalCheckout], ['compare','Unlock Both Charts $75', compareCheckout]].forEach(function(d){
     var h = document.createElement('button');
@@ -3287,13 +3322,23 @@ function buildDashOverlay(){
     h.className = 'dash-hot ' + d[0] + ((window.innerWidth < 900) ? '-mobile' : '-desktop');
     h.setAttribute('aria-label', d[1]);
     h.addEventListener('click', d[2]);
-    wrap.appendChild(h);
+    base.appendChild(h);
   });
+
+  var isMobileArt = (window.innerWidth < 900);
+  /* Sep 3: on mobile the compare link takes the place of the baked "See the Full
+     Picture" subtitle, so a patch of the card's own flat background (#020305,
+     sampled from the art) conceals the baked line first. */
+  if (isMobileArt){
+    var cover = document.createElement('div');
+    cover.className = 'dash-cover compare-mobile';
+    cover.setAttribute('aria-hidden', 'true');
+    base.appendChild(cover);
+  }
 
   /* WHAT'S INCLUDED (Sep 1): "See what's included" link over each of the three
      price buttons in the art. Each opens the shared info modal for its product.
      The link never triggers checkout; checkout happens only from the modal button. */
-  var isMobileArt = (window.innerWidth < 900);
   ['tropical','vedic','compare'].forEach(function(product){
     var info = document.createElement('button');
     info.type = 'button';
@@ -3306,11 +3351,70 @@ function buildDashOverlay(){
       ev.preventDefault(); ev.stopPropagation();
       cozInfoOpen(product, info);
     });
-    wrap.appendChild(info);
+    base.appendChild(info);
   });
-  dashOverlay.appendChild(wrap);
+
+  /* PRICE-PAGE FINE PRINT: desktop only (Sep 3 ruling) — on mobile the line was
+     removed from the page because the modal already carries it; the desktop page
+     keeps it until his desktop pass lands. Same wording as the modal
+     (COZ_INFO[product].fine), display only, never tappable. */
+  if (!isMobileArt){
+    ['tropical','vedic','compare'].forEach(function(product){
+      var fine = document.createElement('p');
+      fine.className = 'dash-fine ' + product + '-desktop';
+      fine.textContent = (COZ_INFO[product] && COZ_INFO[product].fine) || '';
+      wrap.appendChild(fine);
+    });
+  }
+
+  wrap.appendChild(base);
+  if (isMobileArt && DASH_EXPANDING_SRC){
+    var ex = document.createElement('img');
+    ex.className = 'dash-expanding';
+    ex.src = DASH_EXPANDING_SRC;
+    ex.alt = 'Expanding Perspectives — coming soon';
+    wrap.appendChild(ex);
+  }
+  scale.appendChild(wrap);
+  dashOverlay.appendChild(scale);
   document.body.appendChild(dashOverlay);
   return dashOverlay;
+}
+/* FULL PICTURE INTRO (Sep 3 ruling): the page enters as the whole picture, holds
+   ~3s, then zooms in to the readable view — the same pattern as the reading
+   pages. Runs on .dash-scale so it can never fight the pinch zoom (.dash-art). */
+function dashIntroZoom(ov){
+  if (REDUCED) return;
+  var sc = ov.querySelector('.dash-scale'); if (!sc || sc.__introDone) return;
+  sc.__introDone = true;
+  var run = function(){
+    var full = sc.offsetHeight, vh = window.innerHeight;
+    if (!full || full <= vh * 1.05) return;
+    var s = vh / full;
+    ov.__introLock = true;
+    sc.style.transition = 'none';
+    sc.style.transform = 'scale(' + s.toFixed(4) + ')';
+    sc.style.pointerEvents = 'none';
+    ov.style.overflow = 'hidden';
+    window.setTimeout(function(){
+      sc.style.transition = 'transform 1.8s cubic-bezier(0.22,0.61,0.36,1)';
+      sc.style.transform = 'scale(1)';
+      window.setTimeout(function(){
+        sc.style.transition = ''; sc.style.transform = ''; sc.style.pointerEvents = '';
+        ov.style.overflow = ''; ov.__introLock = false;
+        try { ov.scrollTop = 0; } catch(_){}
+      }, 1950);
+    }, 3000);
+  };
+  var imgs = Array.prototype.slice.call(sc.querySelectorAll('img'));
+  var pending = imgs.filter(function(i){ return !i.complete; }).length;
+  if (!pending){ run(); return; }
+  imgs.forEach(function(i){
+    if (i.complete) return;
+    var done = function(){ if (--pending === 0) run(); };
+    i.addEventListener('load', done, { once:true });
+    i.addEventListener('error', done, { once:true });
+  });
 }
 function startUnlockTransition(){
   if (dashStarted) return;
@@ -3325,6 +3429,7 @@ function startUnlockTransition(){
   dashStarted = true;
   try { EMERGE_SOUND.play('impact'); EMERGE_SOUND.haptic(10); } catch(_){}
   var ov = buildDashOverlay();
+  dashIntroZoom(ov);                    /* full picture first, then zoom in */
   bodyEl.classList.add('unlock-leaving');
   window.setTimeout(function(){
     ov.classList.add('is-visible');
@@ -3333,7 +3438,7 @@ function startUnlockTransition(){
   }, REDUCED ? 0 : 550);
 }
 window.addEventListener('EMERGE_UNLOCK_READING_REQUESTED', startUnlockTransition);
-window.setTimeout(function(){ try { (new Image()).src = DASH_SRC; } catch(_){} }, 4000);  /* preload after the drawing settles */
+window.setTimeout(function(){ try { (new Image()).src = DASH_SRC; if (DASH_EXPANDING_SRC) (new Image()).src = DASH_EXPANDING_SRC; } catch(_){} }, 4000);  /* preload after the drawing settles */
 /* ===== END v18.31: UNLOCK -> DASHBOARD FINALE ===== */
 
 unlockBtn.addEventListener('click', function(){
@@ -3508,7 +3613,7 @@ ctaEl.addEventListener('click', function(){
   function wire(){
     var d = document.getElementById('unlockDash'); if (!d || d.__pzWired) return; d.__pzWired = true;
     d.addEventListener('touchstart', function(e){
-      var w = wrapEl(); if (!w) return;
+      var w = wrapEl(); if (!w || d.__introLock) return;
       if (e.touches.length === 2){
         if (z === 1){ ty = -d.scrollTop; tx = 0; }
         var m = mid(e.touches[0], e.touches[1]);
